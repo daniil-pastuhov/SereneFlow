@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		09FED4B446BD58DF150C455A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C6D2DD7FE2E0BF5DB2A96B4B /* PrivacyInfo.xcprivacy */; };
 		22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F543015C899423D4B01CEB2E /* Assets.xcassets */; };
 		286BA5B2656DC8914398C0CC /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */; };
 		2B02D273B8048A357782D40A /* SereneFlowWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F5782C4478E998FE210E691C /* SereneFlowWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -44,12 +45,14 @@
 
 /* Begin PBXFileReference section */
 		12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SereneFlowWidgetBundle.swift; sourceTree = "<group>"; };
+		13460834AD319CDAB0309B74 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		1405A1434510C5F0CBFB7F9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerActivityAttributes.swift; sourceTree = "<group>"; };
 		3771E0E755C03BF5A873EAE2 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C09A8B87794DF76A2697A309 /* TimerLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerLiveActivity.swift; sourceTree = "<group>"; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C6D2DD7FE2E0BF5DB2A96B4B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		F543015C899423D4B01CEB2E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F5782C4478E998FE210E691C /* SereneFlowWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SereneFlowWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,6 +78,7 @@
 				C117AD187833E2513BD2F553 /* Info.plist */,
 				3771E0E755C03BF5A873EAE2 /* iosApp.swift */,
 				FEC4F0A5217577A3B46AA2F5 /* LiveActivityManager.swift */,
+				C6D2DD7FE2E0BF5DB2A96B4B /* PrivacyInfo.xcprivacy */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -85,8 +89,18 @@
 				1DB4B685CAEE8BEFEBBAEF94 /* iosApp */,
 				125AF96DE90E67F9A33D5174 /* SereneFlowWidget */,
 				D729CB25B4FA03B3484F4F1E /* Shared */,
+				5A401711BDDC9F0B23300161 /* Timer */,
 				94C98B8B3A2BFC1966447269 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		5A401711BDDC9F0B23300161 /* Timer */ = {
+			isa = PBXGroup;
+			children = (
+				13460834AD319CDAB0309B74 /* Version.xcconfig */,
+			);
+			name = Timer;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		94C98B8B3A2BFC1966447269 /* Products */ = {
@@ -157,10 +171,12 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					6582578CDFF6469821003A3C = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = S8Q8KHX6G5;
+						ProvisioningStyle = Automatic;
 					};
 					78B53CC79860CBFC2F5543C6 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = S8Q8KHX6G5;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -190,6 +206,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */,
+				09FED4B446BD58DF150C455A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -212,7 +229,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -d \"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home\" ]; then\n  export JAVA_HOME=\"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home\"\nelif [ -d \"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ]; then\n  export JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\nfi\nexport PATH=\"$JAVA_HOME/bin:$PATH\"\ncd \"$SRCROOT/..\"\n./gradlew --no-daemon :composeApp:embedAndSignAppleFrameworkForXcode\n";
+			shellScript = "# Xcode starts with a bare environment; CI sets JAVA_HOME itself.\nif [ -z \"$JAVA_HOME\" ]; then\n  if [ -d \"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home\" ]; then\n    export JAVA_HOME=\"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home\"\n  elif [ -d \"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ]; then\n    export JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\n  fi\nfi\nexport PATH=\"$JAVA_HOME/bin:$PATH\"\ncd \"$SRCROOT/..\"\n./gradlew --no-daemon :composeApp:embedAndSignAppleFrameworkForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -251,6 +268,7 @@
 /* Begin XCBuildConfiguration section */
 		11814011E7D6EC822BFBC66D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 13460834AD319CDAB0309B74 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -282,9 +300,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = S8Q8KHX6G5;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -319,7 +338,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sereneflow.timer.iosApp.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sereneflow.timer.widget;
 				PRODUCT_NAME = SereneFlowWidget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -340,7 +359,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sereneflow.timer.iosApp.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sereneflow.timer.widget;
 				PRODUCT_NAME = SereneFlowWidget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -350,6 +369,7 @@
 		};
 		6C824A6EB4BAD43AE2A4BB29 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 13460834AD319CDAB0309B74 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -381,9 +401,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = S8Q8KHX6G5;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -421,11 +442,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework",
-					"$(SRCROOT)/../composeApp/build/bin/iosArm64/debugFramework",
-					"$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/releaseFramework",
-					"$(SRCROOT)/../composeApp/build/bin/iosArm64/releaseFramework",
-					"$(BUILT_PRODUCTS_DIR)",
+					"$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
 				);
 				INFOPLIST_FILE = iosApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -437,7 +454,7 @@
 					"-framework",
 					ComposeApp,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.sereneflow.timer.iosApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sereneflow.timer;
 				PRODUCT_NAME = SereneFlow;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -453,11 +470,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework",
-					"$(SRCROOT)/../composeApp/build/bin/iosArm64/debugFramework",
-					"$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/releaseFramework",
-					"$(SRCROOT)/../composeApp/build/bin/iosArm64/releaseFramework",
-					"$(BUILT_PRODUCTS_DIR)",
+					"$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
 				);
 				INFOPLIST_FILE = iosApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -469,7 +482,7 @@
 					"-framework",
 					ComposeApp,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.sereneflow.timer.iosApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sereneflow.timer;
 				PRODUCT_NAME = SereneFlow;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

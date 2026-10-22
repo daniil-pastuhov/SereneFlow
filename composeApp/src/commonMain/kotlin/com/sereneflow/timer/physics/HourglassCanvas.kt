@@ -53,9 +53,12 @@ fun HourglassCanvas(
         val glassTop = height * 0.15f
         val glassBottom = height * 0.85f
         val glassHeight = glassBottom - glassTop
-        val glassWidth = minOf(width * 0.55f, 260f)
+        // A fifth of the shorter side: the 260px it was designed at on a phone, larger on tablets.
+        val glassWidth = minOf(width * 0.55f, minOf(width, height) * 0.2f)
+        // Every other pixel size scales with the glass.
+        val unit = glassWidth / 260f
         val neckY = glassTop + glassHeight * 0.5f
-        val neckWidth = 24f
+        val neckWidth = 24f * unit
 
         // Draw Outer Hourglass Glass Silhouette
         val glassPath = Path().apply {
@@ -105,7 +108,7 @@ fun HourglassCanvas(
         drawPath(
             path = glassPath,
             color = glassColor.copy(alpha = 0.55f),
-            style = Stroke(width = 3.5f)
+            style = Stroke(width = 3.5f * unit)
         )
 
         // Top bulb sand volume (shrinks as progress goes 0f -> 1f)
@@ -117,8 +120,8 @@ fun HourglassCanvas(
             val topSandPath = Path().apply {
                 moveTo(centerX - topSandWidth * 0.5f, topSandTop)
                 lineTo(centerX + topSandWidth * 0.5f, topSandTop)
-                quadraticTo(centerX + neckWidth * 0.4f, neckY - 5f, centerX, neckY)
-                quadraticTo(centerX - neckWidth * 0.4f, neckY - 5f, centerX - topSandWidth * 0.5f, topSandTop)
+                quadraticTo(centerX + neckWidth * 0.4f, neckY - 5f * unit, centerX, neckY)
+                quadraticTo(centerX - neckWidth * 0.4f, neckY - 5f * unit, centerX - topSandWidth * 0.5f, topSandTop)
                 close()
             }
 
@@ -142,8 +145,8 @@ fun HourglassCanvas(
             val bottomSandPath = Path().apply {
                 moveTo(centerX - moundBaseWidth * 0.5f, glassBottom)
                 // Conical mound peak
-                quadraticTo(centerX - moundBaseWidth * 0.2f, moundTopY + 10f, centerX, moundTopY)
-                quadraticTo(centerX + moundBaseWidth * 0.2f, moundTopY + 10f, centerX + moundBaseWidth * 0.5f, glassBottom)
+                quadraticTo(centerX - moundBaseWidth * 0.2f, moundTopY + 10f * unit, centerX, moundTopY)
+                quadraticTo(centerX + moundBaseWidth * 0.2f, moundTopY + 10f * unit, centerX + moundBaseWidth * 0.5f, glassBottom)
                 close()
             }
 
@@ -168,7 +171,7 @@ fun HourglassCanvas(
                 ),
                 start = Offset(centerX, neckY),
                 end = Offset(centerX, glassBottom - (glassHeight * 0.45f * bottomSandRatio)),
-                strokeWidth = 3f
+                strokeWidth = 3f * unit
             )
 
             // Dynamic scattered particles in stream
@@ -178,11 +181,11 @@ fun HourglassCanvas(
             for (p in particles) {
                 val fall = fract(p.offset + seconds * p.speed)
                 val pY = neckY + streamHeight * fall
-                val pX = centerX + p.horizontalJitter * (fall * 0.6f)
+                val pX = centerX + p.horizontalJitter * unit * (fall * 0.6f)
 
                 drawCircle(
                     color = sandColor.copy(alpha = p.alpha),
-                    radius = p.size,
+                    radius = p.size * unit,
                     center = Offset(pX, pY)
                 )
             }

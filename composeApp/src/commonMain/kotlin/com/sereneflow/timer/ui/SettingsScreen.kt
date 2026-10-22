@@ -97,274 +97,274 @@ fun SettingsScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            // Theme Section
-            item {
-                SectionHeader(title = "HARMONIZED THEMES", icon = Icons.Default.Palette)
-                Spacer(modifier = Modifier.height(10.dp))
+        ReadableWidth(modifier = Modifier.fillMaxSize().padding(paddingValues)) { sidePadding ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = sidePadding, end = sidePadding, top = 12.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                // Theme Section
+                item {
+                    SectionHeader(title = "HARMONIZED THEMES", icon = Icons.Default.Palette)
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.cardBackground)
-                        .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    AppThemeMode.entries.forEach { mode ->
-                        val isSelected = mode == currentTheme
-                        val samplePalette = getSerenePalette(mode, isDark = mode == AppThemeMode.MIDNIGHT_STARLIGHT)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        AppThemeMode.entries.forEach { mode ->
+                            val isSelected = mode == currentTheme
+                            val samplePalette = getSerenePalette(mode, isDark = mode == AppThemeMode.MIDNIGHT_STARLIGHT)
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                .clickable { preferencesRepository.setThemeMode(mode) }
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                // Color preview swatches
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(18.dp)
-                                            .clip(CircleShape)
-                                            .background(samplePalette.primary)
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .size(18.dp)
-                                            .clip(CircleShape)
-                                            .background(samplePalette.secondary)
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .size(18.dp)
-                                            .clip(CircleShape)
-                                            .background(samplePalette.background)
-                                            .border(1.dp, Color.Gray.copy(alpha = 0.3f), CircleShape)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
+                                    .clickable { preferencesRepository.setThemeMode(mode) }
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Color preview swatches
+                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(18.dp)
+                                                .clip(CircleShape)
+                                                .background(samplePalette.primary)
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(18.dp)
+                                                .clip(CircleShape)
+                                                .background(samplePalette.secondary)
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(18.dp)
+                                                .clip(CircleShape)
+                                                .background(samplePalette.background)
+                                                .border(1.dp, Color.Gray.copy(alpha = 0.3f), CircleShape)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(14.dp))
+
+                                    Text(
+                                        text = mode.displayName,
+                                        fontSize = 15.sp,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = colors.onSurface
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.width(14.dp))
-
-                                Text(
-                                    text = mode.displayName,
-                                    fontSize = 15.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = colors.onSurface
-                                )
-                            }
-
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = colors.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            // Audio & Voice Guidance Mode
-            item {
-                SectionHeader(title = "DEFAULT SOUND", icon = Icons.Default.GraphicEq)
-                SectionNote("Used when you create a new routine.")
-                Spacer(modifier = Modifier.height(10.dp))
+                // Audio & Voice Guidance Mode
+                item {
+                    SectionHeader(title = "DEFAULT SOUND", icon = Icons.Default.GraphicEq)
+                    SectionNote("Used when you create a new routine.")
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.cardBackground)
-                        .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SoundMode.entries.forEach { mode ->
-                        val isSelected = mode == defaultSound
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                .clickable { preferencesRepository.setDefaultSoundMode(mode) }
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = mode.displayName,
-                                    fontSize = 14.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                                    color = colors.onSurface
-                                )
-                                Text(
-                                    text = mode.description,
-                                    fontSize = 12.sp,
-                                    color = colors.onSurfaceVariant
-                                )
-                            }
-
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = colors.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Screen & background behaviour
-            item {
-                SectionHeader(title = "SCREEN & BACKGROUND", icon = Icons.Default.PhoneAndroid)
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.cardBackground)
-                        .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                        .padding(vertical = 6.dp)
-                ) {
-                    SwitchRow(
-                        title = "Keep screen on",
-                        description = "The display stays awake while a routine is on screen.",
-                        checked = preferences.keepScreenOn,
-                        onCheckedChange = preferencesRepository::setKeepScreenOn
-                    )
-                    SwitchRow(
-                        title = "Follow routine with screen off",
-                        description = "Keep guiding you in the background, with a notification " +
-                            "showing the current step and time left.",
-                        checked = preferences.backgroundMode,
-                        onCheckedChange = { enabled ->
-                            preferencesRepository.setBackgroundMode(enabled)
-                            if (enabled) requestNotificationPermission()
-                        }
-                    )
-                }
-            }
-
-            // "% left" reminders
-            item {
-                SectionHeader(title = "REMINDERS", icon = Icons.Default.NotificationsActive)
-                SectionNote("Announce when this much of each step is left. Steps under 10 seconds are skipped.")
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.cardBackground)
-                        .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    AppPreferences.ReminderOptions.forEach { percent ->
-                        val selected = percent in preferences.reminderThresholds
-                        FilterChip(
-                            selected = selected,
-                            onClick = { preferencesRepository.toggleReminderThreshold(percent) },
-                            label = {
-                                Text(
-                                    text = "$percent%",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center,
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = colors.primaryContainer,
-                                selectedLabelColor = colors.onSurface,
-                                labelColor = colors.onSurfaceVariant
-                            )
-                        )
-                    }
-                }
-            }
-
-            // Default Visual Simulation
-            item {
-                SectionHeader(title = "DEFAULT VISUAL EFFECT", icon = Icons.Default.Visibility)
-                SectionNote("Used when you create a new routine.")
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.cardBackground)
-                        .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    VisualEffectType.entries.forEach { effect ->
-                        val isSelected = effect == defaultVisual
-                        val emoji = when (effect) {
-                            VisualEffectType.WATER -> "🌊"
-                            VisualEffectType.BONSAI_TREE -> "🌳"
-                            VisualEffectType.COSMIC_ORBIT -> "✨"
-                            VisualEffectType.BREATHING_LOTUS -> "🌸"
-                            VisualEffectType.HOURGLASS -> "⏳"
-                        }
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                .clickable { preferencesRepository.setDefaultVisualEffect(effect) }
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Text(text = emoji, fontSize = 20.sp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SoundMode.entries.forEach { mode ->
+                            val isSelected = mode == defaultSound
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
+                                    .clickable { preferencesRepository.setDefaultSoundMode(mode) }
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = effect.displayName,
+                                        text = mode.displayName,
                                         fontSize = 14.sp,
                                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                                         color = colors.onSurface
                                     )
                                     Text(
-                                        text = effect.description,
-                                        fontSize = 11.sp,
+                                        text = mode.description,
+                                        fontSize = 12.sp,
                                         color = colors.onSurfaceVariant
                                     )
                                 }
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Screen & background behaviour
+                item {
+                    SectionHeader(title = "SCREEN & BACKGROUND", icon = Icons.Default.PhoneAndroid)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(vertical = 6.dp)
+                    ) {
+                        SwitchRow(
+                            title = "Keep screen on",
+                            description = "The display stays awake while a routine is on screen.",
+                            checked = preferences.keepScreenOn,
+                            onCheckedChange = preferencesRepository::setKeepScreenOn
+                        )
+                        SwitchRow(
+                            title = "Follow routine with screen off",
+                            description = "Keep guiding you in the background, with a notification " +
+                                "showing the current step and time left.",
+                            checked = preferences.backgroundMode,
+                            onCheckedChange = { enabled ->
+                                preferencesRepository.setBackgroundMode(enabled)
+                                if (enabled) requestNotificationPermission()
+                            }
+                        )
+                    }
+                }
+
+                // "% left" reminders
+                item {
+                    SectionHeader(title = "REMINDERS", icon = Icons.Default.NotificationsActive)
+                    SectionNote("Announce when this much of each step is left. Steps under 10 seconds are skipped.")
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AppPreferences.ReminderOptions.forEach { percent ->
+                            val selected = percent in preferences.reminderThresholds
+                            FilterChip(
+                                selected = selected,
+                                onClick = { preferencesRepository.toggleReminderThreshold(percent) },
+                                label = {
+                                    Text(
+                                        text = "$percent%",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Center,
+                                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = colors.primaryContainer,
+                                    selectedLabelColor = colors.onSurface,
+                                    labelColor = colors.onSurfaceVariant
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Default Visual Simulation
+                item {
+                    SectionHeader(title = "DEFAULT VISUAL EFFECT", icon = Icons.Default.Visibility)
+                    SectionNote("Used when you create a new routine.")
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        VisualEffectType.entries.forEach { effect ->
+                            val isSelected = effect == defaultVisual
+                            val emoji = when (effect) {
+                                VisualEffectType.WATER -> "🌊"
+                                VisualEffectType.BONSAI_TREE -> "🌳"
+                                VisualEffectType.COSMIC_ORBIT -> "✨"
+                                VisualEffectType.BREATHING_LOTUS -> "🌸"
+                                VisualEffectType.HOURGLASS -> "⏳"
                             }
 
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = colors.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
+                                    .clickable { preferencesRepository.setDefaultVisualEffect(effect) }
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Text(text = emoji, fontSize = 20.sp)
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = effect.displayName,
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                            color = colors.onSurface
+                                        )
+                                        Text(
+                                            text = effect.description,
+                                            fontSize = 11.sp,
+                                            color = colors.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }

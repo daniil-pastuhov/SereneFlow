@@ -21,8 +21,15 @@ Requires JDK 17/21 in `JAVA_HOME`.
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator \
   -destination "generic/platform=iOS Simulator" build
 
-swift tools/generate_icons.swift   # Regenerate all app icons (iOS asset catalog + Android mipmaps/adaptive)
+swift tools/generate_icons.swift   # Regenerate all app icons (iOS asset catalog + Android mipmaps/adaptive + Play icon)
+
+scripts/release                    # Start a release (see README "Releasing"); CI publishes release/v* pushes
+scripts/ios_screenshots.sh build/raw-iphone && scripts/frame_screenshots.py build/raw-iphone store-listing/app-store/en-US/screenshots
 ```
+
+Store credentials live outside the repo in `~/.config/sereneflow/` (`source store.env`) and in the
+private GitHub repo's Actions secrets; never copy them into the repo. Release work is documented in
+README.md ("Releasing") and `store-listing/*/README.md`.
 
 Don't pass `CODE_SIGNING_ALLOWED=NO`: simulator builds are ad-hoc signed via `project.yml`, and an unsigned `SereneFlowWidget` extension never launches, so the Live Activity silently shows nothing.
 
@@ -38,6 +45,8 @@ Don't pass `CODE_SIGNING_ALLOWED=NO`: simulator builds are ad-hoc signed via `pr
 - **Audio** is an `expect fun createAudioController()`. Tones are synthesized in common code (`audio/ToneSynth`) and played by `AudioTrack` on Android and an `AVAudioEngine` player pool on iOS (session category `.playback`, so the ringer switch doesn't mute it; all AVFoundation calls hop to the main queue). Speech uses `TextToSpeech` / `AVSpeechSynthesizer`. Android needs `AndroidAppContext.appContext` set by `MainActivity` before `App()`. `-Xexpect-actual-classes` is enabled.
 - **Platform UI** (`ui/platform/PlatformUi.kt`): `ConfirmDialog`, `ActionMenu`, `KeepScreenOn`, `PlatformIcons` are expect/actual — iOS presents native `UIAlertController` alerts/action sheets and uses iOS-style icons; Android uses Material `AlertDialog`/`DropdownMenu`. Use these instead of Material dialogs/menus in shared screens.
 - **Visual timers** (`physics/*Canvas.kt`) take `progress: () -> Float` and read it, plus `rememberFrameTimeSeconds()`, inside the draw lambda so frames only redraw. All motion is a pure function of frame time (no per-frame mutation, no looping `infiniteRepeatable` phases) so it is smooth and frame-rate independent. `ActiveTimerScreen` passes `TimerState.stepProgressAt(nowEpochMs())`, exact from the wall-clock step end. Orbit and Lotus use the shared thick `drawProgressRing` and keep the centre clear for the countdown digits. Adding an effect means a `VisualEffectType` entry, a Canvas composable, and a branch in `ActiveTimerScreen`.
+- **Adaptive layout**: lay out from the space a screen has (`BoxWithConstraints`), never the device idiom or orientation: folding an iPhone Duo or resizing a window changes it mid-session. Forms use `ReadableWidth` (`ui/AdaptiveLayout.kt`) to stay at most 680dp wide; the routine list is an adaptive grid; `ActiveTimerScreen` scales its dial with the shorter side and moves the controls beside it when the window is wide. The canvases must size from their own `size` (fractions of the shorter side), not fixed pixels. iPhone Duo needs the iOS 27.1 SDK (Xcode 27.1; CI uses the `xcode-27` image).
+- **Version and demo launches**: `Version.xcconfig` (repo root) is the one version of both apps: Gradle reads `MARKETING_VERSION` for `versionName`, and it is the Xcode project's base configuration. `DemoLaunch` opens a screen directly (debug builds only: iOS launch arguments in `MainViewController`, Android intent extras in `MainActivity`) for the screenshot scripts.
 - **Theming**: `AppThemeMode` enum → palettes in `theme/Color.kt` → `SereneFlowTheme` in `theme/Theme.kt` (Material 3).
 
 ## Notes

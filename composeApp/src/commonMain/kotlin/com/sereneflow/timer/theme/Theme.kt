@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.sereneflow.timer.model.AppThemeMode
+import com.sereneflow.timer.ui.platform.SystemBarAppearance
 
 val LocalSereneColors = staticCompositionLocalOf { ZenSagePalette }
 
@@ -50,6 +51,8 @@ fun SereneFlowTheme(
             onSurfaceVariant = palette.onSurfaceVariant
         )
     }
+
+    SystemBarAppearance(darkBackground = palette.isDark)
 
     CompositionLocalProvider(LocalSereneColors provides palette) {
         MaterialTheme(

@@ -1,0 +1,12 @@
+# Store screenshots, in store order: name, view (list|timer|editor|settings), routine id from
+# routines.json (- for none), seconds into the routine's first step (timer only), theme.
+# Read by scripts/ios_screenshots.sh and scripts/android_screenshots.sh; the captions for each
+# name are in scripts/frame_screenshots.py.
+water     timer    morning_awakening  50   ZEN_SAGE
+list      list     -                  0    ZEN_SAGE
+bonsai    timer    gentle_stretch     34   SUNSET_CLAY
+editor    editor   evening_wind_down  0    OCEAN_MIST
+orbit     timer    deep_focus         38   MIDNIGHT_STARLIGHT
+lotus     timer    evening_wind_down  70   OCEAN_MIST
+hourglass timer    tea_break          70   SUNSET_CLAY
+settings  settings -                  0    ZEN_SAGE

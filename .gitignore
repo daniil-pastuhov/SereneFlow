@@ -23,3 +23,4 @@ keystore.properties
 *service-account*.json
 # App Store Connect API keys
 *.p8
+__pycache__/

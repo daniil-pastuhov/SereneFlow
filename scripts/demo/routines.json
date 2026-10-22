@@ -1,0 +1,71 @@
+[
+  {
+    "id": "morning_awakening",
+    "title": "Morning Awakening",
+    "description": "Awaken your body and mind with mindful hydration, gentle flow, and breathwork",
+    "visualEffect": "WATER",
+    "soundMode": "VOICE_AND_CHIME",
+    "accentColorHex": 4282608468,
+    "steps": [
+      {"id": "m1", "title": "Warm Lemon Water", "durationSeconds": 120, "description": "Hydrate and savor the morning warmth"},
+      {"id": "m2", "title": "Cat-Cow Stretch", "durationSeconds": 180, "description": "Gentle spinal wave stretches"},
+      {"id": "m3", "title": "Box Breathing", "durationSeconds": 240, "description": "Breathe in, hold, out, hold: four counts each"},
+      {"id": "m4", "title": "Intention Journaling", "durationSeconds": 360, "description": "Set your focus for today"}
+    ]
+  },
+  {
+    "id": "deep_focus",
+    "title": "Deep Focus Sprint",
+    "description": "One distraction-free work block with a proper break",
+    "visualEffect": "COSMIC_ORBIT",
+    "soundMode": "TIBETAN_BOWL",
+    "accentColorHex": 4283197078,
+    "steps": [
+      {"id": "f1", "title": "Clear Your Desk", "durationSeconds": 60, "description": "Close tabs, silence your phone"},
+      {"id": "f2", "title": "Deep Work", "durationSeconds": 1500, "description": "One task, full attention"},
+      {"id": "f3", "title": "Stand & Stretch", "durationSeconds": 300, "description": "Look away from the screen"}
+    ]
+  },
+  {
+    "id": "gentle_stretch",
+    "title": "Gentle Stretch",
+    "description": "Loosen up after a long day at the desk",
+    "visualEffect": "BONSAI_TREE",
+    "soundMode": "VOICE_AND_CHIME",
+    "accentColorHex": 4290607936,
+    "steps": [
+      {"id": "g1", "title": "Neck Rolls", "durationSeconds": 60, "description": "Slow circles, both directions"},
+      {"id": "g2", "title": "Shoulder Openers", "durationSeconds": 90, "description": "Roll back and down"},
+      {"id": "g3", "title": "Forward Fold", "durationSeconds": 120, "description": "Let your head hang heavy"},
+      {"id": "g4", "title": "Child's Pose", "durationSeconds": 120, "description": "Breathe into your back"},
+      {"id": "g5", "title": "Seated Twist", "durationSeconds": 90, "description": "Each side"}
+    ]
+  },
+  {
+    "id": "evening_wind_down",
+    "title": "Evening Wind-Down",
+    "description": "Slow breathing and a quiet mind before sleep",
+    "visualEffect": "BREATHING_LOTUS",
+    "soundMode": "VOICE_ONLY",
+    "accentColorHex": 4284441768,
+    "steps": [
+      {"id": "e1", "title": "Dim the Lights", "durationSeconds": 120, "description": "Screens away, lights low"},
+      {"id": "e2", "title": "Calm Breathing", "durationSeconds": 300, "description": "Follow the lotus: in, hold, out"},
+      {"id": "e3", "title": "Body Scan", "durationSeconds": 480, "description": "Relax from your toes to your forehead"},
+      {"id": "e4", "title": "Gratitude", "durationSeconds": 300, "description": "Three good things from today"}
+    ]
+  },
+  {
+    "id": "tea_break",
+    "title": "Mindful Tea Break",
+    "description": "Brew, steep and sip without rushing",
+    "visualEffect": "HOURGLASS",
+    "soundMode": "NATURE_SOUND",
+    "accentColorHex": 4288056663,
+    "steps": [
+      {"id": "t1", "title": "Boil & Breathe", "durationSeconds": 120, "description": "Listen to the kettle"},
+      {"id": "t2", "title": "Steep", "durationSeconds": 240, "description": "Green tea: three to four minutes"},
+      {"id": "t3", "title": "Slow Sips", "durationSeconds": 300, "description": "Notice the warmth and aroma"}
+    ]
+  }
+]

@@ -41,7 +41,7 @@ sealed class AppScreen {
 }
 
 @Composable
-fun App() {
+fun App(demoLaunch: DemoLaunch? = null) {
     val storage = remember { createFileStorage() }
     val routineRepository = remember { RoutineRepository(storage) }
     val preferencesRepository = remember { PreferencesRepository(storage) }
@@ -50,8 +50,24 @@ fun App() {
     val activeSession by TimerSession.active.collectAsState()
     val requestNotificationPermission = rememberNotificationPermissionRequest()
     var showBackgroundPrompt by remember { mutableStateOf(false) }
-    val backStack = remember { mutableStateListOf<AppScreen>(AppScreen.List) }
+    val backStack = remember {
+        mutableStateListOf<AppScreen>(AppScreen.List).apply {
+            when (demoLaunch) {
+                is DemoLaunch.Editor -> routineRepository.getRoutine(demoLaunch.routineId)?.let { add(AppScreen.Editor(it)) }
+                DemoLaunch.Settings -> add(AppScreen.Settings)
+                else -> {}
+            }
+        }
+    }
     val currentScreen = backStack.last()
+
+    // The timer screen is pushed by the session effect below once the session is running.
+    LaunchedEffect(Unit) {
+        if (demoLaunch !is DemoLaunch.Timer) return@LaunchedEffect
+        val routine = routineRepository.getRoutine(demoLaunch.routineId) ?: return@LaunchedEffect
+        TimerSession.start(routine, preferences.reminderThresholds, backgroundMode = false)
+            .engine.fastForward(demoLaunch.elapsedSeconds * 1000L)
+    }
 
     fun push(screen: AppScreen) {
         backStack.add(screen)

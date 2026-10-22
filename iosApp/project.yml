@@ -3,9 +3,14 @@ options:
   bundleIdPrefix: com.sereneflow
   deploymentTarget:
     iOS: "16.0"
+# Version.xcconfig (repository root) holds MARKETING_VERSION for both apps; see the comment there.
+configFiles:
+  Debug: ../Version.xcconfig
+  Release: ../Version.xcconfig
 settings:
   base:
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "S8Q8KHX6G5"
+    CODE_SIGN_STYLE: Automatic
 targets:
   iosApp:
     type: application
@@ -18,10 +23,13 @@ targets:
     preBuildScripts:
       - name: "Compile Kotlin/Native Framework"
         script: |
-          if [ -d "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home" ]; then
-            export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"
-          elif [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]; then
-            export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+          # Xcode starts with a bare environment; CI sets JAVA_HOME itself.
+          if [ -z "$JAVA_HOME" ]; then
+            if [ -d "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home" ]; then
+              export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"
+            elif [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]; then
+              export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+            fi
           fi
           export PATH="$JAVA_HOME/bin:$PATH"
           cd "$SRCROOT/.."
@@ -31,17 +39,15 @@ targets:
         ARCHS: "arm64"
         ONLY_ACTIVE_ARCH: "YES"
         PRODUCT_NAME: "SereneFlow"
-        PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer.iosApp"
+        PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer"
         INFOPLIST_FILE: "iosApp/Info.plist"
         ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
         # Simulator builds are ad-hoc signed; the Live Activity extension won't launch unsigned.
         CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: "-"
+        # Only the framework the pre-build script just made for this configuration and SDK, so a
+        # Release archive can never link a leftover Debug framework.
         FRAMEWORK_SEARCH_PATHS:
-          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework"
-          - "$(SRCROOT)/../composeApp/build/bin/iosArm64/debugFramework"
-          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/releaseFramework"
-          - "$(SRCROOT)/../composeApp/build/bin/iosArm64/releaseFramework"
-          - "$(BUILT_PRODUCTS_DIR)"
+          - "$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
         OTHER_LDFLAGS:
           - "-framework"
           - "ComposeApp"
@@ -56,7 +62,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: "SereneFlowWidget"
-        PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer.iosApp.widget"
+        PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer.widget"
         INFOPLIST_FILE: "SereneFlowWidget/Info.plist"
         CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: "-"
         ARCHS: "arm64"

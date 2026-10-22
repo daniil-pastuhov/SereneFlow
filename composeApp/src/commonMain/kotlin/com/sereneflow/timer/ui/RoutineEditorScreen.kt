@@ -194,247 +194,247 @@ fun RoutineEditorScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            // Title & Description Inputs
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.cardBackground)
-                        .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                        .padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Routine Name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = colors.primary,
-                            unfocusedBorderColor = colors.divider
-                        )
-                    )
-
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text("Mindful Description (Optional)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = colors.primary,
-                            unfocusedBorderColor = colors.divider
-                        )
-                    )
-                }
-            }
-
-            // Visual Effect Selector
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "VISUAL EFFECT (PHYSICS)",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                        color = colors.primary
-                    )
-
-                    Row(
+        ReadableWidth(modifier = Modifier.fillMaxSize().padding(paddingValues)) { sidePadding ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = sidePadding, end = sidePadding, top = 12.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                // Title & Description Inputs
+                item {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        VisualEffectType.entries.forEach { effect ->
-                            val isSelected = effect == selectedVisualEffect
-                            val iconEmoji = when (effect) {
-                                VisualEffectType.WATER -> "🌊"
-                                VisualEffectType.BONSAI_TREE -> "🌳"
-                                VisualEffectType.COSMIC_ORBIT -> "✨"
-                                VisualEffectType.BREATHING_LOTUS -> "🌸"
-                                VisualEffectType.HOURGLASS -> "⏳"
-                            }
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text("Routine Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = colors.primary,
+                                unfocusedBorderColor = colors.divider
+                            )
+                        )
 
-                            Box(
-                                modifier = Modifier
-                                    .revealWhenInitiallySelected(isSelected)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(if (isSelected) colors.primaryContainer else colors.cardBackground)
-                                    .border(
-                                        width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected) colors.primary else colors.cardBorder,
-                                        shape = RoundedCornerShape(16.dp)
-                                    )
-                                    .clickable { selectedVisualEffect = effect }
-                                    .padding(horizontal = 14.dp, vertical = 12.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = iconEmoji, fontSize = 18.sp)
-                                    Spacer(modifier = Modifier.width(8.dp))
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("Mindful Description (Optional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = colors.primary,
+                                unfocusedBorderColor = colors.divider
+                            )
+                        )
+                    }
+                }
+
+                // Visual Effect Selector
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "VISUAL EFFECT (PHYSICS)",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp,
+                            color = colors.primary
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            VisualEffectType.entries.forEach { effect ->
+                                val isSelected = effect == selectedVisualEffect
+                                val iconEmoji = when (effect) {
+                                    VisualEffectType.WATER -> "🌊"
+                                    VisualEffectType.BONSAI_TREE -> "🌳"
+                                    VisualEffectType.COSMIC_ORBIT -> "✨"
+                                    VisualEffectType.BREATHING_LOTUS -> "🌸"
+                                    VisualEffectType.HOURGLASS -> "⏳"
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .revealWhenInitiallySelected(isSelected)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(if (isSelected) colors.primaryContainer else colors.cardBackground)
+                                        .border(
+                                            width = if (isSelected) 2.dp else 1.dp,
+                                            color = if (isSelected) colors.primary else colors.cardBorder,
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
+                                        .clickable { selectedVisualEffect = effect }
+                                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(text = iconEmoji, fontSize = 18.sp)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = effect.displayName,
+                                            fontSize = 13.sp,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = if (isSelected) colors.onPrimaryContainer else colors.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Sound Guidance Mode
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "AUDIO & VOICE GUIDANCE",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp,
+                            color = colors.primary
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            SoundMode.entries.forEach { mode ->
+                                val isSelected = mode == selectedSoundMode
+                                Box(
+                                    modifier = Modifier
+                                        .revealWhenInitiallySelected(isSelected)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.6f))
+                                        .clickable { selectedSoundMode = mode }
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
                                     Text(
-                                        text = effect.displayName,
-                                        fontSize = 13.sp,
+                                        text = mode.displayName,
+                                        fontSize = 12.sp,
                                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                        color = if (isSelected) colors.onPrimaryContainer else colors.onSurface
+                                        color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
                                     )
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            // Sound Guidance Mode
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "AUDIO & VOICE GUIDANCE",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                        color = colors.primary
-                    )
-
+                // Steps Timeline Header & Summary
+                item {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        SoundMode.entries.forEach { mode ->
-                            val isSelected = mode == selectedSoundMode
-                            Box(
-                                modifier = Modifier
-                                    .revealWhenInitiallySelected(isSelected)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.6f))
-                                    .clickable { selectedSoundMode = mode }
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = mode.displayName,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Steps Timeline Header & Summary
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "TIMELINE STEPS (${steps.size})",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                        color = colors.primary
-                    )
-                    Text(
-                        text = "Total: $formattedTotal",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Interactive Step Items with Timeline Connectors
-            itemsIndexed(steps, key = { _, step -> step.id }) { index, step ->
-                StepEditorItem(
-                    index = index,
-                    step = step,
-                    isFirst = index == 0,
-                    isLast = index == steps.size - 1,
-                    onUpdateStep = { updated ->
-                        val list = steps.toMutableList()
-                        list[index] = updated
-                        steps = list
-                    },
-                    onMoveUp = {
-                        if (index > 0) {
-                            val list = steps.toMutableList()
-                            val temp = list[index]
-                            list[index] = list[index - 1]
-                            list[index - 1] = temp
-                            steps = list
-                        }
-                    },
-                    onMoveDown = {
-                        if (index < steps.size - 1) {
-                            val list = steps.toMutableList()
-                            val temp = list[index]
-                            list[index] = list[index + 1]
-                            list[index + 1] = temp
-                            steps = list
-                        }
-                    },
-                    onDelete = {
-                        if (steps.size > 1) {
-                            steps = steps.filterIndexed { i, _ -> i != index }
-                        }
-                    }
-                )
-            }
-
-            // Add Step Button
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(colors.cardBackground.copy(alpha = 0.6f))
-                        .border(
-                            width = 1.5.dp,
-                            color = colors.primary.copy(alpha = 0.6f),
-                            shape = RoundedCornerShape(18.dp)
-                        )
-                        .clickable {
-                            val randId = kotlin.random.Random.nextLong().let { if (it < 0) -it else it }
-                            val newStep = RoutineStep(
-                                id = "step_$randId",
-                                title = "New Step ${steps.size + 1}",
-                                durationSeconds = 120
-                            )
-                            steps = steps + newStep
-                        }
-                        .padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Add Next Step",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            text = "TIMELINE STEPS (${steps.size})",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp,
                             color = colors.primary
                         )
+                        Text(
+                            text = "Total: $formattedTotal",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.onSurfaceVariant
+                        )
                     }
                 }
-                Spacer(modifier = Modifier.height(30.dp))
+
+                // Interactive Step Items with Timeline Connectors
+                itemsIndexed(steps, key = { _, step -> step.id }) { index, step ->
+                    StepEditorItem(
+                        index = index,
+                        step = step,
+                        isFirst = index == 0,
+                        isLast = index == steps.size - 1,
+                        onUpdateStep = { updated ->
+                            val list = steps.toMutableList()
+                            list[index] = updated
+                            steps = list
+                        },
+                        onMoveUp = {
+                            if (index > 0) {
+                                val list = steps.toMutableList()
+                                val temp = list[index]
+                                list[index] = list[index - 1]
+                                list[index - 1] = temp
+                                steps = list
+                            }
+                        },
+                        onMoveDown = {
+                            if (index < steps.size - 1) {
+                                val list = steps.toMutableList()
+                                val temp = list[index]
+                                list[index] = list[index + 1]
+                                list[index + 1] = temp
+                                steps = list
+                            }
+                        },
+                        onDelete = {
+                            if (steps.size > 1) {
+                                steps = steps.filterIndexed { i, _ -> i != index }
+                            }
+                        }
+                    )
+                }
+
+                // Add Step Button
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(colors.cardBackground.copy(alpha = 0.6f))
+                            .border(
+                                width = 1.5.dp,
+                                color = colors.primary.copy(alpha = 0.6f),
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                            .clickable {
+                                val randId = kotlin.random.Random.nextLong().let { if (it < 0) -it else it }
+                                val newStep = RoutineStep(
+                                    id = "step_$randId",
+                                    title = "New Step ${steps.size + 1}",
+                                    durationSeconds = 120
+                                )
+                                steps = steps + newStep
+                            }
+                            .padding(vertical = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Add Next Step",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.primary
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
             }
         }
     }

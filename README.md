@@ -34,11 +34,9 @@ Four curated palettes designed for tranquility and visual peace:
 - **Routine Gallery**: Beautiful cards displaying routine durations, step tags, mini-timeline previews, and quick play triggers.
 - **Interactive Timeline Editor**: Add, delete, and reorder steps with smooth timeline connectors and duration steppers (-1m, -15s, +15s, +1m).
 - **Routine Duplication**: Duplicate and customize routines with a single tap.
-- **Bundled Mindful Presets**:
-  - *Morning Awakening* (15 min)
-  - *Deep Focus Sprint* (25 min)
-  - *Mindful Tea & Breath* (8 min)
-  - *Evening Wind-Down* (20 min)
+- **Starter Routine**: *Morning Awakening* (15 min), shown on first launch.
+- **Adaptive Layout**: a routine grid and centred forms on iPad, iPhone Duo and tablets; the timer
+  puts its controls beside the dial in landscape.
 
 ---
 
@@ -96,7 +94,7 @@ The resulting APK is located at `androidApp/build/outputs/apk/debug/androidApp-d
    ```
 2. Build with Xcode or command line:
    ```bash
-   xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator -destination "generic/platform=iOS Simulator" build CODE_SIGNING_ALLOWED=NO
+   xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator -destination "generic/platform=iOS Simulator" build
    ```
 3. Or open `iosApp/iosApp.xcodeproj` in Xcode and hit **Run** on any iPhone simulator!
 
@@ -104,3 +102,68 @@ The resulting APK is located at `androidApp/build/outputs/apk/debug/androidApp-d
 ```bash
 ./gradlew :composeApp:testAndroidHostTest
 ```
+
+---
+
+## 🏪 Releasing
+
+Merging to `main` publishes nothing; CI (`.github/workflows/ci.yml`) only tests and builds it. A
+release goes out in steps:
+
+1. **Start it**: `scripts/release` (add `--dry-run` to try it without changing anything). It lists
+   the commits on `origin/main` since the last `vX.Y.Z` tag and asks for a patch, minor or major
+   bump. Then it has the Claude CLI write store release notes (en-US) for you to accept, edit or
+   regenerate. It creates `release/vX.Y.Z` with the version bump in `Version.xcconfig` and
+   `release-notes/vX.Y.Z/en-US.txt`, pushes it and opens a PR.
+2. **Internal testing**: CI publishes every push to `release/v*` to the Google Play internal track
+   and to the internal TestFlight testers, with those notes. Fixes for the release go on the
+   branch; each push becomes a new internal build.
+3. **Play closed testing and the App Store**: merging the PR promotes the newest internal Play
+   build of that version to closed testing (`alpha`). It also puts the newest TestFlight build of
+   the version on its App Store version, with the notes as "What's New", and submits it for App
+   Review; it goes live as soon as Apple approves it (set the repository variable
+   `APP_STORE_RELEASE_TYPE` to `MANUAL` to release it from App Store Connect yourself). Then it
+   tags `vX.Y.Z` and creates a GitHub release.
+
+**First release (1.0.0)**: there is no tag to count from yet, so tag the commit before the release
+work as `v0.0.0` (`git tag v0.0.0 <commit> && git push origin v0.0.0`), then run `scripts/release`
+and choose **keep 1.0.0**. Play takes only drafts before its first review, so the repository
+variable `PLAY_RELEASE_STATUS` is `draft` until then (see `store-listing/google-play/README.md`).
+
+**Version**: `Version.xcconfig` holds the one version of both apps. Gradle reads it for Android's
+`versionName`, and it is the Xcode project's base configuration, so the app and the widget get it
+as `MARKETING_VERSION`. CI sets Android's `versionCode` (`-PversionCode`) and the iOS build number
+(a UTC timestamp).
+
+**Secrets**: the repository's Actions secrets hold the Android upload key (`ANDROID_*`), the Play
+service account (`PLAY_SERVICE_ACCOUNT_JSON`) and the App Store Connect API key (`ASC_*`). Local
+copies live outside the repo in `~/.config/sereneflow/`; `source ~/.config/sereneflow/store.env`
+before running `scripts/ios_release.sh`, `scripts/testflight.py` or `scripts/play_upload.py` by hand.
+
+### Release signing
+
+`androidApp/build.gradle.kts` signs release builds when `androidApp/keystore.properties`
+(git-ignored) exists:
+
+```properties
+storeFile=/Users/<you>/.config/sereneflow/upload-keystore.jks
+storePassword=...
+keyAlias=upload
+keyPassword=...
+```
+
+Without it, `assembleRelease` builds an unsigned (still minified) APK.
+
+### Store listing
+
+`store-listing/app-store/` and `store-listing/google-play/` hold the texts, screenshots and art,
+with a README each listing every console field to fill in. The privacy policy and support page are
+in `store-listing/privacy-site/`, published from the public repository
+[sereneflow-privacy](https://github.com/daniil-pastuhov/sereneflow-privacy) at
+https://daniil-pastuhov.github.io/sereneflow-privacy/.
+
+Screenshots come from the running debug app: `scripts/ios_screenshots.sh` and
+`scripts/android_screenshots.sh` open each screen in `scripts/demo/shots.txt` with the demo
+routines in `scripts/demo/routines.json` (through debug-only launch arguments, see `DemoLaunch.kt`),
+`scripts/frame_screenshots.py` adds captions and a device frame, and `scripts/store_art.py` makes
+the Play feature graphic and the App Store header images.

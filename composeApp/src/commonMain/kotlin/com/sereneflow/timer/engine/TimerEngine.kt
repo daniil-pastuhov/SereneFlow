@@ -119,6 +119,16 @@ class TimerEngine(
 
     fun toggleMute() = setMuted(!_timerState.value.isMuted)
 
+    /**
+     * Moves a ticking timer [ms] further on, as if that much time had passed (demo launches). A
+     * timer that isn't ticking has no step end, so it stays where it is.
+     */
+    fun fastForward(ms: Long) {
+        val state = _timerState.value
+        _timerState.value = state.copy(stepEndEpochMs = state.stepEndEpochMs?.minus(ms))
+        sync()
+    }
+
     fun restartStep() {
         transitionToStep(_timerState.value.currentStepIndex, announceWhenPaused = true)
     }

@@ -1,0 +1,33 @@
+# Keeps the workflow's actions and the Gradle dependencies current. Minor and patch updates come
+# grouped, one PR per group; a major version gets a PR of its own.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # gradle/libs.versions.toml and the Gradle wrapper.
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # The Kotlin plugins and Compose Multiplatform's compiler share one version, so they move
+      # together, majors included; CI shows whether a combination builds.
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin:*"
+          - "org.jetbrains.kotlin.*"
+      compose:
+        patterns: ["org.jetbrains.compose*"]
+        update-types: [minor, patch]
+      androidx:
+        patterns: ["androidx.*", "com.android.*"]
+        update-types: [minor, patch]
+      libraries:
+        patterns: ["*"]
+        update-types: [minor, patch]

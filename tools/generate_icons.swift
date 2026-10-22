@@ -8,6 +8,7 @@
 //   androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher(_round).xml (adaptive icon)
 //   androidApp/src/main/res/drawable/ic_launcher_foreground.xml / ic_launcher_background.xml
 //                                             / ic_launcher_monochrome.xml
+//   store-listing/google-play/icon-512.png    (Play Console app icon; Play rounds the corners)
 //
 // Artwork (1024-unit square): a sage-green gradient, a white progress ring that is three-quarters
 // complete with a round head, and a five-petal lotus inside — the app's timer motif.
@@ -287,3 +288,6 @@ try write(androidForeground(trackAlpha: 0.35, monochrome: true), "\(res)/drawabl
 try write(androidBackground, "\(res)/drawable/ic_launcher_background.xml")
 try write(adaptiveIcon, "\(res)/mipmap-anydpi-v26/ic_launcher.xml")
 try write(adaptiveIcon, "\(res)/mipmap-anydpi-v26/ic_launcher_round.xml")
+
+// Full-bleed square: Play Console applies its own corner mask and shadow.
+try write(render(size: 512, palette: lightPalette), "store-listing/google-play/icon-512.png")

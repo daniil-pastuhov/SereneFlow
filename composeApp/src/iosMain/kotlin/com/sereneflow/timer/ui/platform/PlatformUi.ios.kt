@@ -89,6 +89,10 @@ actual fun KeepScreenOn(enabled: Boolean) {
     }
 }
 
+// The status bar already follows the content's brightness under Compose on iOS.
+@Composable
+actual fun SystemBarAppearance(darkBackground: Boolean) {}
+
 actual object PlatformIcons {
     actual val Back: ImageVector = Icons.AutoMirrored.Rounded.ArrowBackIos
     actual val More: ImageVector = Icons.Rounded.MoreHoriz

@@ -41,6 +41,13 @@ expect fun ActionMenu(
 @Composable
 expect fun KeepScreenOn(enabled: Boolean)
 
+/**
+ * Light status and navigation bar icons over a dark background, dark ones over a light one. The
+ * app's theme decides, not the system's dark mode: Midnight Starlight is dark in light mode.
+ */
+@Composable
+expect fun SystemBarAppearance(darkBackground: Boolean)
+
 /** Icons that differ between the platforms' native conventions. */
 expect object PlatformIcons {
     val Back: ImageVector

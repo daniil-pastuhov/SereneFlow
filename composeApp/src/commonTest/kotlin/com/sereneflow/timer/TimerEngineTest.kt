@@ -254,6 +254,32 @@ class TimerEngineTest {
     }
 
     @Test
+    fun testFastForwardMovesThroughSteps() = runTest {
+        val audio = FakeAudioController()
+        val now = 0L
+        val engine = TimerEngine(
+            routine = testRoutine,
+            audioController = audio,
+            scope = this,
+            clock = { now }
+        )
+
+        engine.fastForward(4_000) // not started: nothing to move
+        assertEquals(10_000, engine.timerState.value.pausedRemainingMs)
+
+        engine.start()
+        engine.fastForward(4_000)
+        assertEquals(0, engine.timerState.value.currentStepIndex)
+        assertEquals(6, engine.timerState.value.secondsRemainingInStep)
+        assertEquals(0.4f, engine.timerState.value.stepProgressAt(now), 0.0001f)
+
+        engine.fastForward(8_000)
+        assertEquals(1, engine.timerState.value.currentStepIndex)
+        assertEquals(18, engine.timerState.value.secondsRemainingInStep)
+        engine.stop()
+    }
+
+    @Test
     fun testPauseKeepsRemainingTime() = runTest {
         val audio = FakeAudioController()
         var now = 0L

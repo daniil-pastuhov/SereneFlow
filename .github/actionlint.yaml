@@ -1,0 +1,4 @@
+# GitHub's Xcode 27 macOS image (see the ios job in workflows/ci.yml), which actionlint doesn't know yet.
+self-hosted-runner:
+  labels:
+    - xcode-27

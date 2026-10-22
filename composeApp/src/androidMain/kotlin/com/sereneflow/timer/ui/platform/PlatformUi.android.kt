@@ -1,5 +1,8 @@
 package com.sereneflow.timer.ui.platform
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -16,6 +19,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.core.view.WindowCompat
 
 private val DestructiveRed = Color(0xFFE53935)
 
@@ -73,6 +77,27 @@ actual fun KeepScreenOn(enabled: Boolean) {
         view.keepScreenOn = enabled
         onDispose { view.keepScreenOn = false }
     }
+}
+
+@Composable
+actual fun SystemBarAppearance(darkBackground: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(view, darkBackground) {
+        val window = view.context.findActivity()?.window
+        if (window != null) {
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkBackground
+                isAppearanceLightNavigationBars = !darkBackground
+            }
+        }
+        onDispose {}
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 actual object PlatformIcons {

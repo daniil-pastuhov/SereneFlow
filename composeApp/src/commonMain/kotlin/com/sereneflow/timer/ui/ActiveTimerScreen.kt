@@ -15,10 +15,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,7 +57,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
@@ -127,285 +134,196 @@ fun ActiveTimerScreen(
         label = "AuraPulse"
     )
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
     ) {
-        // 1. Full-screen Physics Simulation Backdrop
-        when (routine.visualEffect) {
-            VisualEffectType.WATER -> {
-                WaterWaveCanvas(
-                    progress = { 1f - progress() }, // Drains down gracefully
-                    primaryColor = colors.primary,
-                    secondaryColor = colors.secondary
-                )
-            }
-            VisualEffectType.BONSAI_TREE -> {
-                BonsaiTreeCanvas(
-                    progress = progress, // Blooms and grows
-                    trunkColor = colors.onBackground.copy(alpha = 0.6f),
-                    foliageColor = colors.primary,
-                    leafColor = colors.secondary
-                )
-            }
-            VisualEffectType.COSMIC_ORBIT -> {
-                CosmicOrbitCanvas(
-                    progress = progress,
-                    coreColor = colors.primary,
-                    accentColor = colors.secondary,
-                    trackColor = colors.onBackground.copy(alpha = 0.12f)
-                )
-            }
-            VisualEffectType.BREATHING_LOTUS -> {
-                BreathingLotusCanvas(
-                    progress = progress,
-                    petalColor = colors.primary,
-                    goldAccent = colors.secondary,
-                    trackColor = colors.onBackground.copy(alpha = 0.12f)
-                )
-            }
-            VisualEffectType.HOURGLASS -> {
-                HourglassCanvas(
-                    progress = progress,
-                    glassColor = colors.surfaceVariant,
-                    sandColor = colors.primary,
-                    accentColor = colors.secondary
-                )
-            }
+        // Laid out from the space the screen has, never the device or orientation: folding an
+        // iPhone Duo or resizing a window changes it mid-session. Wide windows (landscape, an
+        // unfolded Duo on its side) put the title in a corner and the controls in a column beside
+        // the dial, clear of the ring the canvases draw around the centre.
+        val sideLayout = maxWidth > maxHeight * 1.15f
+        // The dial was designed on a 440dp-wide phone; it grows and shrinks with the shorter side,
+        // as the canvases' rings do.
+        val dialScale = (minOf(maxWidth, maxHeight) / 440.dp).coerceIn(0.7f, 2f)
+        // Controls grow less: touch targets need no more than a little extra on a tablet.
+        val controlScale = dialScale.coerceIn(1f, 1.3f)
+        // The ring effects draw a ring around the centre that would run under the side column of
+        // controls, so beside it they are centred on the space that is left. The others fill the
+        // screen and stay clear of the column on their own.
+        val ringEffect = routine.visualEffect == VisualEffectType.COSMIC_ORBIT ||
+            routine.visualEffect == VisualEffectType.BREATHING_LOTUS
+        val stageEndPadding = if (sideLayout && ringEffect) {
+            val safeEnd = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current)
+            safeEnd + 24.dp + 80.dp * controlScale + 16.dp
+        } else {
+            0.dp
         }
 
-        // 2. Main Foreground Overlay & Controls
-        Column(
+        Box(modifier = Modifier.fillMaxSize().padding(end = stageEndPadding)) {
+            // 1. Full-screen Physics Simulation Backdrop
+            when (routine.visualEffect) {
+                VisualEffectType.WATER -> {
+                    WaterWaveCanvas(
+                        progress = { 1f - progress() }, // Drains down gracefully
+                        primaryColor = colors.primary,
+                        secondaryColor = colors.secondary
+                    )
+                }
+                VisualEffectType.BONSAI_TREE -> {
+                    BonsaiTreeCanvas(
+                        progress = progress, // Blooms and grows
+                        trunkColor = colors.onBackground.copy(alpha = 0.6f),
+                        foliageColor = colors.primary,
+                        leafColor = colors.secondary
+                    )
+                }
+                VisualEffectType.COSMIC_ORBIT -> {
+                    CosmicOrbitCanvas(
+                        progress = progress,
+                        coreColor = colors.primary,
+                        accentColor = colors.secondary,
+                        trackColor = colors.onBackground.copy(alpha = 0.12f)
+                    )
+                }
+                VisualEffectType.BREATHING_LOTUS -> {
+                    BreathingLotusCanvas(
+                        progress = progress,
+                        petalColor = colors.primary,
+                        goldAccent = colors.secondary,
+                        trackColor = colors.onBackground.copy(alpha = 0.12f)
+                    )
+                }
+                VisualEffectType.HOURGLASS -> {
+                    HourglassCanvas(
+                        progress = progress,
+                        glassColor = colors.surfaceVariant,
+                        sandColor = colors.primary,
+                        accentColor = colors.secondary
+                    )
+                }
+            }
+
+            // 2. Centre: step title, countdown and next step, on the canvases' centre. Not inset, so
+            // it lines up with the rings, which are drawn on the whole screen.
+            TimerDial(
+                stepTitle = state.currentStep?.title ?: "Routine Step",
+                remaining = state.formattedRemaining,
+                next = state.nextStep?.let { "Up next: ${it.title} (${it.formattedDuration})" },
+                scale = dialScale,
+                auraScale = auraScale,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // 3. Title, progress rail and controls, inside the safe area.
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            // Top Bar: Close, Routine Title, and Step Progress Rails
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = requestClose,
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(colors.surface.copy(alpha = 0.85f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = colors.onSurface
-                        )
-                    }
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = routine.title,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onBackground
-                        )
-                        Text(
-                            text = "Step ${state.currentStepIndex + 1} of ${routine.steps.size}",
-                            fontSize = 12.sp,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-
-                    if (routine.soundMode != SoundMode.MUTE) {
-                        IconButton(
-                            onClick = { engine.toggleMute() },
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(CircleShape)
-                                .background(colors.surface.copy(alpha = 0.85f))
-                        ) {
-                            Icon(
-                                imageVector = if (state.isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
-                                contentDescription = if (state.isMuted) "Unmute" else "Mute",
-                                tint = if (state.isMuted) colors.onSurfaceVariant else colors.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    } else {
-                        // Keeps the title centred when there is no sound to toggle.
-                        Spacer(modifier = Modifier.size(42.dp))
-                    }
+            val muteButton: (@Composable () -> Unit)? = if (routine.soundMode != SoundMode.MUTE) {
+                {
+                    RoundIconButton(
+                        icon = if (state.isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = if (state.isMuted) "Unmute" else "Mute",
+                        tint = if (state.isMuted) colors.onSurfaceVariant else colors.primary,
+                        size = 42.dp,
+                        iconSize = 20.dp,
+                        onClick = { engine.toggleMute() }
+                    )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Segmented Progress Rail
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    routine.steps.forEachIndexed { idx, _ ->
-                        val isFinished = idx < state.currentStepIndex
-                        val isCurrent = idx == state.currentStepIndex
-                        val segmentColor = when {
-                            isFinished -> colors.primary
-                            isCurrent -> colors.primary.copy(alpha = 0.85f)
-                            else -> colors.surfaceVariant.copy(alpha = 0.45f)
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(5.dp)
-                                .clip(RoundedCornerShape(3.dp))
-                                .background(segmentColor)
-                        )
-                    }
-                }
-            }
-
-            // Center Display: Ambient Card with Step Title, Timer Digits & Next Step Preview
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Current Step Pill
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.surface.copy(alpha = 0.88f))
-                        .border(1.dp, colors.cardBorder.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
-                        .padding(horizontal = 22.dp, vertical = 10.dp)
-                ) {
+            } else null
+            val title: @Composable (Alignment.Horizontal) -> Unit = { alignment ->
+                Column(horizontalAlignment = alignment) {
                     Text(
-                        text = state.currentStep?.title ?: "Routine Step",
+                        text = routine.title,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.onSurface
-                    )
-                }
-
-                // Large Glowing Countdown Numbers
-                Box(contentAlignment = Alignment.Center) {
-                    // Soft Aura
-                    Box(
-                        modifier = Modifier
-                            .size(240.dp * auraScale)
-                            .clip(CircleShape)
-                            .background(colors.accentGlow)
-                    )
-
-                    Text(
-                        text = state.formattedRemaining,
-                        fontSize = 68.sp,
-                        fontWeight = FontWeight.Light,
-                        letterSpacing = 3.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = colors.onBackground
                     )
-                }
-
-                // Up Next Step Banner
-                val next = state.nextStep
-                if (next != null) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(colors.surface.copy(alpha = 0.75f))
-                            .padding(horizontal = 14.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "Up next: ${next.title} (${next.formattedDuration})",
-                            fontSize = 12.sp,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "Step ${state.currentStepIndex + 1} of ${routine.steps.size}",
+                        fontSize = 12.sp,
+                        color = colors.onSurfaceVariant
+                    )
                 }
             }
+            val closeButton: @Composable () -> Unit = {
+                RoundIconButton(
+                    icon = Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = colors.onSurface,
+                    size = 42.dp,
+                    onClick = requestClose
+                )
+            }
+            val controls: @Composable () -> Unit = {
+                val buttonSize = 52.dp * controlScale
+                val iconSize = 24.dp * controlScale
+                RoundIconButton(Icons.Default.Refresh, "Restart Step", colors.onSurface, buttonSize, iconSize) { engine.restartStep() }
+                RoundIconButton(Icons.Default.FastRewind, "Previous Step", colors.onSurface, buttonSize, iconSize) { engine.previousStep() }
+                PlayPauseButton(
+                    isPlaying = state.isRunning && !state.isPaused,
+                    size = 80.dp * controlScale,
+                    onClick = { engine.togglePlayPause() }
+                )
+                RoundIconButton(Icons.Default.FastForward, "Skip Step", colors.onSurface, buttonSize, iconSize) { engine.skipStep() }
+            }
 
-            // Bottom Player Controls
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Restart Step Button
-                IconButton(
-                    onClick = { engine.restartStep() },
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .background(colors.surface.copy(alpha = 0.85f))
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Restart Step",
-                        tint = colors.onSurface
-                    )
+            if (sideLayout) {
+                Column(modifier = Modifier.align(Alignment.TopStart).width(240.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        closeButton()
+                        Spacer(modifier = Modifier.width(12.dp))
+                        title(Alignment.Start)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    StepRail(stepCount = routine.steps.size, currentIndex = state.currentStepIndex)
                 }
-
-                // Previous Step Button
-                IconButton(
-                    onClick = { engine.previousStep() },
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .background(colors.surface.copy(alpha = 0.85f))
+                Column(
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.FastRewind,
-                        contentDescription = "Previous Step",
-                        tint = colors.onSurface
-                    )
+                    muteButton?.invoke()
+                    controls()
                 }
-
-                // Main Play/Pause Button
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .shadow(elevation = 12.dp, shape = CircleShape, spotColor = colors.primary)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(colors.primary, colors.secondary)
-                            )
-                        )
-                        .clickable { engine.togglePlayPause() },
-                    contentAlignment = Alignment.Center
+            } else {
+                Column(
+                    modifier = Modifier.align(Alignment.TopCenter).widthIn(max = 640.dp).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = if (state.isRunning && !state.isPaused) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (state.isRunning && !state.isPaused) "Pause" else "Play",
-                        tint = colors.onPrimary,
-                        modifier = Modifier.size(38.dp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        closeButton()
+                        title(Alignment.CenterHorizontally)
+                        // Keeps the title centred when there is no sound to toggle.
+                        muteButton?.invoke() ?: Spacer(modifier = Modifier.size(42.dp))
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    StepRail(stepCount = routine.steps.size, currentIndex = state.currentStepIndex)
                 }
-
-                // Skip Next Step Button
-                IconButton(
-                    onClick = { engine.skipStep() },
+                Row(
                     modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .background(colors.surface.copy(alpha = 0.85f))
+                        .align(Alignment.BottomCenter)
+                        .widthIn(max = 480.dp * controlScale)
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.FastForward,
-                        contentDescription = "Skip Step",
-                        tint = colors.onSurface
-                    )
+                    controls()
                 }
             }
         }
 
-        // 3. Completion Celebration Overlay
+        // 4. Completion Celebration Overlay
         AnimatedVisibility(
             visible = state.isCompleted,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
@@ -416,6 +334,164 @@ fun ActiveTimerScreen(
                 onDismiss = onClose
             )
         }
+    }
+}
+
+/**
+ * The current step's title above the countdown and the next step below it, with the countdown
+ * exactly in the middle of [modifier]'s area: equal space above and below keeps it on the centre
+ * the canvases draw their rings around.
+ */
+@Composable
+private fun TimerDial(
+    stepTitle: String,
+    remaining: String,
+    next: String?,
+    scale: Float,
+    auraScale: Float,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalSereneColors.current
+    val auraSize = 240.dp * scale
+    val gap = 16.dp * scale
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier.weight(1f).padding(bottom = gap),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            // Current Step Pill
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.surface.copy(alpha = 0.88f))
+                    .border(1.dp, colors.cardBorder.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                    .padding(horizontal = 22.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = stepTitle,
+                    fontSize = 16.sp * scale.coerceAtMost(1.4f),
+                    fontWeight = FontWeight.Medium,
+                    color = colors.onSurface
+                )
+            }
+        }
+
+        // Large Glowing Countdown Numbers
+        Box(modifier = Modifier.size(auraSize), contentAlignment = Alignment.Center) {
+            // Soft Aura
+            Box(
+                modifier = Modifier
+                    .size(auraSize * auraScale)
+                    .clip(CircleShape)
+                    .background(colors.accentGlow)
+            )
+
+            Text(
+                text = remaining,
+                fontSize = 68.sp * scale,
+                fontWeight = FontWeight.Light,
+                letterSpacing = 3.sp * scale,
+                color = colors.onBackground,
+                softWrap = false
+            )
+        }
+
+        Box(
+            modifier = Modifier.weight(1f).padding(top = gap),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            // Up Next Step Banner
+            if (next != null) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(colors.surface.copy(alpha = 0.75f))
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = next,
+                        fontSize = 12.sp * scale.coerceAtMost(1.4f),
+                        color = colors.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Segmented progress rail: one segment per step, filled up to the current one. */
+@Composable
+private fun StepRail(stepCount: Int, currentIndex: Int) {
+    val colors = LocalSereneColors.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        repeat(stepCount) { idx ->
+            val segmentColor = when {
+                idx < currentIndex -> colors.primary
+                idx == currentIndex -> colors.primary.copy(alpha = 0.85f)
+                else -> colors.surfaceVariant.copy(alpha = 0.45f)
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(segmentColor)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RoundIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    tint: Color,
+    size: Dp = 52.dp,
+    iconSize: Dp = 24.dp,
+    onClick: () -> Unit
+) {
+    val colors = LocalSereneColors.current
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(colors.surface.copy(alpha = 0.85f))
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(iconSize)
+        )
+    }
+}
+
+@Composable
+private fun PlayPauseButton(isPlaying: Boolean, size: Dp, onClick: () -> Unit) {
+    val colors = LocalSereneColors.current
+    Box(
+        modifier = Modifier
+            .size(size)
+            .shadow(elevation = 12.dp, shape = CircleShape, spotColor = colors.primary)
+            .clip(CircleShape)
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(colors.primary, colors.secondary)
+                )
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+            contentDescription = if (isPlaying) "Pause" else "Play",
+            tint = colors.onPrimary,
+            modifier = Modifier.size(size * 0.475f)
+        )
     }
 }
 
@@ -437,6 +513,7 @@ private fun CelebrationOverlay(
     ) {
         Column(
             modifier = Modifier
+                .widthIn(max = 480.dp)
                 .fillMaxWidth(0.92f)
                 .clip(RoundedCornerShape(28.dp))
                 .background(colors.surface)
