@@ -2,9 +2,10 @@ package com.sereneflow.timer.engine
 
 import com.sereneflow.timer.audio.AudioController
 import com.sereneflow.timer.audio.playStepCue
+import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.Routine
+import com.sereneflow.timer.model.RoutineCues
 import com.sereneflow.timer.model.RoutineStep
-import com.sereneflow.timer.model.SoundMode
 import com.sereneflow.timer.model.TimerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,8 @@ import kotlin.time.Clock
  */
 class TimerEngine(
     private val routine: Routine,
+    /** The routine's sound and voice, with its Default choices already filled in. */
+    private val cues: RoutineCues,
     private val audioController: AudioController,
     reminderThresholds: Set<Int> = emptySet(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
@@ -48,7 +51,7 @@ class TimerEngine(
     private val announcedReminders = mutableSetOf<Int>()
 
     private val isSilent: Boolean
-        get() = routine.soundMode == SoundMode.MUTE || _timerState.value.isMuted
+        get() = cues.isSilent || _timerState.value.isMuted
 
     private val isTicking: Boolean
         get() = _timerState.value.let { it.isRunning && !it.isPaused }
@@ -230,25 +233,14 @@ class TimerEngine(
         )
 
         if (_timerState.value.isMuted) return
-        when (routine.soundMode) {
-            SoundMode.VOICE_AND_CHIME -> {
-                audioController.playRoutineComplete()
-                audioController.speak("Routine complete. Well done.")
-            }
-            SoundMode.VOICE_ONLY -> {
-                audioController.speak("Routine complete. Wonderful work.")
-            }
-            SoundMode.TIBETAN_BOWL, SoundMode.NATURE_SOUND -> {
-                audioController.playRoutineComplete()
-            }
-            SoundMode.MUTE -> {}
-        }
+        if (cues.sound != CueSound.NONE) audioController.playRoutineComplete()
+        if (cues.voice) audioController.speak("Routine complete. Well done.")
     }
 
     private fun announceStepStart(stepIndex: Int) {
         val step = routine.steps.getOrNull(stepIndex) ?: return
         if (_timerState.value.isMuted) return
-        audioController.playStepCue(routine.soundMode, step, stepIndex)
+        audioController.playStepCue(cues.sound, cues.voice, step, stepIndex)
     }
 
     /**
@@ -269,15 +261,8 @@ class TimerEngine(
 
     private fun announceReminder(stepTitle: String, percentLeft: Int) {
         if (isSilent) return
-        when (routine.soundMode) {
-            SoundMode.VOICE_AND_CHIME -> {
-                audioController.playZenChime()
-                audioController.speak("$stepTitle, $percentLeft percent left")
-            }
-            SoundMode.VOICE_ONLY -> audioController.speak("$stepTitle, $percentLeft percent left")
-            SoundMode.TIBETAN_BOWL, SoundMode.NATURE_SOUND -> audioController.playZenChime()
-            SoundMode.MUTE -> {}
-        }
+        if (cues.sound != CueSound.NONE) audioController.playZenChime()
+        if (cues.voice) audioController.speak("$stepTitle, $percentLeft percent left")
     }
 
     private val RoutineStep.durationMs: Long

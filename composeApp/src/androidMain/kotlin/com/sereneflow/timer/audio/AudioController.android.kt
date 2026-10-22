@@ -5,6 +5,7 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
+import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.platform.AndroidAppContext
 import java.util.Locale
 import kotlinx.coroutines.CompletableDeferred
@@ -48,6 +49,12 @@ class AndroidAudioController : AudioController {
 
     override fun playZenChime(frequencyHz: Double, durationMs: Long) {
         scope.launch { play(ToneSynth.chime(frequencyHz, durationMs), durationMs) }
+    }
+
+    override fun playSound(sound: CueSound) {
+        val samples = ToneSynth.render(sound)
+        if (samples.isEmpty()) return
+        scope.launch { play(samples, samples.size * 1000L / ToneSynth.SAMPLE_RATE) }
     }
 
     override fun playStepComplete() {

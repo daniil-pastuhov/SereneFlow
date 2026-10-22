@@ -1,5 +1,6 @@
 package com.sereneflow.timer.audio
 
+import com.sereneflow.timer.model.CueSound
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.set
@@ -103,6 +104,10 @@ class IOSAudioController : AudioController {
 
     override fun playZenChime(frequencyHz: Double, durationMs: Long) {
         playSamples(ToneSynth.chime(frequencyHz, durationMs))
+    }
+
+    override fun playSound(sound: CueSound) {
+        playSamples(ToneSynth.render(sound))
     }
 
     override fun playStepComplete() {

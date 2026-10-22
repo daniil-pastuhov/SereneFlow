@@ -70,7 +70,6 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.session.ActiveSession
 import com.sereneflow.timer.ui.platform.KeepScreenOn
 import com.sereneflow.timer.engine.nowEpochMs
-import com.sereneflow.timer.model.SoundMode
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.physics.BonsaiTreeCanvas
 import com.sereneflow.timer.physics.BreathingLotusCanvas
@@ -152,8 +151,8 @@ fun ActiveTimerScreen(
         // The ring effects draw a ring around the centre that would run under the side column of
         // controls, so beside it they are centred on the space that is left. The others fill the
         // screen and stay clear of the column on their own.
-        val ringEffect = routine.visualEffect == VisualEffectType.COSMIC_ORBIT ||
-            routine.visualEffect == VisualEffectType.BREATHING_LOTUS
+        val ringEffect = session.cues.visualEffect == VisualEffectType.COSMIC_ORBIT ||
+            session.cues.visualEffect == VisualEffectType.BREATHING_LOTUS
         val stageEndPadding = if (sideLayout && ringEffect) {
             val safeEnd = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current)
             safeEnd + 24.dp + 80.dp * controlScale + 16.dp
@@ -162,8 +161,8 @@ fun ActiveTimerScreen(
         }
 
         Box(modifier = Modifier.fillMaxSize().padding(end = stageEndPadding)) {
-            // 1. Full-screen Physics Simulation Backdrop
-            when (routine.visualEffect) {
+            // 1. Full-screen animated backdrop
+            when (session.cues.visualEffect) {
                 VisualEffectType.WATER -> {
                     WaterWaveCanvas(
                         progress = { 1f - progress() }, // Drains down gracefully
@@ -224,7 +223,7 @@ fun ActiveTimerScreen(
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            val muteButton: (@Composable () -> Unit)? = if (routine.soundMode != SoundMode.MUTE) {
+            val muteButton: (@Composable () -> Unit)? = if (!session.cues.isSilent) {
                 {
                     RoundIconButton(
                         icon = if (state.isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,

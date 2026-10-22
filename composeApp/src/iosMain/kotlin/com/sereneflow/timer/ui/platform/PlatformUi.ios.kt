@@ -9,8 +9,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.vector.ImageVector
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRectMake
+import platform.UIKit.NSLayoutConstraint
+import platform.UIKit.UIAction
+import platform.UIKit.UIAdaptivePresentationControllerDelegateProtocol
 import platform.UIKit.UIAlertAction
 import platform.UIKit.UIAlertActionStyleCancel
 import platform.UIKit.UIAlertActionStyleDefault
@@ -19,10 +23,25 @@ import platform.UIKit.UIAlertController
 import platform.UIKit.UIAlertControllerStyleActionSheet
 import platform.UIKit.UIAlertControllerStyleAlert
 import platform.UIKit.UIApplication
+import platform.UIKit.UIBarButtonItem
+import platform.UIKit.UIBarButtonSystemItem
+import platform.UIKit.UIColor
+import platform.UIKit.UINavigationController
+import platform.UIKit.UIPickerView
+import platform.UIKit.UIPickerViewDataSourceProtocol
+import platform.UIKit.UIPickerViewDelegateProtocol
+import platform.UIKit.UIPresentationController
+import platform.UIKit.UISheetPresentationControllerDetent
+import platform.UIKit.sheetPresentationController
+import platform.UIKit.systemBackgroundColor
 import platform.UIKit.UIViewController
 import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
+import platform.UIKit.navigationItem
 import platform.UIKit.popoverPresentationController
+import platform.UIKit.presentationController
+import platform.darwin.NSInteger
+import platform.darwin.NSObject
 
 @Composable
 actual fun ConfirmDialog(
@@ -82,6 +101,83 @@ actual fun ActionMenu(
 }
 
 @Composable
+actual fun DurationPicker(
+    initialSeconds: Int,
+    onConfirm: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val currentOnConfirm by rememberUpdatedState(onConfirm)
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
+
+    DisposableEffect(Unit) {
+        val picker = UIPickerView()
+        // The picker holds its data source and delegate weakly; this effect keeps them alive.
+        val wheels = DurationWheels(onSwipeDismiss = { currentOnDismiss() })
+        picker.dataSource = wheels
+        picker.delegate = wheels
+        picker.selectRow((initialSeconds / 60).coerceAtMost(MAX_PICKER_MINUTES).toLong(), inComponent = 0, animated = false)
+        picker.selectRow((initialSeconds % 60).toLong(), inComponent = 1, animated = false)
+
+        val content = UIViewController()
+        content.title = "Duration"
+        content.view.backgroundColor = UIColor.systemBackgroundColor
+        picker.translatesAutoresizingMaskIntoConstraints = false
+        content.view.addSubview(picker)
+        NSLayoutConstraint.activateConstraints(
+            listOf(
+                picker.leadingAnchor.constraintEqualToAnchor(content.view.leadingAnchor),
+                picker.trailingAnchor.constraintEqualToAnchor(content.view.trailingAnchor),
+                picker.centerYAnchor.constraintEqualToAnchor(content.view.safeAreaLayoutGuide.centerYAnchor)
+            )
+        )
+        content.navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemCancel,
+            primaryAction = UIAction.actionWithHandler { currentOnDismiss() }
+        )
+        content.navigationItem.rightBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemDone,
+            primaryAction = UIAction.actionWithHandler {
+                currentOnConfirm(
+                    pickedDuration(
+                        minutes = picker.selectedRowInComponent(0).toInt(),
+                        seconds = picker.selectedRowInComponent(1).toInt()
+                    )
+                )
+            }
+        )
+
+        val sheet = UINavigationController(rootViewController = content)
+        sheet.sheetPresentationController?.let {
+            it.detents = listOf(UISheetPresentationControllerDetent.mediumDetent())
+            it.prefersGrabberVisible = true
+        }
+        sheet.presentationController?.delegate = wheels
+        present(sheet)
+        onDispose { sheet.dismissIfPresented() }
+    }
+}
+
+/** Minutes and seconds wheels of [DurationPicker], and the sheet's swipe-to-dismiss. */
+private class DurationWheels(
+    private val onSwipeDismiss: () -> Unit
+) : NSObject(), UIPickerViewDataSourceProtocol, UIPickerViewDelegateProtocol,
+    UIAdaptivePresentationControllerDelegateProtocol {
+
+    override fun numberOfComponentsInPickerView(pickerView: UIPickerView): NSInteger = 2
+
+    override fun pickerView(pickerView: UIPickerView, numberOfRowsInComponent: NSInteger): NSInteger =
+        if (numberOfRowsInComponent == 0L) MAX_PICKER_MINUTES + 1L else 60L
+
+    @ObjCSignatureOverride
+    override fun pickerView(pickerView: UIPickerView, titleForRow: NSInteger, forComponent: NSInteger): String =
+        if (forComponent == 0L) "$titleForRow min" else "$titleForRow sec"
+
+    override fun presentationControllerDidDismiss(presentationController: UIPresentationController) {
+        onSwipeDismiss()
+    }
+}
+
+@Composable
 actual fun KeepScreenOn(enabled: Boolean) {
     DisposableEffect(enabled) {
         UIApplication.sharedApplication.idleTimerDisabled = enabled
@@ -99,7 +195,7 @@ actual object PlatformIcons {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun present(controller: UIAlertController) {
+private fun present(controller: UIViewController) {
     val presenter = topViewController() ?: return
     // iPad presents action sheets as popovers, which need an anchor or UIKit throws.
     controller.popoverPresentationController?.let { popover ->
@@ -113,7 +209,7 @@ private fun present(controller: UIAlertController) {
     presenter.presentViewController(controller, animated = true, completion = null)
 }
 
-private fun UIAlertController.dismissIfPresented() {
+private fun UIViewController.dismissIfPresented() {
     if (presentingViewController != null && !isBeingDismissed()) {
         dismissViewControllerAnimated(true, completion = null)
     }

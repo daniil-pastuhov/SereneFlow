@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,7 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.audio.PreviewStep
 import com.sereneflow.timer.audio.VoiceOption
 import com.sereneflow.timer.audio.playStepCue
-import com.sereneflow.timer.model.SoundMode
+import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.repository.PreferencesRepository
 import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.theme.LocalSereneColors
@@ -165,19 +168,46 @@ private fun ChoiceRow(name: String, detail: String?, isSelected: Boolean, onClic
     }
 }
 
-/** The sound new routines start with; picking one plays it, as a step start does. */
+/** A setting whose options are on a [ChoiceScreen] of their own: its name, the current choice and ›. */
+@Composable
+internal fun NavigationRow(title: String, description: String, value: String, onClick: () -> Unit) {
+    val colors = LocalSereneColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.onSurface)
+            Text(text = description, fontSize = 12.sp, color = colors.onSurfaceVariant)
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(text = value, fontSize = 14.sp, color = colors.primary, maxLines = 1)
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(22.dp)
+        )
+    }
+}
+
+/** The sound of routines set to Default; picking one plays it, as a step start does. */
 @Composable
 fun SoundPickerScreen(preferencesRepository: PreferencesRepository, onBack: () -> Unit) {
     val preferences by preferencesRepository.preferences.collectAsState()
     ChoiceScreen(
         title = "Default sound",
-        note = "Used when you create a new routine; each routine can change it. Tap a sound to hear it.",
-        choices = SoundMode.entries.map { Choice(it, it.displayName, it.description) },
-        selected = preferences.defaultSoundMode,
-        onSelect = { mode ->
-            preferencesRepository.setDefaultSoundMode(mode)
+        note = "Plays at each step in routines whose sound is Default; each routine can pick its own. " +
+            "Tap a sound to hear it.",
+        choices = CueSound.entries.map { Choice(it, it.displayName, it.description) },
+        selected = preferences.defaultSound,
+        onSelect = { sound ->
+            preferencesRepository.setDefaultSound(sound)
             TimerSession.audioController.stop()
-            TimerSession.audioController.playStepCue(mode, PreviewStep, stepIndex = 0)
+            TimerSession.audioController.playSound(sound)
         },
         onBack = onBack
     )
@@ -204,14 +234,11 @@ fun VoicePickerScreen(preferencesRepository: PreferencesRepository, onBack: () -
         selected = selectedId,
         onSelect = { id ->
             preferencesRepository.setVoice(id)
-            // A sample in the new voice, as a step start says it; spoken even when the default
-            // sound itself doesn't speak.
-            val defaultSound = preferences.defaultSoundMode
-            val sample = if (defaultSound == SoundMode.VOICE_AND_CHIME) defaultSound else SoundMode.VOICE_ONLY
+            // A sample in the new voice, as a step start says it, even while voice guidance is off.
             TimerSession.audioController.apply {
                 setVoice(id)
                 stop()
-                playStepCue(sample, PreviewStep, stepIndex = 0)
+                playStepCue(preferences.defaultSound, voice = true, PreviewStep, stepIndex = 0)
             }
         },
         onBack = onBack,

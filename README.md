@@ -1,16 +1,16 @@
 # SereneFlow 🌸
-### Mindful Routine & Physics-Based Visual Timer (Compose Multiplatform)
+### Mindful Routine & Animated Visual Timer (Compose Multiplatform)
 
 **SereneFlow** is an elegant, tranquil routine and timer app built with **Compose Multiplatform (CMP)** targeting **Android** and **iOS**. 
 
-Designed as a modern, calming alternative to cluttered and rigid timer apps, SereneFlow transforms everyday habits and meditation routines into a relaxing, aesthetically harmonized experience featuring real-time physics-based generative animations and soothing audio reminders.
+Designed as a modern, calming alternative to cluttered and rigid timer apps, SereneFlow transforms everyday habits and meditation routines into a relaxing, aesthetically harmonized experience featuring real-time generative animations and soothing audio reminders.
 
 ---
 
 ## ✨ Key Features
 
-### 🌊 Physics-Based Animated Timers
-Choose from 5 distinct visual simulations rendered dynamically with Compose Canvas and mathematical physics:
+### 🌊 Animated Visual Timers
+Choose from 5 distinct visual effects rendered dynamically with Compose Canvas:
 1. **Serene Water**: Fluid liquid simulation with multi-harmonic sine waves, surface ripples, and buoyant rising bubbles with Stokes drag & Brownian wobble.
 2. **Living Bonsai**: Procedural branching tree with natural harmonic wind sway physics, blooming cherry blossom clusters, and falling petals drifting with 2D gravity.
 3. **Celestial Orbit**: Multi-tier orbital mechanics obeying Kepler's laws, drifting stardust particles, and a radiant pulsating celestial core.
@@ -18,10 +18,10 @@ Choose from 5 distinct visual simulations rendered dynamically with Compose Canv
 5. **Zen Hourglass**: Flowing ballistic stream of glowing sand grains with bounce scatter and dynamic accumulation mound physics.
 
 ### 🔔 Mindful Audio & Spoken Guidance
-- **Tibetan Singing Bowl**: Real-time synthesized harmonic bell sound (432 Hz fundamental with overtone shimmer and warm exponential decay).
-- **Zen Chimes**: Soft wooden bell notification on milestones and countdowns.
+- **Step sounds**: Real-time synthesized tones — Tibetan Bowl (432 Hz fundamental with overtone shimmer and warm exponential decay), Zen Chime, Crystal Bowl, Temple Gong, Kalimba, Wood Block and Koshi Chimes — or no sound.
+- **Zen Chimes**: Soft bell notification on milestones and countdowns.
 - **Voice Guidance**: Clear, soothing voice announcements powered by native platform Text-to-Speech (`android.speech.tts.TextToSpeech` on Android, `AVSpeechSynthesizer` on iOS).
-- **Settings Choice**: Toggle between *Voice & Singing Bowl*, *Voice Only*, *Tibetan Bowl Only*, *Zen Chime*, or *Silent (Visual Only)*.
+- **Per-routine choices**: Each routine picks its sound, voice guidance (on, off) and visual effect, or leaves them at *Default* to follow Settings when it starts.
 
 ### 🎨 Harmonized Color Themes
 Four curated palettes designed for tranquility and visual peace:

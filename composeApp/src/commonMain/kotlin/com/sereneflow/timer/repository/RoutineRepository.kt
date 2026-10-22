@@ -4,7 +4,7 @@ import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineStep
-import com.sereneflow.timer.model.SoundMode
+import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.storage.FileStorage
 import com.sereneflow.timer.storage.StorageJson
@@ -36,7 +36,7 @@ class RoutineRepository(
     private fun loadRoutines(): List<Routine> {
         val json = storage.read(FILE_NAME) ?: return createDefaultRoutines()
         return try {
-            StorageJson.decodeFromString<List<Routine>>(json)
+            StorageJson.decodeFromString<List<Routine>>(json).map { it.migrated() }
         } catch (_: Exception) {
             createDefaultRoutines()
         }
@@ -87,8 +87,6 @@ class RoutineRepository(
                     id = "morning_awakening",
                     title = "Morning Awakening",
                     description = "Awaken your body and mind with mindful hydration, gentle flow, and breathwork",
-                    visualEffect = VisualEffectType.WATER,
-                    soundMode = SoundMode.VOICE_AND_CHIME,
                     accentColorHex = 0xFF436B54L,
                     steps = listOf(
                         RoutineStep("s1", "Warm Lemon Water & Presence", 120, "Hydrate and savor the morning warmth"),
@@ -118,7 +116,7 @@ class PreferencesRepository(
     private fun loadPreferences(): AppPreferences {
         val json = storage.read(FILE_NAME) ?: return AppPreferences()
         return try {
-            StorageJson.decodeFromString<AppPreferences>(json)
+            StorageJson.decodeFromString<AppPreferences>(json).migrated()
         } catch (_: Exception) {
             AppPreferences()
         }
@@ -132,8 +130,12 @@ class PreferencesRepository(
         _preferences.update { it.copy(defaultVisualEffect = effect) }
     }
 
-    fun setDefaultSoundMode(mode: SoundMode) {
-        _preferences.update { it.copy(defaultSoundMode = mode) }
+    fun setDefaultSound(sound: CueSound) {
+        _preferences.update { it.copy(defaultSound = sound) }
+    }
+
+    fun setDefaultVoice(enabled: Boolean) {
+        _preferences.update { it.copy(defaultVoice = enabled) }
     }
 
     fun setVoice(id: String?) {
