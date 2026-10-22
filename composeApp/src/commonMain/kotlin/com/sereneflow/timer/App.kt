@@ -32,12 +32,16 @@ import com.sereneflow.timer.ui.ActiveTimerScreen
 import com.sereneflow.timer.ui.RoutineEditorScreen
 import com.sereneflow.timer.ui.RoutineListScreen
 import com.sereneflow.timer.ui.SettingsScreen
+import com.sereneflow.timer.ui.SoundPickerScreen
+import com.sereneflow.timer.ui.VoicePickerScreen
 
 sealed class AppScreen {
     data object List : AppScreen()
     data class Editor(val routine: Routine?) : AppScreen()
     data class Timer(val routine: Routine) : AppScreen()
     data object Settings : AppScreen()
+    data object SoundPicker : AppScreen()
+    data object VoicePicker : AppScreen()
 }
 
 @Composable
@@ -130,8 +134,9 @@ fun App(demoLaunch: DemoLaunch? = null) {
             targetState = currentScreen,
             modifier = Modifier.fillMaxSize(),
             transitionSpec = {
-                // Push slides in from the trailing edge; pop slides back out to it.
-                val isPop = initialState != AppScreen.List && targetState == AppScreen.List
+                // Push slides in from the trailing edge; pop slides back out to it. A pop is a
+                // screen that has left the back stack.
+                val isPop = initialState !in backStack
                 if (isPop) {
                     (fadeIn(tween(220)) + slideInHorizontally(tween(320)) { -it / 4 }) togetherWith
                             (fadeOut(tween(220)) + slideOutHorizontally(tween(320)) { it })
@@ -187,8 +192,16 @@ fun App(demoLaunch: DemoLaunch? = null) {
                 is AppScreen.Settings -> {
                     SettingsScreen(
                         preferencesRepository = preferencesRepository,
+                        onOpenSoundPicker = { push(AppScreen.SoundPicker) },
+                        onOpenVoicePicker = { push(AppScreen.VoicePicker) },
                         onBack = ::pop
                     )
+                }
+                is AppScreen.SoundPicker -> {
+                    SoundPickerScreen(preferencesRepository = preferencesRepository, onBack = ::pop)
+                }
+                is AppScreen.VoicePicker -> {
+                    VoicePickerScreen(preferencesRepository = preferencesRepository, onBack = ::pop)
                 }
             }
         }

@@ -7,7 +7,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="SereneFlow"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+        android:theme="@style/Theme.SereneFlow">
         <!-- Started from the launcher through one of the aliases below. -->
         <activity
             android:name=".SereneFlowActivity"

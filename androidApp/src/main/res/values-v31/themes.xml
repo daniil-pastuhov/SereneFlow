@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ system splash: the icon of the launcher entry that was tapped (so it follows
+         the app icon picked with the theme) on this background. -->
+    <style name="Theme.SereneFlow" parent="Base.Theme.SereneFlow">
+        <item name="android:windowSplashScreenBackground">@color/window_background</item>
+    </style>
+</resources>

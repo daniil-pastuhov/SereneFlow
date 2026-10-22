@@ -5,9 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,12 +20,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -52,9 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.model.SoundMode
-import com.sereneflow.timer.audio.PreviewStep
 import com.sereneflow.timer.audio.VoiceOption
-import com.sereneflow.timer.audio.playStepCue
 import com.sereneflow.timer.platform.AppIconSwitcher
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.PreferencesRepository
@@ -74,11 +73,22 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun SettingsScreen(
     preferencesRepository: PreferencesRepository,
+    onOpenSoundPicker: () -> Unit,
+    onOpenVoicePicker: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
     val preferences by preferencesRepository.preferences.collectAsState()
+    // The chosen voice's name; "Default" too for one that was since removed from the device.
+    val voices by produceState<List<VoiceOption>?>(initialValue = null) {
+        value = TimerSession.audioController.englishVoices()
+    }
+    val voiceName = when {
+        preferences.voiceId == null -> "Default"
+        voices == null -> "…" // still loading; don't flash "Default" for a chosen voice
+        else -> voices?.firstOrNull { it.id == preferences.voiceId }?.name ?: "Default"
+    }
     val requestNotificationPermission = rememberNotificationPermissionRequest()
     val currentTheme = preferences.themeMode
     val defaultVisual = preferences.defaultVisualEffect
@@ -87,6 +97,7 @@ fun SettingsScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = colors.background,
+        contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
                 title = {
@@ -186,87 +197,40 @@ fun SettingsScreen(
                     }
                 }
 
-                // Audio & Voice Guidance Mode
+                // Sound and voice: each opens a list of its own, which can grow without making
+                // this screen long.
                 item {
-                    SectionHeader(title = "DEFAULT SOUND", icon = Icons.Default.GraphicEq)
-                    SectionNote("Used when you create a new routine.")
+                    SectionHeader(title = "SOUND & VOICE", icon = Icons.Default.GraphicEq)
                     Spacer(modifier = Modifier.height(10.dp))
-
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
                             .background(colors.cardBackground)
                             .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                            .padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(vertical = 6.dp)
                     ) {
-                        SoundMode.entries.forEach { mode ->
-                            val isSelected = mode == defaultSound
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                    .clickable {
-                                        preferencesRepository.setDefaultSoundMode(mode)
-                                        // A sample of the sound, as a step start plays it.
-                                        TimerSession.audioController.stop()
-                                        TimerSession.audioController.playStepCue(mode, PreviewStep, stepIndex = 0)
-                                    }
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = mode.displayName,
-                                        fontSize = 14.sp,
-                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                                        color = colors.onSurface
-                                    )
-                                    Text(
-                                        text = mode.description,
-                                        fontSize = 12.sp,
-                                        color = colors.onSurfaceVariant
-                                    )
-                                }
-
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        tint = colors.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
+                        NavigationRow(
+                            title = "Default sound",
+                            description = "For new routines",
+                            value = defaultSound.displayName,
+                            onClick = onOpenSoundPicker
+                        )
+                        // For the sounds that speak; also while a chosen voice is set, as it applies
+                        // to every routine that speaks and must stay visible to be changed back.
+                        if (defaultSound == SoundMode.VOICE_AND_CHIME || defaultSound == SoundMode.VOICE_ONLY ||
+                            preferences.voiceId != null
+                        ) {
+                            NavigationRow(
+                                title = "Voice",
+                                description = "For spoken step announcements",
+                                value = voiceName,
+                                onClick = onOpenVoicePicker
+                            )
                         }
                     }
                 }
 
-                // Voice, for the sounds that speak; also while a chosen voice is set, as it applies
-                // to every routine that speaks and must stay visible to be changed back.
-                if (defaultSound == SoundMode.VOICE_AND_CHIME || defaultSound == SoundMode.VOICE_ONLY ||
-                    preferences.voiceId != null
-                ) {
-                    item {
-                        VoiceSection(
-                            selectedId = preferences.voiceId,
-                            onSelect = { id ->
-                                preferencesRepository.setVoice(id)
-                                // A sample in the new voice, as a step start says it; spoken even
-                                // when the default sound itself doesn't speak.
-                                val sample = if (defaultSound == SoundMode.VOICE_AND_CHIME) defaultSound else SoundMode.VOICE_ONLY
-                                TimerSession.audioController.apply {
-                                    setVoice(id)
-                                    stop()
-                                    playStepCue(sample, PreviewStep, stepIndex = 0)
-                                }
-                            }
-                        )
-                    }
-                }
                 // Screen & background behaviour
                 item {
                     SectionHeader(title = "SCREEN & BACKGROUND", icon = Icons.Default.PhoneAndroid)
@@ -409,82 +373,29 @@ fun SettingsScreen(
     }
 }
 
+/** A setting whose options are on a screen of their own: its name, the current choice and ›. */
 @Composable
-private fun VoiceSection(selectedId: String?, onSelect: (String?) -> Unit) {
-    val colors = LocalSereneColors.current
-    // The speech engine can take a moment to start on Android, so the list arrives later.
-    val voices by produceState<List<VoiceOption>?>(initialValue = null) {
-        value = TimerSession.audioController.englishVoices()
-    }
-
-    SectionHeader(title = "VOICE", icon = Icons.Default.RecordVoiceOver)
-    SectionNote("Speaks the step announcements. Tap a voice to hear it.")
-    Spacer(modifier = Modifier.height(10.dp))
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(colors.cardBackground)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        val list = voices
-        when {
-            list == null -> VoiceRow("Loading voices…", null, isSelected = false, onClick = null)
-            else -> {
-                // A saved voice that was since removed from the device falls back to the default.
-                val effectiveId = selectedId?.takeIf { id -> list.any { it.id == id } }
-                VoiceRow("Default", "The device's standard English voice", effectiveId == null) { onSelect(null) }
-                list.forEach { voice ->
-                    VoiceRow(voice.name, voice.detail, voice.id == effectiveId) { onSelect(voice.id) }
-                }
-                if (list.isEmpty()) {
-                    Text(
-                        text = "No other English voices are installed. You can add some in the device's text-to-speech settings.",
-                        fontSize = 12.sp,
-                        color = colors.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 14.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun VoiceRow(name: String, detail: String?, isSelected: Boolean, onClick: (() -> Unit)?) {
+private fun NavigationRow(title: String, description: String, value: String, onClick: () -> Unit) {
     val colors = LocalSereneColors.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = name,
-                fontSize = 14.sp,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                color = colors.onSurface
-            )
-            if (detail != null) {
-                Text(text = detail, fontSize = 12.sp, color = colors.onSurfaceVariant)
-            }
+            Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.onSurface)
+            Text(text = description, fontSize = 12.sp, color = colors.onSurfaceVariant)
         }
-        if (isSelected) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
-                tint = colors.primary,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(text = value, fontSize = 14.sp, color = colors.primary, maxLines = 1)
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(22.dp)
+        )
     }
 }
 
