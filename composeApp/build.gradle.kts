@@ -57,3 +57,10 @@ kotlin {
         }
     }
 }
+
+compose.resources {
+    // Res for the app icon previews in Settings (composeResources/drawable, made by
+    // tools/generate_icons.swift).
+    packageOfResClass = "com.sereneflow.timer.resources"
+    publicResClass = false
+}

@@ -6,8 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.sereneflow.timer.platform.AndroidAppContext
+import com.sereneflow.timer.platform.AppIconSwitcher
 
-class MainActivity : ComponentActivity() {
+/**
+ * The app's only activity. The launcher reaches it through the per-icon aliases in the manifest;
+ * the default one keeps the name `.MainActivity`, which home-screen shortcuts from 1.0 point at.
+ */
+class SereneFlowActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AndroidAppContext.appContext = applicationContext
@@ -17,6 +22,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             App(demoLaunch = demoLaunch)
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // A new app icon is applied once the app is off screen (see AppIconSwitcher).
+        if (!isChangingConfigurations) AppIconSwitcher.applyPendingIcon()
     }
 
     /** `--es demoScreen timer --es demoRoutine <id> --ei demoElapsed <seconds>`; see [DemoLaunch]. */

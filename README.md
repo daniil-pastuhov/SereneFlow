@@ -62,7 +62,7 @@ Timer/
 ├── androidApp/                 # Android native application launcher
 │   └── src/main/
 │       └── AndroidManifest.xml
-│       └── kotlin/com/sereneflow/timer/MainActivity.kt
+│       └── kotlin/com/sereneflow/timer/SereneFlowActivity.kt
 └── iosApp/                     # Native iOS SwiftUI project embedding ComposeApp.framework
     ├── iosApp/
     │   ├── iosApp.swift        # SwiftUI @main entry point

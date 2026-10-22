@@ -1,6 +1,7 @@
 package com.sereneflow.timer.engine
 
 import com.sereneflow.timer.audio.AudioController
+import com.sereneflow.timer.audio.playStepCue
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.SoundMode
@@ -247,22 +248,7 @@ class TimerEngine(
     private fun announceStepStart(stepIndex: Int) {
         val step = routine.steps.getOrNull(stepIndex) ?: return
         if (_timerState.value.isMuted) return
-        when (routine.soundMode) {
-            SoundMode.VOICE_AND_CHIME -> {
-                audioController.playTibetanBowl()
-                audioController.speak("${step.title}, ${step.formattedDuration}")
-            }
-            SoundMode.VOICE_ONLY -> {
-                audioController.speak("Step ${stepIndex + 1}: ${step.title}, ${step.formattedDuration}")
-            }
-            SoundMode.TIBETAN_BOWL -> {
-                audioController.playTibetanBowl()
-            }
-            SoundMode.NATURE_SOUND -> {
-                audioController.playZenChime()
-            }
-            SoundMode.MUTE -> {}
-        }
+        audioController.playStepCue(routine.soundMode, step, stepIndex)
     }
 
     /**

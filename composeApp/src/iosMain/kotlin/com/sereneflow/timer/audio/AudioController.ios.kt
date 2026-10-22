@@ -87,6 +87,7 @@ class IOSAudioController : AudioController {
         nextPlayer = (nextPlayer + 1) % players.size
         player.scheduleBuffer(buffer, completionHandler = null)
         if (!player.playing) player.play()
+        if (!sessionActive) scheduleIdlePause()
     }
 
     override fun playTibetanBowl(fundamentalHz: Double, durationMs: Long) {
@@ -116,6 +117,7 @@ class IOSAudioController : AudioController {
             speechSynthesizer.stopSpeakingAtBoundary(AVSpeechBoundary.AVSpeechBoundaryImmediate)
         }
         speechSynthesizer.speakUtterance(utterance)
+        if (!sessionActive) scheduleIdlePause()
     }
 
     override fun stop() = onMain {
@@ -135,15 +137,24 @@ class IOSAudioController : AudioController {
         if (active) {
             ensureEngine()
         } else {
-            val generation = idleGeneration
-            dispatch_after(
-                dispatch_time(DISPATCH_TIME_NOW, IDLE_GRACE_NANOS),
-                dispatch_get_main_queue()
-            ) {
-                if (generation == idleGeneration && !sessionActive && !speechSynthesizer.speaking) {
-                    engine.pause()
-                }
-            }
+            scheduleIdlePause()
+        }
+    }
+
+    /**
+     * Pauses the engine once nothing has played for the grace period. A running engine keeps the
+     * app alive in the background, so any sound outside a routine (a Settings preview, cues of a
+     * routine run without background mode) must end with this too. Must run on the main thread.
+     */
+    private fun scheduleIdlePause() {
+        val generation = ++idleGeneration
+        dispatch_after(
+            dispatch_time(DISPATCH_TIME_NOW, IDLE_GRACE_NANOS),
+            dispatch_get_main_queue()
+        ) {
+            if (generation != idleGeneration || sessionActive) return@dispatch_after
+            // Still speaking: look again later rather than cut the voice off or never pause.
+            if (speechSynthesizer.speaking) scheduleIdlePause() else engine.pause()
         }
     }
 

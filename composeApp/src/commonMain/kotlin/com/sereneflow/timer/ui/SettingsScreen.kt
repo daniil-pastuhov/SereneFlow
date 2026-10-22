@@ -1,5 +1,6 @@
 package com.sereneflow.timer.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -39,6 +41,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,12 +55,23 @@ import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.model.SoundMode
+import com.sereneflow.timer.audio.PreviewStep
+import com.sereneflow.timer.audio.playStepCue
+import com.sereneflow.timer.platform.AppIconSwitcher
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.PreferencesRepository
+import com.sereneflow.timer.resources.Res
+import com.sereneflow.timer.resources.app_icon_midnight_starlight
+import com.sereneflow.timer.resources.app_icon_ocean_mist
+import com.sereneflow.timer.resources.app_icon_sunset_clay
+import com.sereneflow.timer.resources.app_icon_zen_sage
+import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.theme.getSerenePalette
 import com.sereneflow.timer.ui.platform.PlatformIcons
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -178,6 +194,13 @@ fun SettingsScreen(
                     }
                 }
 
+                // App icon, one per theme; the platform keeps the choice.
+                if (AppIconSwitcher.isSupported) {
+                    item {
+                        AppIconSection()
+                    }
+                }
+
                 // Audio & Voice Guidance Mode
                 item {
                     SectionHeader(title = "DEFAULT SOUND", icon = Icons.Default.GraphicEq)
@@ -200,7 +223,12 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(14.dp))
                                     .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                    .clickable { preferencesRepository.setDefaultSoundMode(mode) }
+                                    .clickable {
+                                        preferencesRepository.setDefaultSoundMode(mode)
+                                        // A sample of the sound, as a step start plays it.
+                                        TimerSession.audioController.stop()
+                                        TimerSession.audioController.playStepCue(mode, PreviewStep, stepIndex = 0)
+                                    }
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -373,6 +401,71 @@ fun SettingsScreen(
         }
     }
 }
+
+@Composable
+private fun AppIconSection() {
+    val colors = LocalSereneColors.current
+    var currentIcon by remember { mutableStateOf(AppIconSwitcher.current()) }
+
+    SectionHeader(title = "APP ICON", icon = Icons.Default.Apps)
+    AppIconSwitcher.changeNote?.let { SectionNote(it) }
+    Spacer(modifier = Modifier.height(10.dp))
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(colors.cardBackground)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+            .padding(horizontal = 8.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        AppThemeMode.entries.forEach { icon ->
+            val isSelected = icon == currentIcon
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(enabled = !isSelected) {
+                        AppIconSwitcher.set(icon) { currentIcon = it }
+                    }
+                    .padding(vertical = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(icon.previewIcon),
+                    contentDescription = "${icon.displayName} icon",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .border(
+                            width = 2.5.dp,
+                            color = if (isSelected) colors.primary else Color.Transparent,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(4.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = icon.displayName,
+                    fontSize = 11.sp,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (isSelected) colors.onSurface else colors.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 13.sp
+                )
+            }
+        }
+    }
+}
+
+private val AppThemeMode.previewIcon: DrawableResource
+    get() = when (this) {
+        AppThemeMode.ZEN_SAGE -> Res.drawable.app_icon_zen_sage
+        AppThemeMode.OCEAN_MIST -> Res.drawable.app_icon_ocean_mist
+        AppThemeMode.SUNSET_CLAY -> Res.drawable.app_icon_sunset_clay
+        AppThemeMode.MIDNIGHT_STARLIGHT -> Res.drawable.app_icon_midnight_starlight
+    }
 
 @Composable
 private fun SwitchRow(
