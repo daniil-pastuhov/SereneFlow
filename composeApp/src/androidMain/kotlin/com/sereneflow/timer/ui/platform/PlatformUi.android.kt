@@ -3,6 +3,11 @@ package com.sereneflow.timer.ui.platform
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.Build
+import android.widget.NumberPicker
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -16,9 +21,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 
 private val DestructiveRed = Color(0xFFE53935)
@@ -68,6 +81,59 @@ actual fun ActionMenu(
             )
         }
     }
+}
+
+@Composable
+actual fun DurationPicker(
+    initialSeconds: Int,
+    onConfirm: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var minutes by remember { mutableIntStateOf((initialSeconds / 60).coerceAtMost(MAX_PICKER_MINUTES)) }
+    var seconds by remember { mutableIntStateOf(initialSeconds % 60) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Duration") },
+        text = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                NumberWheel(value = minutes, max = MAX_PICKER_MINUTES, onChange = { minutes = it })
+                Text("min")
+                NumberWheel(value = seconds, max = 59, onChange = { seconds = it })
+                Text("sec")
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(pickedDuration(minutes, seconds)) }) { Text("Done") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+/** The platform's own scrolling number wheel. */
+@Composable
+private fun NumberWheel(value: Int, max: Int, onChange: (Int) -> Unit) {
+    // The wheel follows the activity's theme, not the app's; match the dialog's text instead.
+    val textColor = LocalContentColor.current.toArgb()
+    AndroidView(
+        factory = { context ->
+            NumberPicker(context).apply {
+                minValue = 0
+                maxValue = max
+                this.value = value
+                setFormatter { "%02d".format(it) }
+                setOnValueChangedListener { _, _, new -> onChange(new) }
+            }
+        },
+        update = { picker ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) picker.textColor = textColor
+        }
+    )
 }
 
 @Composable

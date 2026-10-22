@@ -1,11 +1,15 @@
 package com.sereneflow.timer.audio
 
+import com.sereneflow.timer.model.CueSound
+
 /** An English text-to-speech voice installed on the device. */
 data class VoiceOption(val id: String, val name: String, val detail: String)
 
 interface AudioController {
     fun playTibetanBowl(fundamentalHz: Double = 432.0, durationMs: Long = 3000)
     fun playZenChime(frequencyHz: Double = 720.0, durationMs: Long = 1400)
+    /** Plays a step-start [sound] ([ToneSynth.render]); nothing for [CueSound.NONE]. */
+    fun playSound(sound: CueSound)
     fun playStepComplete()
     fun playRoutineComplete()
     fun speak(text: String)

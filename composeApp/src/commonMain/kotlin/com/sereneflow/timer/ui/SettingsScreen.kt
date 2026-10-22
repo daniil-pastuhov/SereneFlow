@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -52,7 +51,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.AppThemeMode
-import com.sereneflow.timer.model.SoundMode
 import com.sereneflow.timer.audio.VoiceOption
 import com.sereneflow.timer.platform.AppIconSwitcher
 import com.sereneflow.timer.model.VisualEffectType
@@ -92,7 +90,7 @@ fun SettingsScreen(
     val requestNotificationPermission = rememberNotificationPermissionRequest()
     val currentTheme = preferences.themeMode
     val defaultVisual = preferences.defaultVisualEffect
-    val defaultSound = preferences.defaultSoundMode
+    val defaultSound = preferences.defaultSound
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -212,15 +210,19 @@ fun SettingsScreen(
                     ) {
                         NavigationRow(
                             title = "Default sound",
-                            description = "For new routines",
+                            description = "For routines set to Default",
                             value = defaultSound.displayName,
                             onClick = onOpenSoundPicker
                         )
-                        // For the sounds that speak; also while a chosen voice is set, as it applies
+                        SwitchRow(
+                            title = "Voice guidance",
+                            description = "Speak each step's name and length in routines set to Default.",
+                            checked = preferences.defaultVoice,
+                            onCheckedChange = preferencesRepository::setDefaultVoice
+                        )
+                        // While the voice speaks; also while a chosen voice is set, as it applies
                         // to every routine that speaks and must stay visible to be changed back.
-                        if (defaultSound == SoundMode.VOICE_AND_CHIME || defaultSound == SoundMode.VOICE_ONLY ||
-                            preferences.voiceId != null
-                        ) {
+                        if (preferences.defaultVoice || preferences.voiceId != null) {
                             NavigationRow(
                                 title = "Voice",
                                 description = "For spoken step announcements",
@@ -306,7 +308,7 @@ fun SettingsScreen(
                 // Default Visual Simulation
                 item {
                     SectionHeader(title = "DEFAULT VISUAL EFFECT", icon = Icons.Default.Visibility)
-                    SectionNote("Used when you create a new routine.")
+                    SectionNote("Used by routines whose visual effect is Default.")
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Column(
@@ -320,13 +322,6 @@ fun SettingsScreen(
                     ) {
                         VisualEffectType.entries.forEach { effect ->
                             val isSelected = effect == defaultVisual
-                            val emoji = when (effect) {
-                                VisualEffectType.WATER -> "🌊"
-                                VisualEffectType.BONSAI_TREE -> "🌳"
-                                VisualEffectType.COSMIC_ORBIT -> "✨"
-                                VisualEffectType.BREATHING_LOTUS -> "🌸"
-                                VisualEffectType.HOURGLASS -> "⏳"
-                            }
 
                             Row(
                                 modifier = Modifier
@@ -339,7 +334,7 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Text(text = emoji, fontSize = 20.sp)
+                                    Text(text = effect.emoji, fontSize = 20.sp)
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
@@ -370,32 +365,6 @@ fun SettingsScreen(
                 }
             }
         }
-    }
-}
-
-/** A setting whose options are on a screen of their own: its name, the current choice and ›. */
-@Composable
-private fun NavigationRow(title: String, description: String, value: String, onClick: () -> Unit) {
-    val colors = LocalSereneColors.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.onSurface)
-            Text(text = description, fontSize = 12.sp, color = colors.onSurfaceVariant)
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(text = value, fontSize = 14.sp, color = colors.primary, maxLines = 1)
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = colors.onSurfaceVariant,
-            modifier = Modifier.size(22.dp)
-        )
     }
 }
 

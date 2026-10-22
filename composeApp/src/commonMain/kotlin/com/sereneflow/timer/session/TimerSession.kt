@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import com.sereneflow.timer.audio.AudioController
 import com.sereneflow.timer.audio.createAudioController
 import com.sereneflow.timer.engine.TimerEngine
+import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.Routine
+import com.sereneflow.timer.model.RoutineCues
 import com.sereneflow.timer.model.TimerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +19,8 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-class ActiveSession(val routine: Routine, val engine: TimerEngine)
+/** [cues] are the routine's look and sound with its Default choices filled in at start. */
+class ActiveSession(val routine: Routine, val cues: RoutineCues, val engine: TimerEngine)
 
 /**
  * The single running routine, owned by the process rather than by a screen.
@@ -40,10 +43,11 @@ object TimerSession {
      * alive with the screen off. When false the timer still keeps correct time (it is
      * wall-clock based) but nothing is shown or played outside the app.
      */
-    fun start(routine: Routine, reminderThresholds: Set<Int>, backgroundMode: Boolean): ActiveSession {
+    fun start(routine: Routine, preferences: AppPreferences, backgroundMode: Boolean): ActiveSession {
         stop()
-        val engine = TimerEngine(routine, audioController, reminderThresholds)
-        val session = ActiveSession(routine, engine)
+        val cues = routine.resolve(preferences)
+        val engine = TimerEngine(routine, cues, audioController, preferences.reminderThresholds)
+        val session = ActiveSession(routine, cues, engine)
         _active.value = session
         engine.start()
 

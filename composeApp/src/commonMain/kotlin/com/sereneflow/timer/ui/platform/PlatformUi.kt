@@ -37,6 +37,24 @@ expect fun ActionMenu(
     onDismiss: () -> Unit
 )
 
+/**
+ * Picks a step duration with minutes and seconds wheels, shown while this composable is in the
+ * composition. iOS presents a `UIPickerView` in a sheet; Android `NumberPicker`s in a dialog.
+ * [onConfirm] gets the total in seconds, at least [MIN_STEP_SECONDS].
+ */
+@Composable
+expect fun DurationPicker(
+    initialSeconds: Int,
+    onConfirm: (Int) -> Unit,
+    onDismiss: () -> Unit
+)
+
+const val MIN_STEP_SECONDS = 10
+const val MAX_PICKER_MINUTES = 180
+
+/** The duration the wheels show, as seconds no shorter than a step may be. */
+internal fun pickedDuration(minutes: Int, seconds: Int): Int = (minutes * 60 + seconds).coerceAtLeast(MIN_STEP_SECONDS)
+
 /** Keeps the display from sleeping while composed with [enabled] = true. */
 @Composable
 expect fun KeepScreenOn(enabled: Boolean)

@@ -69,6 +69,8 @@ import com.sereneflow.timer.ui.platform.PlatformIcons
 @Composable
 fun RoutineListScreen(
     routineRepository: RoutineRepository,
+    /** Shown on routines whose visual effect is Default. */
+    defaultVisualEffect: VisualEffectType,
     onStartRoutine: (Routine) -> Unit,
     onEditRoutine: (Routine) -> Unit,
     onCreateNewRoutine: () -> Unit,
@@ -132,6 +134,7 @@ fun RoutineListScreen(
                 items(routines, key = { it.id }) { routine ->
                     RoutineCard(
                         routine = routine,
+                        visualEffect = routine.visualEffect ?: defaultVisualEffect,
                         onPlay = { onStartRoutine(routine) },
                         onEdit = { onEditRoutine(routine) },
                         onDuplicate = { routineRepository.duplicateRoutine(routine.id) },
@@ -212,6 +215,7 @@ private fun HeaderSection(
 @Composable
 private fun RoutineCard(
     routine: Routine,
+    visualEffect: VisualEffectType,
     onPlay: () -> Unit,
     onEdit: () -> Unit,
     onDuplicate: () -> Unit,
@@ -343,7 +347,7 @@ private fun RoutineCard(
                 }
 
                 // Visual effect badge
-                val visualEmoji = when (routine.visualEffect) {
+                val visualEmoji = when (visualEffect) {
                     VisualEffectType.WATER -> "🌊 Water"
                     VisualEffectType.BONSAI_TREE -> "🌳 Bonsai"
                     VisualEffectType.COSMIC_ORBIT -> "✨ Orbit"

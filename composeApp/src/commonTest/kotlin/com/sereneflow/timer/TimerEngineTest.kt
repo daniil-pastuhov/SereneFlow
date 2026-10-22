@@ -2,9 +2,10 @@ package com.sereneflow.timer
 
 import com.sereneflow.timer.audio.AudioController
 import com.sereneflow.timer.engine.TimerEngine
+import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.Routine
+import com.sereneflow.timer.model.RoutineCues
 import com.sereneflow.timer.model.RoutineStep
-import com.sereneflow.timer.model.SoundMode
 import com.sereneflow.timer.model.VisualEffectType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
@@ -16,8 +17,15 @@ import kotlin.test.assertTrue
 
 class FakeAudioController : AudioController {
     val spokenList = mutableListOf<String>()
+    val soundsPlayed = mutableListOf<CueSound>()
     var bowlsPlayed = 0
     var chimesPlayed = 0
+
+    override fun playSound(sound: CueSound) {
+        if (sound == CueSound.NONE) return
+        soundsPlayed.add(sound)
+        if (sound == CueSound.TIBETAN_BOWL) bowlsPlayed++
+    }
 
     override fun playTibetanBowl(fundamentalHz: Double, durationMs: Long) {
         bowlsPlayed++
@@ -54,17 +62,18 @@ class TimerEngineTest {
         title = "Test Mindful Flow",
         description = "Test Description",
         visualEffect = VisualEffectType.WATER,
-        soundMode = SoundMode.VOICE_AND_CHIME,
         steps = listOf(
             RoutineStep("s1", "Centering Breath", 10),
             RoutineStep("s2", "Presence & Calm", 20)
         )
     )
 
+    private val bowlAndVoice = RoutineCues(VisualEffectType.WATER, CueSound.TIBETAN_BOWL, voice = true)
+
     @Test
     fun testTimerEngineInitialState() {
         val audio = FakeAudioController()
-        val engine = TimerEngine(routine = testRoutine, audioController = audio)
+        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio)
         val state = engine.timerState.value
 
         assertEquals(0, state.currentStepIndex)
@@ -78,7 +87,7 @@ class TimerEngineTest {
     @Test
     fun testTimerEngineSkipAndPrevious() {
         val audio = FakeAudioController()
-        val engine = TimerEngine(routine = testRoutine, audioController = audio)
+        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio)
 
         engine.skipStep()
         var state = engine.timerState.value
@@ -97,6 +106,7 @@ class TimerEngineTest {
         val audio = FakeAudioController()
         val engine = TimerEngine(
             routine = testRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             scope = this,
             clock = { testScheduler.currentTime }
@@ -118,6 +128,7 @@ class TimerEngineTest {
         val audio = FakeAudioController()
         val engine = TimerEngine(
             routine = testRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             reminderThresholds = setOf(50),
             scope = this,
@@ -141,6 +152,7 @@ class TimerEngineTest {
         val audio = FakeAudioController()
         val engine = TimerEngine(
             routine = testRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             reminderThresholds = setOf(50),
             scope = this,
@@ -162,6 +174,7 @@ class TimerEngineTest {
         val audio = FakeAudioController()
         val engine = TimerEngine(
             routine = testRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             reminderThresholds = setOf(75, 50, 25),
             scope = this,
@@ -185,6 +198,7 @@ class TimerEngineTest {
         val shortRoutine = testRoutine.copy(steps = listOf(RoutineStep("q", "Quick", 8)))
         val engine = TimerEngine(
             routine = shortRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             reminderThresholds = setOf(50),
             scope = this,
@@ -202,6 +216,7 @@ class TimerEngineTest {
         val audio = FakeAudioController()
         val engine = TimerEngine(
             routine = testRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             reminderThresholds = setOf(50),
             scope = this,
@@ -230,6 +245,7 @@ class TimerEngineTest {
         var now = 0L
         val engine = TimerEngine(
             routine = testRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             scope = this,
             clock = { now }
@@ -270,6 +286,7 @@ class TimerEngineTest {
         val now = 0L
         val engine = TimerEngine(
             routine = testRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             scope = this,
             clock = { now }
@@ -296,6 +313,7 @@ class TimerEngineTest {
         var now = 0L
         val engine = TimerEngine(
             routine = testRoutine,
+            cues = bowlAndVoice,
             audioController = audio,
             scope = this,
             clock = { now }
@@ -313,6 +331,73 @@ class TimerEngineTest {
         engine.resume()
         assertEquals(66_600, engine.timerState.value.stepEndEpochMs)
         assertEquals(0, engine.timerState.value.currentStepIndex)
+        engine.stop()
+    }
+
+    @Test
+    fun testVoiceWithoutSoundOnlySpeaks() = runTest {
+        val audio = FakeAudioController()
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = RoutineCues(VisualEffectType.WATER, CueSound.NONE, voice = true),
+            audioController = audio,
+            reminderThresholds = setOf(50),
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+
+        engine.start()
+        assertEquals(listOf("Step 1: Centering Breath, 10 seconds"), audio.spokenList)
+        advanceTimeBy(5100)
+        assertTrue(audio.spokenList.any { it.contains("50 percent left") })
+        advanceTimeBy(25_000)
+        assertTrue(engine.timerState.value.isCompleted)
+        assertTrue(audio.soundsPlayed.isEmpty())
+        assertEquals(0, audio.bowlsPlayed, "No tone, not even at the end")
+        assertEquals("Routine complete. Well done.", audio.spokenList.last())
+        engine.stop()
+    }
+
+    @Test
+    fun testSoundWithoutVoiceNeverSpeaks() = runTest {
+        val audio = FakeAudioController()
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = RoutineCues(VisualEffectType.WATER, CueSound.KALIMBA, voice = false),
+            audioController = audio,
+            reminderThresholds = setOf(50),
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+
+        engine.start()
+        advanceTimeBy(31_000)
+        assertTrue(engine.timerState.value.isCompleted)
+        assertEquals(listOf(CueSound.KALIMBA, CueSound.KALIMBA), audio.soundsPlayed)
+        assertTrue(audio.spokenList.isEmpty())
+        assertTrue(audio.chimesPlayed > 0, "Reminder and countdown chimes still play")
+        engine.stop()
+    }
+
+    @Test
+    fun testSilentRoutinePlaysNothing() = runTest {
+        val audio = FakeAudioController()
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = RoutineCues(VisualEffectType.WATER, CueSound.NONE, voice = false),
+            audioController = audio,
+            reminderThresholds = setOf(50),
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+
+        engine.start()
+        advanceTimeBy(31_000)
+        assertTrue(engine.timerState.value.isCompleted)
+        assertTrue(audio.soundsPlayed.isEmpty())
+        assertTrue(audio.spokenList.isEmpty())
+        assertEquals(0, audio.chimesPlayed)
+        assertEquals(0, audio.bowlsPlayed)
         engine.stop()
     }
 }

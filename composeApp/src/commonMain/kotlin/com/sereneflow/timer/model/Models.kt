@@ -1,23 +1,61 @@
 package com.sereneflow.timer.model
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class VisualEffectType(val displayName: String, val description: String) {
-    WATER("Serene Water", "Fluid liquid simulation with gentle waves and buoyant rising bubbles"),
-    BONSAI_TREE("Living Bonsai", "Procedural branching tree swaying in the wind with blooming sakura petals"),
-    COSMIC_ORBIT("Celestial Orbit", "Gravitational planetary rings and drifting stardust particles"),
-    BREATHING_LOTUS("Breathing Lotus", "Sacred geometric petals expanding to a meditative 4-4-6-2 rhythm"),
-    HOURGLASS("Zen Hourglass", "Streaming cascade of glowing sand particles and accumulating mound")
+enum class VisualEffectType(val displayName: String, val description: String, val emoji: String) {
+    WATER("Serene Water", "Fluid liquid simulation with gentle waves and buoyant rising bubbles", "🌊"),
+    BONSAI_TREE("Living Bonsai", "Procedural branching tree swaying in the wind with blooming sakura petals", "🌳"),
+    COSMIC_ORBIT("Celestial Orbit", "Gravitational planetary rings and drifting stardust particles", "✨"),
+    BREATHING_LOTUS("Breathing Lotus", "Sacred geometric petals expanding to a meditative 4-4-6-2 rhythm", "🌸"),
+    HOURGLASS("Zen Hourglass", "Streaming cascade of glowing sand particles and accumulating mound", "⏳")
 }
 
+/** The tone played when a step starts; spoken guidance is chosen separately ([VoiceGuidance]). */
 @Serializable
-enum class SoundMode(val displayName: String, val description: String) {
-    VOICE_AND_CHIME("Voice & Singing Bowl", "Spoken step guidance with resonant Tibetan singing bowl chimes"),
-    VOICE_ONLY("Voice Guidance", "Clear, gentle voice announcing step transitions and milestones"),
-    TIBETAN_BOWL("Tibetan Bowl Only", "Harmonic singing bowl bell on step start and completion"),
-    NATURE_SOUND("Zen Chime", "Soft wooden wind chime tones on transitions"),
-    MUTE("Silent (Visual Only)", "Completely silent with gentle visual pulses")
+enum class CueSound(val displayName: String, val description: String) {
+    TIBETAN_BOWL("Tibetan Bowl", "Resonant singing bowl with a slow shimmer"),
+    ZEN_CHIME("Zen Chime", "Soft, bright chime tone"),
+    CRYSTAL_BOWL("Crystal Bowl", "Pure, long-ringing quartz bowl"),
+    TEMPLE_GONG("Temple Gong", "Deep, low gong that fades slowly"),
+    KALIMBA("Kalimba", "Gentle plucked thumb-piano note"),
+    WOOD_BLOCK("Wood Block", "Short, warm wooden knock"),
+    KOSHI_CHIMES("Koshi Chimes", "A small cascade of wind-chime notes"),
+    NONE("No Sound", "No tone; only the voice, if it is on")
+}
+
+/** Whether a routine speaks its steps: as Settings says, or always / never. */
+@Serializable
+enum class VoiceGuidance(val displayName: String) {
+    DEFAULT("Default"),
+    ON("On"),
+    OFF("Off")
+}
+
+/**
+ * The sound setting of app versions up to 1.x, which mixed the tone and the voice. Only read from
+ * saved files, and turned into a [CueSound] and voice by [migrated].
+ */
+@Serializable
+enum class LegacySoundMode(val sound: CueSound, val voice: Boolean) {
+    VOICE_AND_CHIME(CueSound.TIBETAN_BOWL, true),
+    VOICE_ONLY(CueSound.NONE, true),
+    TIBETAN_BOWL(CueSound.TIBETAN_BOWL, false),
+    NATURE_SOUND(CueSound.ZEN_CHIME, false),
+    MUTE(CueSound.NONE, false)
+}
+
+/** What a routine actually looks and sounds like once its Default choices are filled in. */
+data class RoutineCues(
+    val visualEffect: VisualEffectType,
+    val sound: CueSound,
+    val voice: Boolean
+) {
+    val isSilent: Boolean
+        get() = sound == CueSound.NONE && !voice
 }
 
 @Serializable
@@ -67,11 +105,37 @@ data class Routine(
     val id: String,
     val title: String,
     val description: String = "",
-    val visualEffect: VisualEffectType = VisualEffectType.WATER,
-    val soundMode: SoundMode = SoundMode.VOICE_AND_CHIME,
+    /** null = the default from Settings, read when the routine starts. */
+    val visualEffect: VisualEffectType? = null,
+    /** null = the default from Settings, read when the routine starts. */
+    val sound: CueSound? = null,
+    val voice: VoiceGuidance = VoiceGuidance.DEFAULT,
     val steps: List<RoutineStep> = emptyList(),
-    val accentColorHex: Long = 0xFF5B8A72L
+    val accentColorHex: Long = 0xFF5B8A72L,
+    @OptIn(ExperimentalSerializationApi::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    @SerialName("soundMode") val legacySoundMode: LegacySoundMode? = null
 ) {
+    /** This routine with a sound setting from an older version turned into [sound] and [voice]. */
+    fun migrated(): Routine {
+        val legacy = legacySoundMode ?: return this
+        return copy(
+            sound = legacy.sound,
+            voice = if (legacy.voice) VoiceGuidance.ON else VoiceGuidance.OFF,
+            legacySoundMode = null
+        )
+    }
+
+    fun resolve(preferences: AppPreferences): RoutineCues = RoutineCues(
+        visualEffect = visualEffect ?: preferences.defaultVisualEffect,
+        sound = sound ?: preferences.defaultSound,
+        voice = when (voice) {
+            VoiceGuidance.DEFAULT -> preferences.defaultVoice
+            VoiceGuidance.ON -> true
+            VoiceGuidance.OFF -> false
+        }
+    )
+
     val totalDurationSeconds: Int
         get() = steps.sumOf { it.durationSeconds }
 
@@ -99,7 +163,9 @@ data class Routine(
 data class AppPreferences(
     val themeMode: AppThemeMode = AppThemeMode.ZEN_SAGE,
     val defaultVisualEffect: VisualEffectType = VisualEffectType.WATER,
-    val defaultSoundMode: SoundMode = SoundMode.VOICE_AND_CHIME,
+    val defaultSound: CueSound = CueSound.TIBETAN_BOWL,
+    /** Whether routines whose voice is Default speak their steps. */
+    val defaultVoice: Boolean = true,
     /** Percent-of-step-left thresholds that trigger a reminder, e.g. 50 = halfway. */
     val reminderThresholds: Set<Int> = setOf(50),
     /** Keep the display awake while the timer screen is showing. */
@@ -112,8 +178,17 @@ data class AppPreferences(
     /** Whether the user has answered the background-mode prompt shown after their first save. */
     val backgroundModeAsked: Boolean = false,
     /** The text-to-speech voice for spoken cues (AudioController.englishVoices); null = default. */
-    val voiceId: String? = null
+    val voiceId: String? = null,
+    @OptIn(ExperimentalSerializationApi::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    @SerialName("defaultSoundMode") val legacyDefaultSoundMode: LegacySoundMode? = null
 ) {
+    /** These preferences with a default sound from an older version turned into the new two. */
+    fun migrated(): AppPreferences {
+        val legacy = legacyDefaultSoundMode ?: return this
+        return copy(defaultSound = legacy.sound, defaultVoice = legacy.voice, legacyDefaultSoundMode = null)
+    }
+
     companion object {
         val ReminderOptions = listOf(75, 50, 25, 10)
     }

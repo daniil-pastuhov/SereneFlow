@@ -1,0 +1,5 @@
+• Five new step sounds: Crystal Bowl, Temple Gong, Kalimba, Wood Block and Koshi Chimes
+• Voice guidance is now its own switch and works with any sound
+• Routines can follow your default visual effect, sound and voice from Settings
+• Set a step's length with minute and second wheels
+• Swipe back to peek at the previous screen

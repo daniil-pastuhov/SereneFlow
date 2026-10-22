@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +28,7 @@ import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
 import com.sereneflow.timer.ui.platform.ConfirmDialog
 import com.sereneflow.timer.storage.createFileStorage
+import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.theme.SereneFlowTheme
 import com.sereneflow.timer.ui.ActiveTimerScreen
 import com.sereneflow.timer.ui.RoutineEditorScreen
@@ -34,6 +36,7 @@ import com.sereneflow.timer.ui.RoutineListScreen
 import com.sereneflow.timer.ui.SettingsScreen
 import com.sereneflow.timer.ui.SoundPickerScreen
 import com.sereneflow.timer.ui.VoicePickerScreen
+import com.sereneflow.timer.ui.rememberPredictiveBackTransition
 
 sealed class AppScreen {
     data object List : AppScreen()
@@ -74,7 +77,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
     LaunchedEffect(Unit) {
         if (demoLaunch !is DemoLaunch.Timer) return@LaunchedEffect
         val routine = routineRepository.getRoutine(demoLaunch.routineId) ?: return@LaunchedEffect
-        TimerSession.start(routine, preferences.reminderThresholds, backgroundMode = false)
+        TimerSession.start(routine, preferences, backgroundMode = false)
             .engine.fastForward(demoLaunch.elapsedSeconds * 1000L)
     }
 
@@ -101,10 +104,18 @@ fun App(demoLaunch: DemoLaunch? = null) {
 
     // System back (Android) and the edge swipe (iOS) pop the stack. Screens with unsaved state
     // register their own handler, which takes precedence while they are composed.
+    // While the gesture moves, the screen below is previewed (see rememberPredictiveBackTransition).
+    val backNavigationState = rememberNavigationEventState(NavigationEventInfo.None)
     NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
+        state = backNavigationState,
         isBackEnabled = backStack.size > 1,
         onBackCompleted = ::pop
+    )
+    val screenTransition = rememberPredictiveBackTransition(
+        current = currentScreen,
+        backTarget = backStack.getOrElse(backStack.lastIndex - 1) { currentScreen },
+        navigationState = backNavigationState,
+        label = "ScreenTransition"
     )
 
     SereneFlowTheme(themeMode = preferences.themeMode) {
@@ -130,13 +141,15 @@ fun App(demoLaunch: DemoLaunch? = null) {
             )
         }
 
-        AnimatedContent(
-            targetState = currentScreen,
-            modifier = Modifier.fillMaxSize(),
+        screenTransition.AnimatedContent(
+            // The theme's background under screens that are part-way in or out, rather than the
+            // window's launch background.
+            modifier = Modifier.fillMaxSize().background(LocalSereneColors.current.background),
             transitionSpec = {
                 // Push slides in from the trailing edge; pop slides back out to it. A pop is a
-                // screen that has left the back stack.
-                val isPop = initialState !in backStack
+                // screen that has left the back stack, or one a back gesture is moving below.
+                val isPop = initialState !in backStack ||
+                    backStack.indexOf(targetState) < backStack.indexOf(initialState)
                 if (isPop) {
                     (fadeIn(tween(220)) + slideInHorizontally(tween(320)) { -it / 4 }) togetherWith
                             (fadeOut(tween(220)) + slideOutHorizontally(tween(320)) { it })
@@ -144,15 +157,15 @@ fun App(demoLaunch: DemoLaunch? = null) {
                     (fadeIn(tween(220)) + slideInHorizontally(tween(320)) { it }) togetherWith
                             (fadeOut(tween(220)) + slideOutHorizontally(tween(320)) { -it / 4 })
                 }
-            },
-            label = "ScreenTransition"
+            }
         ) { screen ->
             when (screen) {
                 is AppScreen.List -> {
                     RoutineListScreen(
                         routineRepository = routineRepository,
+                        defaultVisualEffect = preferences.defaultVisualEffect,
                         onStartRoutine = { routine ->
-                            TimerSession.start(routine, preferences.reminderThresholds, preferences.backgroundMode)
+                            TimerSession.start(routine, preferences, preferences.backgroundMode)
                             push(AppScreen.Timer(routine))
                         },
                         onEditRoutine = { routine -> push(AppScreen.Editor(routine)) },
@@ -163,8 +176,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
                 is AppScreen.Editor -> {
                     RoutineEditorScreen(
                         routine = screen.routine,
-                        defaultVisualEffect = preferences.defaultVisualEffect,
-                        defaultSoundMode = preferences.defaultSoundMode,
+                        preferences = preferences,
                         onSaveRoutine = { saved ->
                             routineRepository.saveRoutine(saved)
                             pop()
