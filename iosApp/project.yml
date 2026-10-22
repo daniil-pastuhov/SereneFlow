@@ -1,0 +1,64 @@
+name: iosApp
+options:
+  bundleIdPrefix: com.sereneflow
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    DEVELOPMENT_TEAM: ""
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+      - path: Shared
+    dependencies:
+      - target: SereneFlowWidget
+    preBuildScripts:
+      - name: "Compile Kotlin/Native Framework"
+        script: |
+          if [ -d "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home" ]; then
+            export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"
+          elif [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]; then
+            export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+          fi
+          export PATH="$JAVA_HOME/bin:$PATH"
+          cd "$SRCROOT/.."
+          ./gradlew --no-daemon :composeApp:embedAndSignAppleFrameworkForXcode
+    settings:
+      base:
+        ARCHS: "arm64"
+        ONLY_ACTIVE_ARCH: "YES"
+        PRODUCT_NAME: "SereneFlow"
+        PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer.iosApp"
+        INFOPLIST_FILE: "iosApp/Info.plist"
+        ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
+        # Simulator builds are ad-hoc signed; the Live Activity extension won't launch unsigned.
+        CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: "-"
+        FRAMEWORK_SEARCH_PATHS:
+          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework"
+          - "$(SRCROOT)/../composeApp/build/bin/iosArm64/debugFramework"
+          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/releaseFramework"
+          - "$(SRCROOT)/../composeApp/build/bin/iosArm64/releaseFramework"
+          - "$(BUILT_PRODUCTS_DIR)"
+        OTHER_LDFLAGS:
+          - "-framework"
+          - "ComposeApp"
+        ENABLE_BITCODE: "NO"
+  SereneFlowWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.2"
+    sources:
+      - path: SereneFlowWidget
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_NAME: "SereneFlowWidget"
+        PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer.iosApp.widget"
+        INFOPLIST_FILE: "SereneFlowWidget/Info.plist"
+        CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: "-"
+        ARCHS: "arm64"
+        ONLY_ACTIVE_ARCH: "YES"
+        SKIP_INSTALL: "YES"

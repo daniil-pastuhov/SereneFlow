@@ -1,0 +1,25 @@
+*.iml
+.gradle
+.kotlin
+/local.properties
+/.idea/
+.DS_Store
+/build
+/*/build
+captures
+.externalNativeBuild
+.cxx
+iosApp/build
+iosApp/.build
+DerivedData/
+*.xcworkspace
+*.xcuserdatad
+
+# Release signing secrets — never commit these
+keystore.properties
+*.jks
+*.keystore
+# Google Play publishing service-account keys
+*service-account*.json
+# App Store Connect API keys
+*.p8
