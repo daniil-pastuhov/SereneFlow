@@ -72,8 +72,10 @@ Play details); add `--validate-only` for a dry run.
     when the routine ends or the user ends it.*
   - User impact if deferred or interrupted: *Step announcements and chimes would play late or not
     at all while the screen is off, so the user would lose track of their routine.*
-  - Video: record the emulator (`adb shell screenrecord /sdcard/fgs.mp4`) while starting a routine
-    with the setting on, locking the screen and showing the notification; upload it unlisted.
+  - Video: https://daniil-pastuhov.github.io/sereneflow-privacy/fgs-demo.mp4 (in the
+    sereneflow-privacy repository). Recorded on the emulator with `adb shell screenrecord --size
+    640x1428`: a routine started with the setting on, Home, the notification's Pause and Resume,
+    screen off, and back to the app with the timer moved on. Re-record it if the flow changes.
 - **Notifications:** the app asks for `POST_NOTIFICATIONS` only after the user opts in to following
   the routine with the screen off.
 
