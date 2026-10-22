@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Zen Sage's background (theme/Color.kt): the window and system splash screen behind the
+         app icon until Compose draws, so opening the app fades into it without a grey flash. -->
+    <color name="window_background">#FFF7F8F5</color>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Only what shows before Compose draws: Compose paints the app's own theme. -->
+    <style name="Base.Theme.SereneFlow" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+
+    <style name="Theme.SereneFlow" parent="Base.Theme.SereneFlow" />
+</resources>
