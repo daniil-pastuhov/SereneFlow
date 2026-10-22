@@ -87,6 +87,10 @@ Timer/
 ```
 The resulting APK is located at `androidApp/build/outputs/apk/debug/androidApp-debug.apk`.
 
+In Android Studio, run the shared **androidApp** configuration. It starts `SereneFlowActivity`
+directly, because the launcher entry Android Studio picks by default (`.MainActivity`) is turned off
+whenever a theme other than Zen Sage is chosen: the app icon follows the theme.
+
 ### iOS
 1. Build the shared framework:
    ```bash
