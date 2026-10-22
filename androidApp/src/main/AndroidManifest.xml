@@ -15,7 +15,7 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- One launcher entry per app icon (Settings → App icon); AppIconSwitcher enables one and
+        <!-- One launcher entry per app icon (it follows the theme); AppIconSwitcher enables one and
              disables the rest. Zen Sage is the default, and keeps the component name 1.0's launcher
              entry had (.MainActivity), so home-screen shortcuts from before survive the update.
              Names must match AppThemeMode.androidLauncherAlias (checked by AppIconAssetsTest). -->

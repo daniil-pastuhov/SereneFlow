@@ -87,6 +87,30 @@ class RepositoryPersistenceTest {
         assertEquals(true, prefs.keepScreenOn)
         assertEquals(false, prefs.backgroundMode)
         assertEquals(false, prefs.backgroundModeAsked)
+        assertEquals(null, prefs.voiceId)
+    }
+
+    @Test
+    fun preferencesFromBeforeVoicesDecode() = runTest {
+        // A 1.0 preferences.json has no voiceId: it must load with the default voice, not reset.
+        val storage = FakeFileStorage().apply {
+            files["preferences.json"] = """{"themeMode":"SUNSET_CLAY","keepScreenOn":false}"""
+        }
+        val prefs = prefsRepo(storage).preferences.value
+        assertEquals(AppThemeMode.SUNSET_CLAY, prefs.themeMode)
+        assertEquals(false, prefs.keepScreenOn)
+        assertEquals(null, prefs.voiceId)
+    }
+
+    @Test
+    fun voiceSurvivesReloadAndClears() = runTest {
+        val storage = FakeFileStorage()
+        prefsRepo(storage).setVoice("en-us-x-tpc-local")
+        val reloaded = prefsRepo(storage)
+        assertEquals("en-us-x-tpc-local", reloaded.preferences.value.voiceId)
+
+        reloaded.setVoice(null)
+        assertEquals(null, prefsRepo(storage).preferences.value.voiceId)
     }
 
     @Test

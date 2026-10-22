@@ -61,6 +61,11 @@ fun App(demoLaunch: DemoLaunch? = null) {
     }
     val currentScreen = backStack.last()
 
+    // The voice applies to every spoken cue, so it is set on the shared controller.
+    LaunchedEffect(preferences.voiceId) {
+        TimerSession.audioController.setVoice(preferences.voiceId)
+    }
+
     // The timer screen is pushed by the session effect below once the session is running.
     LaunchedEffect(Unit) {
         if (demoLaunch !is DemoLaunch.Timer) return@LaunchedEffect

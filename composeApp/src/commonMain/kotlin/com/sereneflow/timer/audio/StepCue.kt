@@ -11,10 +11,10 @@ fun AudioController.playStepCue(mode: SoundMode, step: RoutineStep, stepIndex: I
     when (mode) {
         SoundMode.VOICE_AND_CHIME -> {
             playTibetanBowl()
-            speak("${step.title}, ${step.formattedDuration}")
+            speak("${step.title}, ${step.spokenDuration}")
         }
         SoundMode.VOICE_ONLY -> {
-            speak("Step ${stepIndex + 1}: ${step.title}, ${step.formattedDuration}")
+            speak("Step ${stepIndex + 1}: ${step.title}, ${step.spokenDuration}")
         }
         SoundMode.TIBETAN_BOWL -> {
             playTibetanBowl()

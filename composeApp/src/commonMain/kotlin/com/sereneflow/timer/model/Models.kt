@@ -47,6 +47,19 @@ data class RoutineStep(
                 "${seconds}s"
             }
         }
+
+    /** The duration as the voice says it, e.g. "1 minute 30 seconds"; "2m" can be read as meters. */
+    val spokenDuration: String
+        get() {
+            val minutes = durationSeconds / 60
+            val seconds = durationSeconds % 60
+            fun unit(count: Int, name: String) = if (count == 1) "1 $name" else "$count ${name}s"
+            return when {
+                minutes > 0 && seconds > 0 -> "${unit(minutes, "minute")} ${unit(seconds, "second")}"
+                minutes > 0 -> unit(minutes, "minute")
+                else -> unit(seconds, "second")
+            }
+        }
 }
 
 @Serializable
@@ -97,7 +110,9 @@ data class AppPreferences(
      */
     val backgroundMode: Boolean = false,
     /** Whether the user has answered the background-mode prompt shown after their first save. */
-    val backgroundModeAsked: Boolean = false
+    val backgroundModeAsked: Boolean = false,
+    /** The text-to-speech voice for spoken cues (AudioController.englishVoices); null = default. */
+    val voiceId: String? = null
 ) {
     companion object {
         val ReminderOptions = listOf(75, 50, 25, 10)

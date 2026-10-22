@@ -12,12 +12,18 @@ import platform.AVFAudio.AVAudioSessionCategoryOptionMixWithOthers
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
 import platform.AVFAudio.AVSpeechBoundary
 import platform.AVFAudio.AVSpeechSynthesisVoice
+import platform.AVFAudio.AVSpeechSynthesisVoiceQualityEnhanced
+import platform.AVFAudio.AVSpeechSynthesisVoiceQualityPremium
+import platform.AVFAudio.AVSpeechSynthesisVoiceTraitIsNoveltyVoice
 import platform.AVFAudio.AVSpeechSynthesizer
 import platform.AVFAudio.AVSpeechUtterance
 import platform.AVFAudio.AVAudioSessionInterruptionNotification
 import platform.AVFAudio.AVAudioSessionInterruptionTypeEnded
 import platform.AVFAudio.AVAudioSessionInterruptionTypeKey
 import platform.AVFAudio.setActive
+import platform.Foundation.NSLocale
+import platform.Foundation.NSLocaleIdentifier
+import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSNumber
 import platform.Foundation.NSOperationQueue
@@ -44,6 +50,7 @@ class IOSAudioController : AudioController {
     private var nextPlayer = 0
     private var isSetUp = false
     private var sessionActive = false
+    private var voiceId: String? = null
     private var idleGeneration = 0
 
     private fun ensureEngine(): Boolean {
@@ -112,12 +119,40 @@ class IOSAudioController : AudioController {
         utterance.rate = 0.48f // Calm, measured speaking tempo
         utterance.pitchMultiplier = 0.95f
         // Prompts are English, so keep an English voice regardless of the device language.
-        utterance.voice = AVSpeechSynthesisVoice.voiceWithLanguage("en-US")
+        utterance.voice = voiceId?.let { AVSpeechSynthesisVoice.voiceWithIdentifier(it) }
+            ?: AVSpeechSynthesisVoice.voiceWithLanguage("en-US")
         if (speechSynthesizer.speaking) {
             speechSynthesizer.stopSpeakingAtBoundary(AVSpeechBoundary.AVSpeechBoundaryImmediate)
         }
         speechSynthesizer.speakUtterance(utterance)
         if (!sessionActive) scheduleIdlePause()
+    }
+
+    override suspend fun englishVoices(): List<VoiceOption> {
+        val english = NSLocale(localeIdentifier = "en_US")
+        // voiceTraits (novelty voices such as "Bubbles") only exists from iOS 17.
+        val hasTraits = AVSpeechSynthesisVoice.instancesRespondToSelector(NSSelectorFromString("voiceTraits"))
+        return AVSpeechSynthesisVoice.speechVoices()
+            .filterIsInstance<AVSpeechSynthesisVoice>()
+            .filter { it.language.startsWith("en") }
+            .filterNot { hasTraits && (it.voiceTraits and AVSpeechSynthesisVoiceTraitIsNoveltyVoice) != 0uL }
+            .sortedWith(compareBy<AVSpeechSynthesisVoice>({ -it.quality }, { it.language }, { it.name }))
+            .map { voice ->
+                val quality = when (voice.quality) {
+                    AVSpeechSynthesisVoiceQualityPremium -> " · Premium"
+                    AVSpeechSynthesisVoiceQualityEnhanced -> " · Enhanced"
+                    else -> ""
+                }
+                VoiceOption(
+                    id = voice.identifier,
+                    name = voice.name,
+                    detail = (english.displayNameForKey(NSLocaleIdentifier, voice.language) ?: voice.language) + quality
+                )
+            }
+    }
+
+    override fun setVoice(id: String?) {
+        voiceId = id
     }
 
     override fun stop() = onMain {

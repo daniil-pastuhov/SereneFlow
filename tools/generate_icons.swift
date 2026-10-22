@@ -2,8 +2,8 @@
 //
 //   swift tools/generate_icons.swift
 //
-// Run from the repository root. One icon per colour theme, which the user picks in Settings →
-// App icon (AppIconSwitcher). Zen Sage is the default icon; the others are alternates. Writes:
+// Run from the repository root. One icon per colour theme; the app icon follows the theme picked in
+// Settings (AppIconSwitcher). Zen Sage is the default icon; the others are alternates. Writes:
 //   iosApp/iosApp/Assets.xcassets/AppIcon<-Theme>.appiconset/  (1024px light, dark, tinted)
 //   androidApp/src/main/res/mipmap-*/ic_launcher<_theme>(_round).png        (legacy, API < 26)
 //   androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher<_theme>(_round).xml (adaptive icons)
@@ -305,7 +305,7 @@ for theme in themes {
 
     """, "\(iosDir)/Contents.json")
 
-    // Shown in Settings → App icon; Compose clips the corners.
+    // Shown beside each theme in Settings; Compose clips the corners.
     try write(render(size: 192, palette: theme.light),
               "composeApp/src/commonMain/composeResources/drawable/app_icon_\(theme.previewName).png")
 }
