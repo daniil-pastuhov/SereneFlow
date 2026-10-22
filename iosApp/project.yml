@@ -42,6 +42,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer"
         INFOPLIST_FILE: "iosApp/Info.plist"
         ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
+        # The per-theme icons (the app icon follows the theme), made by tools/generate_icons.swift.
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-OceanMist AppIcon-SunsetClay AppIcon-MidnightStarlight"
         # Simulator builds are ad-hoc signed; the Live Activity extension won't launch unsigned.
         CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: "-"
         # Only the framework the pre-build script just made for this configuration and SDK, so a

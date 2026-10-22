@@ -17,6 +17,7 @@
 		6EDBDEF57087535AE16C26D6 /* TimerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09A8B87794DF76A2697A309 /* TimerLiveActivity.swift */; };
 		700CBD72B671F1FE45C9C771 /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */; };
 		D93BD5B69D2EE684C4885351 /* SereneFlowWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */; };
+		FADAC6B78CC0760D79FFBE28 /* AppIconManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20C8D999D5F6A6674705005F /* AppIconManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +49,7 @@
 		13460834AD319CDAB0309B74 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		1405A1434510C5F0CBFB7F9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerActivityAttributes.swift; sourceTree = "<group>"; };
+		20C8D999D5F6A6674705005F /* AppIconManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconManager.swift; sourceTree = "<group>"; };
 		3771E0E755C03BF5A873EAE2 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C09A8B87794DF76A2697A309 /* TimerLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerLiveActivity.swift; sourceTree = "<group>"; };
@@ -73,6 +75,7 @@
 		1DB4B685CAEE8BEFEBBAEF94 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				20C8D999D5F6A6674705005F /* AppIconManager.swift */,
 				F543015C899423D4B01CEB2E /* Assets.xcassets */,
 				CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */,
 				C117AD187833E2513BD2F553 /* Info.plist */,
@@ -238,6 +241,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FADAC6B78CC0760D79FFBE28 /* AppIconManager.swift in Sources */,
 				56B0305B5D3847FC6B326502 /* ContentView.swift in Sources */,
 				5B9E263BAEE021053101FA23 /* LiveActivityManager.swift in Sources */,
 				286BA5B2656DC8914398C0CC /* TimerActivityAttributes.swift in Sources */,
@@ -437,6 +441,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-OceanMist AppIcon-SunsetClay AppIcon-MidnightStarlight";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
@@ -465,6 +470,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-OceanMist AppIcon-SunsetClay AppIcon-MidnightStarlight";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";

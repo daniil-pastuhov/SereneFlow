@@ -34,6 +34,9 @@ demo notifications -e visible false
 mkdir -p "$OUT"
 rm -f "$OUT"/*.png(N)
 adb shell run-as "$PACKAGE" mkdir -p files
+# The enabled launcher entry, which follows the app icon picked in Settings.
+LAUNCHER=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN \
+  -c android.intent.category.LAUNCHER "$PACKAGE" | tail -1 | tr -d '\r')
 
 N=1
 # The list is read on fd 3: adb shell would swallow the loop's stdin.
@@ -44,7 +47,7 @@ while read -r -u 3 NAME VIEW ROUTINE ELAPSED THEME; do
   # backgroundModeAsked: no prompt about following the routine with the screen off.
   print -r -- "{\"themeMode\":\"$THEME\",\"backgroundModeAsked\":true}" |
     adb shell run-as "$PACKAGE" sh -c "'cat > files/preferences.json'"
-  adb shell am start -W -n "$PACKAGE/.MainActivity" --es demoScreen "$VIEW" \
+  adb shell am start -W -n "$LAUNCHER" --es demoScreen "$VIEW" \
     --es demoRoutine "$ROUTINE" --ei demoElapsed "$ELAPSED" >/dev/null
   # Long enough for the screen transition, the particles and the text-to-speech engine to start.
   if [[ $VIEW == timer ]]; then sleep 10; else sleep 5; fi

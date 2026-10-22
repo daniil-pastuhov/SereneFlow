@@ -245,12 +245,23 @@ class TimerEngineTest {
         val state = engine.timerState.value
         assertEquals(1, state.currentStepIndex, "Should have moved past the 10s first step")
         assertEquals(5, state.secondsRemainingInStep, "15s into the 20s second step")
-        assertEquals(listOf("Presence & Calm, 20s"), audio.spokenList, "Announce only the step we landed on")
+        assertEquals(listOf("Presence & Calm, 20 seconds"), audio.spokenList, "Announce only the step we landed on")
 
         now = 31_000
         advanceTimeBy(300)
         assertTrue(engine.timerState.value.isCompleted, "Routine ended while suspended")
         engine.stop()
+    }
+
+    @Test
+    fun testDurationsAreSpokenInWords() {
+        fun spoken(seconds: Int) = RoutineStep("s", "Step", seconds).spokenDuration
+        assertEquals("2 minutes", spoken(120))
+        assertEquals("1 minute", spoken(60))
+        assertEquals("1 minute 30 seconds", spoken(90))
+        assertEquals("2 minutes 1 second", spoken(121))
+        assertEquals("45 seconds", spoken(45))
+        assertEquals("1 second", spoken(1))
     }
 
     @Test

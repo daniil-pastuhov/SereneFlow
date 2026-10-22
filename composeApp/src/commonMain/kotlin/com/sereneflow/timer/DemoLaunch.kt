@@ -3,7 +3,7 @@ package com.sereneflow.timer
 /**
  * Opens a screen straight away instead of the routine list, for the store screenshot scripts
  * (scripts/ios_screenshots.sh, scripts/android_screenshots.sh). Only debug builds read it: from
- * launch arguments on iOS (MainViewController) and intent extras on Android (MainActivity).
+ * launch arguments on iOS (MainViewController) and intent extras on Android (SereneFlowActivity).
  */
 sealed class DemoLaunch {
     /** Runs [routineId], [elapsedSeconds] into its first step. */

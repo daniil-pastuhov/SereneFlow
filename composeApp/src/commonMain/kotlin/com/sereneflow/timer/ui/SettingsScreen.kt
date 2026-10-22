@@ -1,5 +1,6 @@
 package com.sereneflow.timer.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -39,6 +40,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,12 +52,23 @@ import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.model.SoundMode
+import com.sereneflow.timer.audio.PreviewStep
+import com.sereneflow.timer.audio.VoiceOption
+import com.sereneflow.timer.audio.playStepCue
+import com.sereneflow.timer.platform.AppIconSwitcher
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.PreferencesRepository
+import com.sereneflow.timer.resources.Res
+import com.sereneflow.timer.resources.app_icon_midnight_starlight
+import com.sereneflow.timer.resources.app_icon_ocean_mist
+import com.sereneflow.timer.resources.app_icon_sunset_clay
+import com.sereneflow.timer.resources.app_icon_zen_sage
+import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
 import com.sereneflow.timer.theme.LocalSereneColors
-import com.sereneflow.timer.theme.getSerenePalette
 import com.sereneflow.timer.ui.platform.PlatformIcons
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,6 +119,9 @@ fun SettingsScreen(
                 // Theme Section
                 item {
                     SectionHeader(title = "HARMONIZED THEMES", icon = Icons.Default.Palette)
+                    if (AppIconSwitcher.isSupported) {
+                        SectionNote(listOfNotNull("The app icon changes with the theme.", AppIconSwitcher.changeNote).joinToString(" "))
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Column(
@@ -119,41 +135,33 @@ fun SettingsScreen(
                     ) {
                         AppThemeMode.entries.forEach { mode ->
                             val isSelected = mode == currentTheme
-                            val samplePalette = getSerenePalette(mode, isDark = mode == AppThemeMode.MIDNIGHT_STARLIGHT)
 
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(14.dp))
                                     .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                    .clickable { preferencesRepository.setThemeMode(mode) }
+                                    .clickable {
+                                        preferencesRepository.setThemeMode(mode)
+                                        // The app icon follows the theme. Only on a real change: iOS
+                                        // shows its alert even when the icon stays the same.
+                                        if (AppIconSwitcher.isSupported && AppIconSwitcher.current() != mode) {
+                                            AppIconSwitcher.set(mode) {}
+                                        }
+                                    }
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    // Color preview swatches
-                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(18.dp)
-                                                .clip(CircleShape)
-                                                .background(samplePalette.primary)
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(18.dp)
-                                                .clip(CircleShape)
-                                                .background(samplePalette.secondary)
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(18.dp)
-                                                .clip(CircleShape)
-                                                .background(samplePalette.background)
-                                                .border(1.dp, Color.Gray.copy(alpha = 0.3f), CircleShape)
-                                        )
-                                    }
+                                    // The theme's app icon, which picking it also switches to.
+                                    Image(
+                                        painter = painterResource(mode.previewIcon),
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(RoundedCornerShape(9.dp))
+                                    )
 
                                     Spacer(modifier = Modifier.width(14.dp))
 
@@ -200,7 +208,12 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(14.dp))
                                     .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                    .clickable { preferencesRepository.setDefaultSoundMode(mode) }
+                                    .clickable {
+                                        preferencesRepository.setDefaultSoundMode(mode)
+                                        // A sample of the sound, as a step start plays it.
+                                        TimerSession.audioController.stop()
+                                        TimerSession.audioController.playStepCue(mode, PreviewStep, stepIndex = 0)
+                                    }
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -232,6 +245,28 @@ fun SettingsScreen(
                     }
                 }
 
+                // Voice, for the sounds that speak; also while a chosen voice is set, as it applies
+                // to every routine that speaks and must stay visible to be changed back.
+                if (defaultSound == SoundMode.VOICE_AND_CHIME || defaultSound == SoundMode.VOICE_ONLY ||
+                    preferences.voiceId != null
+                ) {
+                    item {
+                        VoiceSection(
+                            selectedId = preferences.voiceId,
+                            onSelect = { id ->
+                                preferencesRepository.setVoice(id)
+                                // A sample in the new voice, as a step start says it; spoken even
+                                // when the default sound itself doesn't speak.
+                                val sample = if (defaultSound == SoundMode.VOICE_AND_CHIME) defaultSound else SoundMode.VOICE_ONLY
+                                TimerSession.audioController.apply {
+                                    setVoice(id)
+                                    stop()
+                                    playStepCue(sample, PreviewStep, stepIndex = 0)
+                                }
+                            }
+                        )
+                    }
+                }
                 // Screen & background behaviour
                 item {
                     SectionHeader(title = "SCREEN & BACKGROUND", icon = Icons.Default.PhoneAndroid)
@@ -373,6 +408,93 @@ fun SettingsScreen(
         }
     }
 }
+
+@Composable
+private fun VoiceSection(selectedId: String?, onSelect: (String?) -> Unit) {
+    val colors = LocalSereneColors.current
+    // The speech engine can take a moment to start on Android, so the list arrives later.
+    val voices by produceState<List<VoiceOption>?>(initialValue = null) {
+        value = TimerSession.audioController.englishVoices()
+    }
+
+    SectionHeader(title = "VOICE", icon = Icons.Default.RecordVoiceOver)
+    SectionNote("Speaks the step announcements. Tap a voice to hear it.")
+    Spacer(modifier = Modifier.height(10.dp))
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(colors.cardBackground)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val list = voices
+        when {
+            list == null -> VoiceRow("Loading voices…", null, isSelected = false, onClick = null)
+            else -> {
+                // A saved voice that was since removed from the device falls back to the default.
+                val effectiveId = selectedId?.takeIf { id -> list.any { it.id == id } }
+                VoiceRow("Default", "The device's standard English voice", effectiveId == null) { onSelect(null) }
+                list.forEach { voice ->
+                    VoiceRow(voice.name, voice.detail, voice.id == effectiveId) { onSelect(voice.id) }
+                }
+                if (list.isEmpty()) {
+                    Text(
+                        text = "No other English voices are installed. You can add some in the device's text-to-speech settings.",
+                        fontSize = 12.sp,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 14.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VoiceRow(name: String, detail: String?, isSelected: Boolean, onClick: (() -> Unit)?) {
+    val colors = LocalSereneColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name,
+                fontSize = 14.sp,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                color = colors.onSurface
+            )
+            if (detail != null) {
+                Text(text = detail, fontSize = 12.sp, color = colors.onSurfaceVariant)
+            }
+        }
+        if (isSelected) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "Selected",
+                tint = colors.primary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+private val AppThemeMode.previewIcon: DrawableResource
+    get() = when (this) {
+        AppThemeMode.ZEN_SAGE -> Res.drawable.app_icon_zen_sage
+        AppThemeMode.OCEAN_MIST -> Res.drawable.app_icon_ocean_mist
+        AppThemeMode.SUNSET_CLAY -> Res.drawable.app_icon_sunset_clay
+        AppThemeMode.MIDNIGHT_STARLIGHT -> Res.drawable.app_icon_midnight_starlight
+    }
 
 @Composable
 private fun SwitchRow(

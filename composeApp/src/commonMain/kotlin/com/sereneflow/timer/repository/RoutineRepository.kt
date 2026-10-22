@@ -136,6 +136,10 @@ class PreferencesRepository(
         _preferences.update { it.copy(defaultSoundMode = mode) }
     }
 
+    fun setVoice(id: String?) {
+        _preferences.update { it.copy(voiceId = id) }
+    }
+
     fun setKeepScreenOn(enabled: Boolean) {
         _preferences.update { it.copy(keepScreenOn = enabled) }
     }

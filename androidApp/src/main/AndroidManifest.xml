@@ -8,16 +8,65 @@
         android:label="SereneFlow"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.NoActionBar">
+        <!-- Started from the launcher through one of the aliases below. -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SereneFlowActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- One launcher entry per app icon (it follows the theme); AppIconSwitcher enables one and
+             disables the rest. Zen Sage is the default, and keeps the component name 1.0's launcher
+             entry had (.MainActivity), so home-screen shortcuts from before survive the update.
+             Names must match AppThemeMode.androidLauncherAlias (checked by AppIconAssetsTest). -->
+        <activity-alias
+            android:name=".MainActivity"
+            android:targetActivity=".SereneFlowActivity"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherOceanMist"
+            android:targetActivity=".SereneFlowActivity"
+            android:icon="@mipmap/ic_launcher_ocean_mist"
+            android:roundIcon="@mipmap/ic_launcher_ocean_mist_round"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherSunsetClay"
+            android:targetActivity=".SereneFlowActivity"
+            android:icon="@mipmap/ic_launcher_sunset_clay"
+            android:roundIcon="@mipmap/ic_launcher_sunset_clay_round"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherMidnightStarlight"
+            android:targetActivity=".SereneFlowActivity"
+            android:icon="@mipmap/ic_launcher_midnight_starlight"
+            android:roundIcon="@mipmap/ic_launcher_midnight_starlight_round"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
     </application>
 
 </manifest>
