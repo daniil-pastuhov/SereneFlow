@@ -107,7 +107,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
       # androidApp's debug signing config uses the key alias "debug", and the Android Gradle
       # Plugin only generates a debug keystore by itself for its default alias, so a fresh runner
       # has none. A throwaway one is fine: nothing signed with it leaves the runner.
@@ -145,7 +145,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
       # The Kotlin/Native toolchain is a large download; keep it between runs.
       - name: Cache Kotlin/Native
         uses: actions/cache@v6
@@ -180,7 +180,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
       - name: Restore the release signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -254,7 +254,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
       - name: Cache Kotlin/Native
         uses: actions/cache@v6
         with:
