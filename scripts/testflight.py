@@ -33,7 +33,8 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 
 BUNDLE_ID = "com.sereneflow.timer"
-API = "https://api.appstoreconnect.apple.com/v1"
+API_HOST = "https://api.appstoreconnect.apple.com"
+API = API_HOST + "/v1"
 # Release notes are stored under Play's locale codes; App Store Connect names the same
 # languages as in store-listing/app-store/.
 ASC_LOCALES = {"en-US": "en-US"}
@@ -82,7 +83,8 @@ class Asc:
         # Tokens live 15 minutes and a processing wait can take longer.
         if time.time() - self.issued > 10 * 60:
             self.token, self.issued = make_token(), time.time()
-        url = API + path
+        # Paths are relative to /v1, except the few resources that only exist under /v2.
+        url = (API_HOST if path.startswith("/v2/") else API) + path
         if params:
             url += "?" + urllib.parse.urlencode(params)
         request = urllib.request.Request(
@@ -282,6 +284,7 @@ def cmd_appstore(args):
     asc.call("PATCH", f"/appStoreVersions/{version['id']}/relationships/build",
              body={"data": {"type": "builds", "id": build["id"]}})
 
+    first_version = all(v["id"] == version["id"] for v in versions)
     # A new version starts with the previous one's localizations, except What's New and the
     # promotional text, which Apple leaves empty.
     localizations = {loc["attributes"]["locale"]: loc["id"] for loc in asc.call(
@@ -293,9 +296,17 @@ def cmd_appstore(args):
             print(f"::warning::The App Store listing has no {locale} localization; "
                   f"its What's New was not set")
             continue
-        asc.call("PATCH", f"/appStoreVersionLocalizations/{localizations[locale]}", body={"data": {
-            "type": "appStoreVersionLocalizations", "id": localizations[locale],
-            "attributes": {"whatsNew": text}}})
+        try:
+            asc.call("PATCH", f"/appStoreVersionLocalizations/{localizations[locale]}", body={"data": {
+                "type": "appStoreVersionLocalizations", "id": localizations[locale],
+                "attributes": {"whatsNew": text}}})
+        except AscError as error:
+            # An app's first version has no What's New, and App Store Connect refuses the field
+            # with a 409. Any other refusal is a real error.
+            if error.status != 409 or not first_version:
+                raise
+            print(f"What's New not set ({locale}): the app's first version has none")
+            continue
         print(f"Set What's New ({locale})")
 
     return submit_for_review(asc, app_id, version, args.release_type)

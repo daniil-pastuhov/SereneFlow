@@ -38,6 +38,10 @@ scripts/frame_screenshots.py build/raw-android-tablet store-listing/google-play/
   draft on the internal track; roll it out in Play Console, then delete the variable (or set it to
   `completed`) so later builds reach testers by themselves.
 
+`scripts/play_listing.py --contact-from com.foodtracker.android` publishes the texts, icon,
+feature graphic, screenshots and contact details below (the email is copied from BestBefore's
+Play details); add `--validate-only` for a dry run.
+
 ## 2. Store settings
 
 | Field | Value |

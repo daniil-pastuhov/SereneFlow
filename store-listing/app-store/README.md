@@ -37,6 +37,19 @@ headline lives in that script), keeping key artwork inside the safe areas of App
 | `header.png` | 3840×1646 (21:9) | Product page header: three timers, no text |
 | `search-result.png` | 3840×2560 (3:2) | Search results: a headline and the lotus timer |
 
+## 0. Filling it in through the API
+
+`scripts/appstore_listing.py --version X.Y.Z --review-contact-from com.foodbest.ios` (after
+`source ~/.config/sereneflow/store.env`) sets everything below that has an API: name, subtitle,
+privacy policy, categories, content rights, age rating, availability and price, the version's
+texts and copyright, the App Review contact (copied from BestBefore's) and notes, and the iPhone
+and iPad screenshots. `scripts/testflight.py appstore` then attaches the build and submits.
+
+Only these are done by hand in App Store Connect, as they have no API:
+- **App Privacy** → Get Started → "No, we do not collect data from this app" → Publish.
+- **App Information** → the regulated medical device declaration: **No**.
+- The iPhone Duo screenshot sets and the Header and Search Results images (drag in from `en-US/`).
+
 ## 1. One-time setup (done)
 
 - App record "SereneFlow" (id 6825780663), bundle IDs `com.sereneflow.timer` and
@@ -44,9 +57,9 @@ headline lives in that script), keeping key artwork inside the safe areas of App
 - API key `26GZL2YVV9`, role Admin (automatic cloud signing needs Admin). The key, its issuer ID
   and the Android upload key are in `~/.config/sereneflow/` (`source store.env`) and in the
   repository's Actions secrets.
-- **Still to do:** TestFlight → Internal Testing → add a group (with yourself) and turn on access
-  to all builds; `scripts/testflight.py` hands each build to the internal groups.
-- Rename the app to the listing name in App Information: `SereneFlow: Routine Timer`.
+- TestFlight internal group "Internal" with access to all builds; the account holder is a tester.
+- The primary language is English (U.S.); the record was created with English (U.K.), switched
+  through the API before the first submission.
 
 ## 2. Uploading a build
 
