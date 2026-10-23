@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -221,7 +222,7 @@ private fun HeaderSection(
         IconButton(
             onClick = onOpenSettings,
             modifier = Modifier
-                .size(46.dp)
+                .size(48.dp)
                 .clip(CircleShape)
                 .background(colors.surfaceVariant.copy(alpha = 0.7f))
         ) {
@@ -307,9 +308,10 @@ private fun RoutineCard(
                 }
 
                 Box {
+                    // A 48dp target, nudged into the card's padding so the icon stays where it was.
                     IconButton(
                         onClick = { showMenu = true },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.offset(x = 6.dp, y = (-6).dp).size(48.dp)
                     ) {
                         Icon(
                             imageVector = PlatformIcons.More,

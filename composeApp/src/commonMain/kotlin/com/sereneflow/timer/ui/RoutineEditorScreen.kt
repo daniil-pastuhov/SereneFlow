@@ -9,6 +9,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -55,6 +58,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -765,37 +769,41 @@ private fun StepEditorItem(
                     )
                 )
 
-                // Duration Stepper Row
-                Row(
+                // Duration Stepper Row. The pills wrap below the duration on narrow cards rather
+                // than shrink their touch targets.
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    itemVerticalAlignment = Alignment.CenterVertically
                 ) {
                     // Opens the platform's minutes and seconds wheels.
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .border(1.dp, colors.primary.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-                            .clickable { showDurationPicker = true }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = step.formattedDuration,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.primary
-                        )
+                    SmallTarget(onClick = { showDurationPicker = true }) { indication ->
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .border(1.dp, colors.primary.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                                .then(indication)
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = step.formattedDuration,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.primary
+                            )
+                        }
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // No gaps: each pill's 48dp target already spaces them.
+                    Row {
                         DurationPill(label = "-1m") {
                             val newDuration = (step.durationSeconds - 60).coerceAtLeast(10)
                             onUpdateStep(step.copy(durationSeconds = newDuration))
@@ -883,19 +891,21 @@ private fun SectionLabel(text: String) {
 @Composable
 private fun OptionChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     val colors = LocalSereneColors.current
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.6f))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
-        )
+    SmallTarget(onClick = onClick) { indication ->
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(14.dp))
+                .background(if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.6f))
+                .then(indication)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+            )
+        }
     }
 }
 
@@ -905,19 +915,42 @@ private fun DurationPill(
     onClick: () -> Unit
 ) {
     val colors = LocalSereneColors.current
+    SmallTarget(onClick = onClick) { indication ->
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(colors.surfaceVariant.copy(alpha = 0.8f))
+                .then(indication)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * A 48dp touch target around a smaller control drawn by [content], which applies the modifier it
+ * is given after its clip so the press ripple follows its own shape.
+ */
+@Composable
+private fun SmallTarget(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable (indication: Modifier) -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(colors.surfaceVariant.copy(alpha = 0.8f))
-            .clickable { onClick() }
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+        modifier = modifier
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .clickable(interactionSource = interactionSource, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = colors.onSurfaceVariant
-        )
+        content(Modifier.indication(interactionSource, ripple()))
     }
 }

@@ -338,7 +338,7 @@ fun ActiveTimerScreen(
                         closeButton()
                         title(Alignment.CenterHorizontally)
                         // Keeps the title centred when there is no sound to toggle.
-                        muteButton?.invoke() ?: Spacer(modifier = Modifier.size(42.dp))
+                        muteButton?.invoke() ?: Spacer(modifier = Modifier.size(MinTouchTarget))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     StepRail(stepCount = routine.steps.size, currentIndex = railIndex)
@@ -511,6 +511,9 @@ private fun ExtendStepButton(onClick: () -> Unit) {
 
 private const val EXTEND_STEP_SECONDS = 30
 
+/** The smallest touch target either platform's guidelines allow. */
+private val MinTouchTarget = 48.dp
+
 /** Segmented progress rail: one segment per step, filled up to the current one. */
 @Composable
 private fun StepRail(stepCount: Int, currentIndex: Int) {
@@ -546,19 +549,22 @@ private fun RoundIconButton(
     onClick: () -> Unit
 ) {
     val colors = LocalSereneColors.current
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(colors.surface.copy(alpha = 0.85f))
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = tint,
-            modifier = Modifier.size(iconSize)
-        )
+    // At least a 48dp touch target, even when the circle drawn is smaller.
+    IconButton(onClick = onClick, modifier = Modifier.size(maxOf(size, MinTouchTarget))) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(colors.surface.copy(alpha = 0.85f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = tint,
+                modifier = Modifier.size(iconSize)
+            )
+        }
     }
 }
 
