@@ -25,8 +25,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -50,6 +53,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.navigationevent.NavigationEventInfo
@@ -57,8 +61,13 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.audio.PreviewStep
@@ -74,6 +83,7 @@ import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.ui.platform.ConfirmDialog
 import com.sereneflow.timer.ui.platform.DurationPicker
 import com.sereneflow.timer.ui.platform.PlatformIcons
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -159,6 +169,35 @@ fun RoutineEditorScreen(
         )
     }
 
+    // Keyboard Next walks from the routine name through the step titles; Done on the last one.
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val stepFocusRequesters = remember { mutableMapOf<String, FocusRequester>() }
+    fun stepFocusRequester(stepId: String) = stepFocusRequesters.getOrPut(stepId) { FocusRequester() }
+
+    fun focusStepTitle(index: Int) {
+        val stepId = steps.getOrNull(index)?.id ?: return
+        val itemIndex = FIRST_STEP_ITEM + index
+        coroutineScope.launch {
+            // The LazyColumn only composes visible items, so bring the step in before focusing it.
+            if (listState.layoutInfo.visibleItemsInfo.none { it.index == itemIndex }) {
+                listState.animateScrollToItem(itemIndex)
+            }
+            try {
+                stepFocusRequester(stepId).requestFocus()
+            } catch (_: IllegalStateException) {
+                // Not attached (the step was removed meanwhile): leave focus where it is.
+            }
+        }
+    }
+
+    fun finishEditing() {
+        focusManager.clearFocus()
+        keyboard?.hide()
+    }
+
     val totalDurationSecs = steps.sumOf { it.durationSeconds }
     val totalMins = totalDurationSecs / 60
     val totalSecs = totalDurationSecs % 60
@@ -223,6 +262,7 @@ fun RoutineEditorScreen(
         ) { paddingValues ->
             ReadableWidth(modifier = Modifier.fillMaxSize().padding(paddingValues)) { sidePadding ->
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = sidePadding, end = sidePadding, top = 12.dp, bottom = 32.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -242,6 +282,9 @@ fun RoutineEditorScreen(
                                 value = title,
                                 onValueChange = { title = it },
                                 label = { Text("Routine Name") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(onNext = { focusStepTitle(0) }),
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
@@ -342,6 +385,10 @@ fun RoutineEditorScreen(
                             step = step,
                             isFirst = index == 0,
                             isLast = index == steps.size - 1,
+                            titleFocusRequester = stepFocusRequester(step.id),
+                            onTitleImeAction = {
+                                if (index < steps.size - 1) focusStepTitle(index + 1) else finishEditing()
+                            },
                             onUpdateStep = { updated ->
                                 val list = steps.toMutableList()
                                 list[index] = updated
@@ -465,6 +512,9 @@ fun RoutineEditorScreen(
     }
 }
 
+/** LazyColumn index of the first step: after the name, look & sound, voice and timeline header items. */
+private const val FIRST_STEP_ITEM = 4
+
 /** The lists the editor opens over itself. */
 private enum class EditorPicker { VisualEffect, Sound }
 
@@ -474,6 +524,9 @@ private fun StepEditorItem(
     step: RoutineStep,
     isFirst: Boolean,
     isLast: Boolean,
+    titleFocusRequester: FocusRequester,
+    /** Next on the keyboard (Done on the last step). */
+    onTitleImeAction: () -> Unit,
     onUpdateStep: (RoutineStep) -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
@@ -549,8 +602,13 @@ private fun StepEditorItem(
                     OutlinedTextField(
                         value = step.title,
                         onValueChange = { onUpdateStep(step.copy(title = it)) },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).focusRequester(titleFocusRequester),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = if (isLast) ImeAction.Done else ImeAction.Next),
+                        keyboardActions = KeyboardActions(
+                            onNext = { onTitleImeAction() },
+                            onDone = { onTitleImeAction() }
+                        ),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = colors.primary,
