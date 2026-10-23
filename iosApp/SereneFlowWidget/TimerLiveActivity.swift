@@ -259,7 +259,7 @@ private struct ControlButtons: View {
                     Label(state.isPaused ? "Resume" : "Pause", systemImage: state.isPaused ? "play.fill" : "pause.fill")
                 }
                 Button(intent: SkipStepIntent()) {
-                    Label("Skip", systemImage: "forward.fill")
+                    Label("Skip", systemImage: "forward.end.fill")
                 }
                 Button(intent: EndRoutineIntent()) {
                     Label("End", systemImage: "xmark")

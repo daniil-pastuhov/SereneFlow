@@ -135,6 +135,22 @@ class TimerEngine(
         transitionToStep(prevIdx)
     }
 
+    /**
+     * The player-style back button: restarts the current step once it has run for more than
+     * [REWIND_RESTARTS_AFTER_MS] (or on the first step), otherwise goes back to the previous step.
+     */
+    fun rewind() {
+        if (rewindRestartsStep()) restartStep() else previousStep()
+    }
+
+    /** Whether [rewind] would restart the current step rather than go back one. */
+    fun rewindRestartsStep(): Boolean {
+        val state = _timerState.value
+        val step = state.currentStep ?: return true
+        return state.currentStepIndex == 0 ||
+            step.durationMs - state.stepRemainingMsAt(clock()) > REWIND_RESTARTS_AFTER_MS
+    }
+
     fun setMuted(muted: Boolean) {
         _timerState.update { it.copy(isMuted = muted) }
         if (muted) audioController.stop()
@@ -336,6 +352,9 @@ class TimerEngine(
 
     companion object {
         const val MIN_REMINDER_STEP_SECONDS = 10
+
+        /** How far into a step [rewind] restarts it instead of going back, as music players do. */
+        const val REWIND_RESTARTS_AFTER_MS = 3_000L
 
         /** Clock re-read interval; sub-second so displayed seconds flip close to the real boundary. */
         private const val TICK_MS = 200L

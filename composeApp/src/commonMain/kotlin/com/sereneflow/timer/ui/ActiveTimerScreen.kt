@@ -51,11 +51,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -336,14 +335,16 @@ fun ActiveTimerScreen(
             val controls: @Composable () -> Unit = {
                 val buttonSize = 52.dp * controlScale
                 val iconSize = 24.dp * controlScale
-                RoundIconButton(Icons.Default.Refresh, stringResource(Res.string.timer_restart_step), colors.onSurface, buttonSize, iconSize) { engine.restartStep() }
-                RoundIconButton(Icons.Default.FastRewind, stringResource(Res.string.timer_previous_step), colors.onSurface, buttonSize, iconSize) { engine.previousStep() }
+                // One back button, as in media players: restarts the step, or goes back one when
+                // pressed near its start. Its label follows, re-read as the state ticks.
+                val rewindLabel = if (engine.rewindRestartsStep()) Res.string.timer_restart_step else Res.string.timer_previous_step
+                RoundIconButton(Icons.Default.SkipPrevious, stringResource(rewindLabel), colors.onSurface, buttonSize, iconSize) { engine.rewind() }
                 PlayPauseButton(
                     isPlaying = state.isRunning && !state.isPaused,
                     size = 80.dp * controlScale,
                     onClick = { engine.togglePlayPause() }
                 )
-                RoundIconButton(Icons.Default.FastForward, stringResource(Res.string.timer_skip_step), colors.onSurface, buttonSize, iconSize) { engine.skipStep() }
+                RoundIconButton(Icons.Default.SkipNext, stringResource(Res.string.timer_skip_step), colors.onSurface, buttonSize, iconSize) { engine.skipStep() }
             }
 
             if (sideLayout) {
@@ -385,10 +386,9 @@ fun ActiveTimerScreen(
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .widthIn(max = 480.dp * controlScale)
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    horizontalArrangement = Arrangement.spacedBy(28.dp * controlScale, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     controls()

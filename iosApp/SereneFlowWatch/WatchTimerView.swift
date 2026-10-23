@@ -140,7 +140,7 @@ private struct ControlButtons: View {
         Button {
             tap(.skip)
         } label: {
-            Label("Skip", systemImage: "forward.fill")
+            Label("Skip", systemImage: "forward.end.fill")
         }
         .accessibilityLabel(Text("Skip to next step"))
         .disabled(pendingCommand != nil)

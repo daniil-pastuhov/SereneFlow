@@ -113,6 +113,35 @@ class TimerEngineTest {
     }
 
     @Test
+    fun rewindRestartsAStepUnderWayAndGoesBackNearItsStart() = runTest {
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = FakeAudioController(),
+            phrases = EnglishPhrases,
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+        engine.start()
+        engine.skipStep()
+
+        advanceTimeBy(5_000)
+        assertTrue(engine.rewindRestartsStep())
+        engine.rewind()
+        assertEquals(1, engine.timerState.value.currentStepIndex)
+        assertEquals(20, engine.timerState.value.secondsRemainingInStep)
+
+        advanceTimeBy(1_000)
+        assertFalse(engine.rewindRestartsStep())
+        engine.rewind()
+        assertEquals(0, engine.timerState.value.currentStepIndex)
+
+        // The first step has nothing before it, so rewinding always restarts it.
+        assertTrue(engine.rewindRestartsStep())
+        engine.stop()
+    }
+
+    @Test
     fun testTimerEngineTickingAndAudio() = runTest {
         val audio = FakeAudioController()
         val engine = TimerEngine(

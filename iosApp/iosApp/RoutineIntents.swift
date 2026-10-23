@@ -79,7 +79,7 @@ struct SereneFlowShortcuts: AppShortcutsProvider {
             intent: SkipStepIntent(),
             phrases: ["Skip step in \(.applicationName)", "Next step in \(.applicationName)"],
             shortTitle: "Skip Step",
-            systemImageName: "forward.fill"
+            systemImageName: "forward.end.fill"
         )
         AppShortcut(
             intent: EndRoutineIntent(),
