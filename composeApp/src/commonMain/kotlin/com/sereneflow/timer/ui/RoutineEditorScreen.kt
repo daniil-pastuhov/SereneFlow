@@ -95,6 +95,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.sereneflow.timer.model.newStepId
@@ -544,10 +547,14 @@ fun RoutineEditorScreen(
                                 }
                                 Text(
                                     text = "$rounds",
+                                    modifier = Modifier
+                                        .widthIn(min = 28.dp)
+                                        .clearAndSetSemantics {
+                                            contentDescription = if (rounds == 1) "1 round" else "$rounds rounds"
+                                        },
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.onSurface,
-                                    modifier = Modifier.widthIn(min = 28.dp),
                                     textAlign = TextAlign.Center
                                 )
                                 IconButton(onClick = { rounds++ }, enabled = rounds < Routine.MAX_ROUNDS) {
@@ -759,6 +766,7 @@ private fun StepEditorItem(
                     value = step.title,
                     onValueChange = { onUpdateStep(step.copy(title = it)) },
                     selectAllOnFocus = selectTitleOnFocus,
+                    label = { Text("Step ${index + 1} name") },
                     modifier = Modifier.fillMaxWidth().focusRequester(titleFocusRequester),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = if (isLast) ImeAction.Done else ImeAction.Next),
@@ -781,7 +789,13 @@ private fun StepEditorItem(
                     itemVerticalAlignment = Alignment.CenterVertically
                 ) {
                     // Opens the platform's minutes and seconds wheels.
-                    SmallTarget(onClick = { showDurationPicker = true }) { indication ->
+                    SmallTarget(
+                        onClick = { showDurationPicker = true },
+                        onClickLabel = "Change duration",
+                        modifier = Modifier.semantics {
+                            contentDescription = "Step ${index + 1} duration, ${step.spokenDuration}"
+                        }
+                    ) { indication ->
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
@@ -808,19 +822,19 @@ private fun StepEditorItem(
 
                     // No gaps: each pill's 48dp target already spaces them.
                     Row {
-                        DurationPill(label = "-1m") {
+                        DurationPill(label = "-1m", description = "Decrease by 1 minute") {
                             val newDuration = (step.durationSeconds - 60).coerceAtLeast(10)
                             onUpdateStep(step.copy(durationSeconds = newDuration))
                         }
-                        DurationPill(label = "-15s") {
+                        DurationPill(label = "-15s", description = "Decrease by 15 seconds") {
                             val newDuration = (step.durationSeconds - 15).coerceAtLeast(10)
                             onUpdateStep(step.copy(durationSeconds = newDuration))
                         }
-                        DurationPill(label = "+15s") {
+                        DurationPill(label = "+15s", description = "Increase by 15 seconds") {
                             val newDuration = step.durationSeconds + 15
                             onUpdateStep(step.copy(durationSeconds = newDuration))
                         }
-                        DurationPill(label = "+1m") {
+                        DurationPill(label = "+1m", description = "Increase by 1 minute") {
                             val newDuration = step.durationSeconds + 60
                             onUpdateStep(step.copy(durationSeconds = newDuration))
                         }
@@ -916,10 +930,16 @@ private fun OptionChip(label: String, isSelected: Boolean, onClick: () -> Unit) 
 @Composable
 private fun DurationPill(
     label: String,
+    /** What a screen reader says: "-15s" alone is unclear. */
+    description: String,
     onClick: () -> Unit
 ) {
     val colors = LocalSereneColors.current
-    SmallTarget(onClick = onClick) { indication ->
+    SmallTarget(onClick = onClick, modifier = Modifier.clearAndSetSemantics {
+        contentDescription = description
+        role = Role.Button
+        onClick { onClick(); true }
+    }) { indication ->
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
@@ -947,6 +967,7 @@ private fun DurationPill(
 private fun SmallTarget(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onClickLabel: String? = null,
     selected: Boolean? = null,
     content: @Composable (indication: Modifier) -> Unit
 ) {
@@ -956,7 +977,13 @@ private fun SmallTarget(
             .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             .then(
                 if (selected == null) {
-                    Modifier.clickable(interactionSource = interactionSource, indication = null, role = Role.Button, onClick = onClick)
+                    Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClickLabel = onClickLabel,
+                        role = Role.Button,
+                        onClick = onClick
+                    )
                 } else {
                     Modifier.selectable(selected, interactionSource = interactionSource, indication = null, role = Role.RadioButton, onClick = onClick)
                 }
