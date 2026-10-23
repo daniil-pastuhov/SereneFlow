@@ -17,8 +17,8 @@ internal object TimerNotifications {
     fun ensureChannel(context: Context) {
         // Low importance: the routine plays its own bowl/voice cues, so the notification stays silent.
         val channel = NotificationChannelCompat.Builder(CHANNEL_ID, NotificationManagerCompat.IMPORTANCE_LOW)
-            .setName("Running routine")
-            .setDescription("Shows the current step and time left while a routine runs")
+            .setName(context.getString(R.string.notification_channel_name))
+            .setDescription(context.getString(R.string.notification_channel_description))
             .setShowBadge(false)
             .build()
         NotificationManagerCompat.from(context).createNotificationChannel(channel)
@@ -33,7 +33,7 @@ internal object TimerNotifications {
     fun buildOngoing(context: Context, snapshot: SessionSnapshot): Notification {
         val builder = baseBuilder(context, snapshot)
             .setContentTitle(snapshot.stepTitle)
-            .setContentText(statusLine(snapshot))
+            .setContentText(statusLine(context, snapshot))
             .setOngoing(true)
             .setRequestPromotedOngoing(true)
             .setStyle(progressStyle(snapshot))
@@ -46,23 +46,23 @@ internal object TimerNotifications {
                 .setChronometerCountDown(true)
         } else {
             builder.setShowWhen(false)
-                .setShortCriticalText("Paused")
+                .setShortCriticalText(context.getString(R.string.notification_paused))
         }
 
         builder.addAction(
             0,
-            if (snapshot.isPaused) "Resume" else "Pause",
+            context.getString(if (snapshot.isPaused) R.string.notification_action_resume else R.string.notification_action_pause),
             actionIntent(context, TimerActionReceiver.ACTION_TOGGLE)
         )
-        builder.addAction(0, "Skip", actionIntent(context, TimerActionReceiver.ACTION_SKIP))
-        builder.addAction(0, "End", actionIntent(context, TimerActionReceiver.ACTION_END))
+        builder.addAction(0, context.getString(R.string.notification_action_skip), actionIntent(context, TimerActionReceiver.ACTION_SKIP))
+        builder.addAction(0, context.getString(R.string.notification_action_end), actionIntent(context, TimerActionReceiver.ACTION_END))
         return builder.build()
     }
 
     fun buildComplete(context: Context, snapshot: SessionSnapshot): Notification =
         baseBuilder(context, snapshot)
-            .setContentTitle("Routine complete")
-            .setContentText("You finished \"${snapshot.routineTitle}\". Take a moment to notice how you feel.")
+            .setContentTitle(context.getString(R.string.notification_complete_title))
+            .setContentText(context.getString(R.string.notification_complete_text, snapshot.routineTitle))
             .setAutoCancel(true)
             .setShowWhen(true)
             .build()
@@ -71,7 +71,7 @@ internal object TimerNotifications {
     fun buildPlaceholder(context: Context): Notification =
         NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_timer)
-            .setContentTitle("Routine ended")
+            .setContentTitle(context.getString(R.string.notification_ended))
             .setSilent(true)
             .build()
 
@@ -86,13 +86,15 @@ internal object TimerNotifications {
             .setContentIntent(openAppIntent(context))
             .apply { snapshot.accentArgb?.let { setColor(it.toInt()) } }
 
-    private fun statusLine(snapshot: SessionSnapshot): String {
-        val step = listOfNotNull(snapshot.roundLabel, "Step ${snapshot.stepIndex + 1} of ${snapshot.stepCount}")
-            .joinToString(" · ")
+    private fun statusLine(context: Context, snapshot: SessionSnapshot): String {
+        val stepPosition = context.getString(R.string.notification_step_position, snapshot.stepIndex + 1, snapshot.stepCount)
+        val step = if (snapshot.rounds > 1) {
+            context.getString(R.string.notification_round_step_position, snapshot.round, snapshot.rounds, stepPosition)
+        } else stepPosition
         return when {
-            snapshot.isPaused -> "Paused · ${formatRemaining(snapshot.stepRemainingMs)} left · $step"
-            snapshot.nextStepTitle != null -> "$step · Up next: ${snapshot.nextStepTitle}"
-            else -> "$step · Final step"
+            snapshot.isPaused -> context.getString(R.string.notification_status_paused, formatRemaining(snapshot.stepRemainingMs), step)
+            snapshot.nextStepTitle != null -> context.getString(R.string.notification_status_next, step, snapshot.nextStepTitle)
+            else -> context.getString(R.string.notification_status_last, step)
         }
     }
 

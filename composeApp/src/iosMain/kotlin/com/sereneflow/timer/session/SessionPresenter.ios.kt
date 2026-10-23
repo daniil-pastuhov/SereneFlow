@@ -2,6 +2,14 @@ package com.sereneflow.timer.session
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.sereneflow.timer.resources.Res
+import com.sereneflow.timer.resources.banner_complete_body
+import com.sereneflow.timer.resources.banner_complete_title
+import com.sereneflow.timer.resources.banner_round_step_body
+import com.sereneflow.timer.resources.banner_step_body
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationState
 import platform.UserNotifications.UNAuthorizationOptionAlert
@@ -58,7 +66,9 @@ interface WatchBridge {
         remainingSeconds: Double,
         isPaused: Boolean,
         isCompleted: Boolean,
-        roundLabel: String?
+        /** The current round of [rounds]; both 1 without rounds. */
+        round: Int,
+        rounds: Int
     )
 
     fun end()
@@ -75,6 +85,9 @@ object WatchRegistry {
 private class IosSessionPresenter : SessionPresenter {
     private var lastStepIndex = -1
     private var lastCompleted = false
+
+    /** Reads the banners' words from resources, on the main thread. */
+    private val scope = MainScope()
 
     override fun show(snapshot: SessionSnapshot) = onMain {
         LiveActivityRegistry.bridge?.startOrUpdate(
@@ -106,7 +119,8 @@ private class IosSessionPresenter : SessionPresenter {
             remainingSeconds = snapshot.stepRemainingMs / 1000.0,
             isPaused = snapshot.isPaused,
             isCompleted = snapshot.isCompleted,
-            roundLabel = snapshot.roundLabel
+            round = snapshot.round,
+            rounds = snapshot.rounds
         )
 
         val stepChanged = lastStepIndex != -1 && snapshot.stepIndex != lastStepIndex
@@ -117,15 +131,26 @@ private class IosSessionPresenter : SessionPresenter {
         val inBackground = UIApplication.sharedApplication.applicationState != UIApplicationState.UIApplicationStateActive
         if (!inBackground) return@onMain
         when {
-            justCompleted -> postBanner("Routine complete", "You finished \"${snapshot.routineTitle}\".")
-            stepChanged -> postBanner(
-                snapshot.stepTitle,
-                listOfNotNull(
-                    snapshot.roundLabel,
-                    "Step ${snapshot.stepIndex + 1} of ${snapshot.stepCount}",
-                    snapshot.routineTitle
-                ).joinToString(" · ")
-            )
+            justCompleted -> scope.launch {
+                postBanner(
+                    getString(Res.string.banner_complete_title),
+                    getString(Res.string.banner_complete_body, snapshot.routineTitle)
+                )
+            }
+            stepChanged -> scope.launch {
+                val stepNumber = snapshot.stepIndex + 1
+                postBanner(
+                    snapshot.stepTitle,
+                    if (snapshot.rounds > 1) {
+                        getString(
+                            Res.string.banner_round_step_body,
+                            snapshot.round, snapshot.rounds, stepNumber, snapshot.stepCount, snapshot.routineTitle
+                        )
+                    } else {
+                        getString(Res.string.banner_step_body, stepNumber, snapshot.stepCount, snapshot.routineTitle)
+                    }
+                )
+            }
         }
     }
 

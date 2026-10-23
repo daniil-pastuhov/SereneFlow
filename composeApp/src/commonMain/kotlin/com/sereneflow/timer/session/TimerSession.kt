@@ -123,9 +123,6 @@ data class SessionSnapshot(
     val rounds: Int = 1
 ) {
     val totalDurationMs: Long get() = stepDurationsSeconds.sumOf { it * 1000L }
-
-    /** "Round 2 of 4", or null without rounds. */
-    val roundLabel: String? get() = if (rounds > 1) "Round $round of $rounds" else null
 }
 
 /** [original] is the routine as saved, before [Routine.expandedForRounds] made the engine's steps. */

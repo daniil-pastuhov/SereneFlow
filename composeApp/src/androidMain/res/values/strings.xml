@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Android-only text of the shared module: the running routine's notification and launcher
+     shortcuts. Android resources: apostrophes and quotes are escaped (\' and \"). -->
+<resources>
+    <string name="notification_channel_name">Running routine</string>
+    <string name="notification_channel_description">Shows the current step and time left while a routine runs</string>
+    <!-- The status bar chip while paused -->
+    <string name="notification_paused">Paused</string>
+    <string name="notification_action_resume">Resume</string>
+    <string name="notification_action_pause">Pause</string>
+    <string name="notification_action_skip">Skip</string>
+    <string name="notification_action_end">End</string>
+    <string name="notification_complete_title">Routine complete</string>
+    <!-- %1$s: the routine's name -->
+    <string name="notification_complete_text">You finished \"%1$s\". Take a moment to notice how you feel.</string>
+    <string name="notification_ended">Routine ended</string>
+    <string name="notification_step_position">Step %1$d of %2$d</string>
+    <!-- %1$d: round; %2$d: rounds; %3$s: "Step 2 of 5" -->
+    <string name="notification_round_step_position">Round %1$d of %2$d · %3$s</string>
+    <!-- %1$s: time left, e.g. "01:30"; %2$s: "Step 2 of 5" -->
+    <string name="notification_status_paused">Paused · %1$s left · %2$s</string>
+    <!-- %1$s: "Step 2 of 5"; %2$s: the next step's name -->
+    <string name="notification_status_next">%1$s · Up next: %2$s</string>
+    <string name="notification_status_last">%1$s · Final step</string>
+
+    <!-- A launcher shortcut's long label. %1$s: the routine's name -->
+    <string name="shortcut_start_routine">Start %1$s</string>
+</resources>

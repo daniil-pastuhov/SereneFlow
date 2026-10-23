@@ -28,7 +28,9 @@ struct WatchSnapshot: Equatable {
     var remaining: TimeInterval
     var isPaused: Bool
     var isCompleted: Bool
-    var roundLabel: String?
+    /// The current round of `rounds`; both 1 without rounds.
+    var round: Int
+    var rounds: Int
 
     init?(_ context: [String: Any]) {
         guard context["active"] as? Bool == true,
@@ -45,7 +47,8 @@ struct WatchSnapshot: Equatable {
         remaining = context["remaining"] as? Double ?? 0
         isPaused = context["isPaused"] as? Bool ?? false
         isCompleted = context["isCompleted"] as? Bool ?? false
-        roundLabel = context["roundLabel"] as? String
+        round = context["round"] as? Int ?? 1
+        rounds = context["rounds"] as? Int ?? 1
     }
 }
 

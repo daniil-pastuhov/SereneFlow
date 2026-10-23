@@ -6,6 +6,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.sereneflow.timer.ExternalAction
+import com.sereneflow.timer.composeApp.R
 
 /** The activity in androidApp that reads `sereneflow://start` links (by name: it's another module). */
 private const val ACTIVITY_CLASS = "com.sereneflow.timer.SereneFlowActivity"
@@ -17,7 +18,7 @@ actual fun publishQuickStart(items: List<QuickStartItem>) {
         val shortcuts = items.take(max).mapIndexed { rank, item ->
             ShortcutInfoCompat.Builder(context, "start_${item.routineId}")
                 .setShortLabel(item.title.take(25))
-                .setLongLabel("Start ${item.title}".take(45))
+                .setLongLabel(context.getString(R.string.shortcut_start_routine, item.title).take(45))
                 .setIcon(IconCompat.createWithResource(context, context.applicationInfo.icon))
                 .setRank(rank)
                 // "Hey Google, open <routine> in SereneFlow" (App Actions, res/xml/shortcuts.xml).

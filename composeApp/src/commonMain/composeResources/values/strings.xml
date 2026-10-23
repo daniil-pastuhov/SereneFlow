@@ -379,6 +379,14 @@
     <string name="speech_reminder">%1$s, %2$d percent left</string>
     <string name="speech_routine_complete">Routine complete. Well done.</string>
 
+    <!-- iOS banners while the app is in the background -->
+    <string name="banner_complete_title">Routine complete</string>
+    <string name="banner_complete_body">You finished "%1$s".</string>
+    <!-- %1$d: step number; %2$d: steps; %3$s: routine name -->
+    <string name="banner_step_body">Step %1$d of %2$d · %3$s</string>
+    <!-- %1$d: round; %2$d: rounds; %3$d: step number; %4$d: steps; %5$s: routine name -->
+    <string name="banner_round_step_body">Round %1$d of %2$d · Step %3$d of %4$d · %5$s</string>
+
     <!-- Sound and voice pickers -->
     <!-- The step announced when a sound or voice is previewed -->
     <string name="preview_step_title">Morning stretch</string>

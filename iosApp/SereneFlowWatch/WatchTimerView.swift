@@ -53,9 +53,8 @@ private struct RunningView: View {
     private var statusLine: String {
         if snapshot.isCompleted { return snapshot.routineTitle }
         if snapshot.isPaused { return "Paused" }
-        return [snapshot.roundLabel, "Step \(snapshot.stepIndex + 1) of \(snapshot.stepCount)"]
-            .compactMap { $0 }
-            .joined(separator: " · ")
+        let step = "Step \(snapshot.stepIndex + 1) of \(snapshot.stepCount)"
+        return snapshot.rounds > 1 ? "Round \(snapshot.round) of \(snapshot.rounds) · \(step)" : step
     }
 }
 

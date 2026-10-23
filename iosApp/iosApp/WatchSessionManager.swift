@@ -26,7 +26,8 @@ final class WatchSessionManager: NSObject, WatchBridge, WCSessionDelegate {
         remainingSeconds: Double,
         isPaused: Bool,
         isCompleted: Bool,
-        roundLabel: String?
+        round: Int32,
+        rounds: Int32
     ) {
         var context: [String: Any] = [
             "active": true,
@@ -38,11 +39,12 @@ final class WatchSessionManager: NSObject, WatchBridge, WCSessionDelegate {
             "remaining": remainingSeconds,
             "isPaused": isPaused,
             "isCompleted": isCompleted,
+            "round": Int(round),
+            "rounds": Int(rounds),
             // Application context only sends changes; this makes each update distinct.
             "sentAt": Date().timeIntervalSince1970
         ]
         if let nextStepTitle { context["nextStepTitle"] = nextStepTitle }
-        if let roundLabel { context["roundLabel"] = roundLabel }
         if !isPaused && !isCompleted { context["stepEnd"] = stepEndEpochSeconds }
         send(context)
     }
