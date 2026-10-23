@@ -73,6 +73,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -248,9 +249,9 @@ fun ActiveTimerScreen(
                     VisualEffectType.HOURGLASS -> {
                         HourglassCanvas(
                             progress = progress,
-                            glassColor = colors.surfaceVariant,
+                            glassColor = colors.onBackground,
                             sandColor = canvasAccent,
-                            accentColor = colors.secondary
+                            frameColor = lerp(colors.background, colors.onBackground, 0.45f)
                         )
                     }
                 }
