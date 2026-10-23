@@ -115,6 +115,11 @@ fun RoutineEditorScreen(
         )
     }
 
+    // A new routine's placeholder name and steps are selected on first focus, so typing replaces them.
+    val untouchedDefaults = rememberUntouchedDefaults {
+        if (routine == null) setOf(TITLE_FIELD) + steps.map { it.id } else emptySet()
+    }
+
     val newRoutineId = remember {
         "routine_${kotlin.random.Random.nextLong().let { if (it < 0) -it else it }}"
     }
@@ -278,9 +283,13 @@ fun RoutineEditorScreen(
                                 .padding(18.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            OutlinedTextField(
+                            SelectAllOnFocusField(
                                 value = title,
-                                onValueChange = { title = it },
+                                onValueChange = {
+                                    title = it
+                                    untouchedDefaults.edited(TITLE_FIELD)
+                                },
+                                selectAllOnFocus = TITLE_FIELD in untouchedDefaults,
                                 label = { Text("Routine Name") },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -386,10 +395,12 @@ fun RoutineEditorScreen(
                             isFirst = index == 0,
                             isLast = index == steps.size - 1,
                             titleFocusRequester = stepFocusRequester(step.id),
+                            selectTitleOnFocus = step.id in untouchedDefaults,
                             onTitleImeAction = {
                                 if (index < steps.size - 1) focusStepTitle(index + 1) else finishEditing()
                             },
                             onUpdateStep = { updated ->
+                                if (updated.title != step.title) untouchedDefaults.edited(step.id)
                                 val list = steps.toMutableList()
                                 list[index] = updated
                                 steps = list
@@ -440,6 +451,7 @@ fun RoutineEditorScreen(
                                         durationSeconds = 120
                                     )
                                     steps = steps + newStep
+                                    untouchedDefaults.add(newStep.id)
                                 }
                                 .padding(vertical = 14.dp),
                             contentAlignment = Alignment.Center
@@ -512,6 +524,9 @@ fun RoutineEditorScreen(
     }
 }
 
+/** [UntouchedDefaults] key of the routine name; steps use their ids. */
+private const val TITLE_FIELD = "title"
+
 /** LazyColumn index of the first step: after the name, look & sound, voice and timeline header items. */
 private const val FIRST_STEP_ITEM = 4
 
@@ -525,6 +540,8 @@ private fun StepEditorItem(
     isFirst: Boolean,
     isLast: Boolean,
     titleFocusRequester: FocusRequester,
+    /** The title is still the editor's placeholder: select it all on focus. */
+    selectTitleOnFocus: Boolean,
     /** Next on the keyboard (Done on the last step). */
     onTitleImeAction: () -> Unit,
     onUpdateStep: (RoutineStep) -> Unit,
@@ -599,9 +616,10 @@ private fun StepEditorItem(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    OutlinedTextField(
+                    SelectAllOnFocusField(
                         value = step.title,
                         onValueChange = { onUpdateStep(step.copy(title = it)) },
+                        selectAllOnFocus = selectTitleOnFocus,
                         modifier = Modifier.weight(1f).focusRequester(titleFocusRequester),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = if (isLast) ImeAction.Done else ImeAction.Next),
