@@ -6,61 +6,145 @@ private let accent = Color(red: 0.44, green: 0.66, blue: 0.54)
 
 /// Lock Screen banner and Dynamic Island for a running routine. Countdowns and progress use
 /// `timerInterval` views, which the system animates on its own, so they stay live between updates.
+///
+/// On iOS 18+ it is also offered to a paired Apple Watch's Smart Stack, where the `.small` family
+/// shows a compact layout instead of the Lock Screen banner.
 struct TimerLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: TimerActivityAttributes.self) { context in
-            LockScreenView(routineTitle: context.attributes.routineTitle, state: context.state)
-                .activityBackgroundTint(Color.black.opacity(0.35))
-                .activitySystemActionForegroundColor(.white)
-        } dynamicIsland: { context in
-            let state = context.state
-            return DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    Label {
-                        Text(state.isCompleted ? "Done" : "\(state.stepIndex + 1)/\(state.stepCount)")
-                    } icon: {
-                        Image(systemName: "leaf.fill")
-                    }
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(accent)
-                    .padding(.leading, 4)
+        withWatchSmartStack(timerActivityConfiguration())
+    }
+
+    // An opaque result type may differ per `#available` branch (SE-0360).
+    private func withWatchSmartStack(
+        _ configuration: ActivityConfiguration<TimerActivityAttributes>
+    ) -> some WidgetConfiguration {
+        if #available(iOS 18.0, *) {
+            return configuration.supplementalActivityFamilies([.small])
+        } else {
+            return configuration
+        }
+    }
+}
+
+private func timerActivityConfiguration() -> ActivityConfiguration<TimerActivityAttributes> {
+    ActivityConfiguration(for: TimerActivityAttributes.self) { context in
+        ActivityContentView(routineTitle: context.attributes.routineTitle, state: context.state)
+            .activityBackgroundTint(Color.black.opacity(0.35))
+            .activitySystemActionForegroundColor(.white)
+    } dynamicIsland: { context in
+        let state = context.state
+        return DynamicIsland {
+            DynamicIslandExpandedRegion(.leading) {
+                Label {
+                    Text(state.isCompleted ? "Done" : "\(state.stepIndex + 1)/\(state.stepCount)")
+                } icon: {
+                    Image(systemName: "leaf.fill")
                 }
-                DynamicIslandExpandedRegion(.trailing) {
-                    CountdownText(state: state)
-                        .font(.title2.weight(.light).monospacedDigit())
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 90, alignment: .trailing)
-                        .padding(.trailing, 4)
-                }
-                DynamicIslandExpandedRegion(.center) {
-                    Text(state.isCompleted ? context.attributes.routineTitle : state.stepTitle)
-                        .font(.headline)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(accent)
+                .padding(.leading, 4)
+            }
+            DynamicIslandExpandedRegion(.trailing) {
+                CountdownText(state: state)
+                    .font(.title2.weight(.light).monospacedDigit())
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 90, alignment: .trailing)
+                    .padding(.trailing, 4)
+            }
+            DynamicIslandExpandedRegion(.center) {
+                Text(state.isCompleted ? context.attributes.routineTitle : state.stepTitle)
+                    .font(.headline)
+                    .lineLimit(1)
+            }
+            DynamicIslandExpandedRegion(.bottom) {
+                VStack(alignment: .leading, spacing: 6) {
+                    StepProgressBar(state: state)
+                    Text(subtitle(for: state))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-                DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        StepProgressBar(state: state)
-                        Text(subtitle(for: state))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                    .padding(.horizontal, 4)
-                }
-            } compactLeading: {
-                Image(systemName: state.isPaused ? "pause.fill" : "leaf.fill")
-                    .foregroundStyle(accent)
-            } compactTrailing: {
-                CountdownText(state: state)
-                    .font(.caption.monospacedDigit())
-                    .multilineTextAlignment(.trailing)
-                    .frame(width: 44)
-                    .foregroundStyle(accent)
-            } minimal: {
-                StepProgressRing(state: state)
+                .padding(.horizontal, 4)
             }
-            .keylineTint(accent)
+        } compactLeading: {
+            Image(systemName: state.isPaused ? "pause.fill" : "leaf.fill")
+                .foregroundStyle(accent)
+        } compactTrailing: {
+            CountdownText(state: state)
+                .font(.caption.monospacedDigit())
+                .multilineTextAlignment(.trailing)
+                .frame(width: 44)
+                .foregroundStyle(accent)
+        } minimal: {
+            StepProgressRing(state: state)
         }
+        .keylineTint(accent)
+    }
+}
+
+/// The Lock Screen banner, or on iOS 18+ whichever layout the activity family asks for.
+private struct ActivityContentView: View {
+    let routineTitle: String
+    let state: TimerActivityAttributes.ContentState
+
+    var body: some View {
+        if #available(iOS 18.0, *) {
+            FamilyAdaptiveView(routineTitle: routineTitle, state: state)
+        } else {
+            LockScreenView(routineTitle: routineTitle, state: state)
+        }
+    }
+}
+
+/// The Lock Screen banner on the phone; a compact layout in the watch's Smart Stack.
+@available(iOS 18.0, *)
+private struct FamilyAdaptiveView: View {
+    @Environment(\.activityFamily) private var family
+    let routineTitle: String
+    let state: TimerActivityAttributes.ContentState
+
+    var body: some View {
+        switch family {
+        case .small:
+            WatchSmallView(state: state)
+        default:
+            LockScreenView(routineTitle: routineTitle, state: state)
+        }
+    }
+}
+
+/// Apple Watch Smart Stack: step name, live countdown, step X/Y and a progress ring.
+private struct WatchSmallView: View {
+    let state: TimerActivityAttributes.ContentState
+
+    var body: some View {
+        HStack(spacing: 8) {
+            StepProgressRing(state: state)
+                .frame(width: 36, height: 36)
+                .overlay {
+                    Image(systemName: state.isPaused ? "pause.fill" : "leaf.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(accent)
+                        .accessibilityLabel(state.isPaused ? "Paused" : "Running")
+                }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(state.isCompleted ? "Routine complete" : state.stepTitle)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                CountdownText(state: state)
+                    .font(.title3.weight(.light).monospacedDigit())
+                    .foregroundStyle(accent)
+                if !state.isCompleted {
+                    Text("Step \(state.stepIndex + 1)/\(state.stepCount)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("Step \(state.stepIndex + 1) of \(state.stepCount)")
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 4)
     }
 }
 
