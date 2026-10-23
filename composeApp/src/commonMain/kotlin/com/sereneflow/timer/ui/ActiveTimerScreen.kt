@@ -30,9 +30,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
@@ -71,6 +77,7 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.sereneflow.timer.model.Routine
+import com.sereneflow.timer.model.spokenDuration
 import com.sereneflow.timer.session.ActiveSession
 import com.sereneflow.timer.ui.platform.KeepScreenOn
 import com.sereneflow.timer.engine.nowEpochMs
@@ -171,55 +178,64 @@ fun ActiveTimerScreen(
         }
 
         Box(modifier = Modifier.fillMaxSize().padding(end = stageEndPadding)) {
-            // 1. Full-screen animated backdrop
-            when (session.cues.visualEffect) {
-                VisualEffectType.WATER -> {
-                    WaterWaveCanvas(
-                        progress = { 1f - progress() }, // Drains down gracefully
-                        primaryColor = canvasAccent,
-                        secondaryColor = colors.secondary
-                    )
-                }
-                VisualEffectType.BONSAI_TREE -> {
-                    BonsaiTreeCanvas(
-                        progress = progress, // Blooms and grows
-                        trunkColor = colors.onBackground.copy(alpha = 0.6f),
-                        foliageColor = canvasAccent,
-                        leafColor = colors.secondary
-                    )
-                }
-                VisualEffectType.COSMIC_ORBIT -> {
-                    CosmicOrbitCanvas(
-                        progress = progress,
-                        coreColor = canvasAccent,
-                        accentColor = colors.secondary,
-                        trackColor = colors.onBackground.copy(alpha = 0.12f)
-                    )
-                }
-                VisualEffectType.BREATHING_LOTUS -> {
-                    BreathingLotusCanvas(
-                        progress = progress,
-                        petalColor = canvasAccent,
-                        goldAccent = colors.secondary,
-                        trackColor = colors.onBackground.copy(alpha = 0.12f)
-                    )
-                }
-                VisualEffectType.HOURGLASS -> {
-                    HourglassCanvas(
-                        progress = progress,
-                        glassColor = colors.surfaceVariant,
-                        sandColor = canvasAccent,
-                        accentColor = colors.secondary
-                    )
+            // 1. Full-screen animated backdrop. Decorative: the dial below says the same in words.
+            Box(modifier = Modifier.fillMaxSize().clearAndSetSemantics {}) {
+                when (session.cues.visualEffect) {
+                    VisualEffectType.WATER -> {
+                        WaterWaveCanvas(
+                            progress = { 1f - progress() }, // Drains down gracefully
+                            primaryColor = canvasAccent,
+                            secondaryColor = colors.secondary
+                        )
+                    }
+                    VisualEffectType.BONSAI_TREE -> {
+                        BonsaiTreeCanvas(
+                            progress = progress, // Blooms and grows
+                            trunkColor = colors.onBackground.copy(alpha = 0.6f),
+                            foliageColor = canvasAccent,
+                            leafColor = colors.secondary
+                        )
+                    }
+                    VisualEffectType.COSMIC_ORBIT -> {
+                        CosmicOrbitCanvas(
+                            progress = progress,
+                            coreColor = canvasAccent,
+                            accentColor = colors.secondary,
+                            trackColor = colors.onBackground.copy(alpha = 0.12f)
+                        )
+                    }
+                    VisualEffectType.BREATHING_LOTUS -> {
+                        BreathingLotusCanvas(
+                            progress = progress,
+                            petalColor = canvasAccent,
+                            goldAccent = colors.secondary,
+                            trackColor = colors.onBackground.copy(alpha = 0.12f)
+                        )
+                    }
+                    VisualEffectType.HOURGLASS -> {
+                        HourglassCanvas(
+                            progress = progress,
+                            glassColor = colors.surfaceVariant,
+                            sandColor = canvasAccent,
+                            accentColor = colors.secondary
+                        )
+                    }
                 }
             }
 
             // 2. Centre: step title, countdown and next step, on the canvases' centre. Not inset, so
             // it lines up with the rings, which are drawn on the whole screen.
+            val stepTitle = state.currentStep?.title ?: "Routine Step"
             TimerDial(
-                stepTitle = state.currentStep?.title ?: "Routine Step",
+                stepTitle = stepTitle,
                 remaining = state.formattedRemaining,
+                // Screen readers: "Breathe, 1 minute 30 seconds left", never "01:30".
+                remainingDescription = if (state.isCompleted) "Routine complete" else
+                    "$stepTitle, ${spokenDuration(state.secondsRemainingInStep)} left",
+                stepProgress = state.stepProgress,
+                isPaused = state.isPaused,
                 next = state.nextStep?.let { "Up next: ${it.title} (${it.formattedDuration})" },
+                nextDescription = state.nextStep?.let { "Up next: ${it.title}, ${it.spokenDuration}" },
                 scale = dialScale,
                 auraScale = auraScale,
                 onExtend = if (state.isCompleted) null else {
@@ -363,7 +379,12 @@ fun ActiveTimerScreen(
 private fun TimerDial(
     stepTitle: String,
     remaining: String,
+    /** What a screen reader says for the countdown. */
+    remainingDescription: String,
+    stepProgress: Float,
+    isPaused: Boolean,
     next: String?,
+    nextDescription: String?,
     scale: Float,
     auraScale: Float,
     /** Adds time to the current step; null hides the button. */
@@ -378,9 +399,11 @@ private fun TimerDial(
             modifier = Modifier.weight(1f).padding(bottom = gap),
             contentAlignment = Alignment.BottomCenter
         ) {
-            // Current Step Pill
+            // Current Step Pill. Announced when the step changes; the countdown is not, or it
+            // would be read out every second.
             Box(
                 modifier = Modifier
+                    .semantics { liveRegion = LiveRegionMode.Polite }
                     .clip(RoundedCornerShape(20.dp))
                     .background(colors.surface.copy(alpha = 0.88f))
                     .border(1.dp, colors.cardBorder.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
@@ -396,7 +419,16 @@ private fun TimerDial(
         }
 
         // Large Glowing Countdown Numbers
-        Box(modifier = Modifier.size(auraSize), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .size(auraSize)
+                .clearAndSetSemantics {
+                    contentDescription = remainingDescription
+                    progressBarRangeInfo = ProgressBarRangeInfo(stepProgress, 0f..1f)
+                    if (isPaused) stateDescription = "Paused"
+                },
+            contentAlignment = Alignment.Center
+        ) {
             // Soft Aura
             Box(
                 modifier = Modifier
@@ -427,6 +459,7 @@ private fun TimerDial(
                 if (next != null) {
                     Box(
                         modifier = Modifier
+                            .clearAndSetSemantics { contentDescription = nextDescription ?: next }
                             .clip(RoundedCornerShape(14.dp))
                             .background(colors.surface.copy(alpha = 0.75f))
                             .padding(horizontal = 14.dp, vertical = 6.dp)
