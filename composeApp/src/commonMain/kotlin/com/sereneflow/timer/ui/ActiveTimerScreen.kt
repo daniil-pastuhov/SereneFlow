@@ -56,6 +56,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,7 +83,10 @@ import com.sereneflow.timer.model.spokenDuration
 import com.sereneflow.timer.session.ActiveSession
 import com.sereneflow.timer.ui.platform.KeepScreenOn
 import com.sereneflow.timer.ui.platform.rememberReduceMotion
+import com.sereneflow.timer.engine.StepReminder
 import com.sereneflow.timer.engine.nowEpochMs
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.physics.BonsaiTreeCanvas
 import com.sereneflow.timer.physics.BreathingLotusCanvas
@@ -115,6 +119,19 @@ fun ActiveTimerScreen(
     // Read every frame inside the canvases' draw phase: exact progress from the wall-clock step
     // end, so visuals move continuously and stay correct after time in the background.
     val progress = { engine.timerState.value.stepProgressAt(nowEpochMs()) }
+
+    // "% left" reminders also show for a few seconds, for anyone who can't hear them.
+    // The last one stays set while the banner fades out.
+    var reminder by remember { mutableStateOf<StepReminder?>(null) }
+    var reminderVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(engine) {
+        engine.reminders.collectLatest {
+            reminder = it
+            reminderVisible = true
+            delay(REMINDER_BANNER_MS)
+            reminderVisible = false
+        }
+    }
 
     var showCloseDialog by remember { mutableStateOf(false) }
     val canCloseSilently = !state.isRunning || state.isCompleted
@@ -238,6 +255,8 @@ fun ActiveTimerScreen(
                     "$stepTitle, ${spokenDuration(state.secondsRemainingInStep)} left",
                 stepProgress = state.stepProgress,
                 isPaused = state.isPaused,
+                reminder = reminder?.let { "${it.percentLeft}% of ${it.stepTitle} left" },
+                showReminder = reminderVisible && !state.isCompleted,
                 next = state.nextStep?.let { "Up next: ${it.title} (${it.formattedDuration})" },
                 nextDescription = state.nextStep?.let { "Up next: ${it.title}, ${it.spokenDuration}" },
                 scale = dialScale,
@@ -387,6 +406,9 @@ private fun TimerDial(
     remainingDescription: String,
     stepProgress: Float,
     isPaused: Boolean,
+    /** A "% left" reminder that just fired, shown briefly. */
+    reminder: String?,
+    showReminder: Boolean,
     next: String?,
     nextDescription: String?,
     scale: Float,
@@ -464,6 +486,14 @@ private fun TimerDial(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                // Seen as well as heard: pausing, and each "% left" reminder.
+                if (isPaused) {
+                    StatusPill(text = "Paused", scale = scale)
+                }
+                AnimatedVisibility(visible = showReminder && reminder != null, enter = fadeIn(), exit = fadeOut()) {
+                    StatusPill(text = reminder.orEmpty(), scale = scale)
+                }
+
                 // Up Next Step Banner
                 if (next != null) {
                     Box(
@@ -484,6 +514,23 @@ private fun TimerDial(
             }
         }
     }
+}
+
+/** A short status line under the countdown, announced when it appears. */
+@Composable
+private fun StatusPill(text: String, scale: Float) {
+    val colors = LocalSereneColors.current
+    Text(
+        text = text,
+        fontSize = 13.sp * scale.coerceAtMost(1.4f),
+        fontWeight = FontWeight.SemiBold,
+        color = colors.primary,
+        modifier = Modifier
+            .semantics { liveRegion = LiveRegionMode.Polite }
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.surface.copy(alpha = 0.85f))
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+    )
 }
 
 /** "+30s": gives the current step a little more time. A small pill with a 48dp touch target. */
@@ -513,6 +560,9 @@ private fun ExtendStepButton(onClick: () -> Unit) {
 }
 
 private const val EXTEND_STEP_SECONDS = 30
+
+/** How long a "% left" reminder stays on screen. */
+private const val REMINDER_BANNER_MS = 4_000L
 
 /** The smallest touch target either platform's guidelines allow. */
 private val MinTouchTarget = 48.dp

@@ -2,7 +2,11 @@ package com.sereneflow.timer
 
 import com.sereneflow.timer.audio.AudioController
 import com.sereneflow.timer.audio.HapticKind
+import com.sereneflow.timer.engine.StepReminder
 import com.sereneflow.timer.engine.TimerEngine
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineCues
@@ -151,6 +155,29 @@ class TimerEngineTest {
 
         advanceTimeBy(2000) // still in step 1, must not repeat
         assertEquals(1, audio.spokenList.count { it.contains("percent left") })
+        engine.stop()
+    }
+
+    @Test
+    fun testReminderReachesTheScreenWhenMuted() = runTest {
+        val audio = FakeAudioController()
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = audio,
+            reminderThresholds = setOf(50),
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+        val shown = mutableListOf<StepReminder>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { engine.reminders.toList(shown) }
+
+        engine.setMuted(true)
+        engine.start()
+        advanceTimeBy(5100) // 5s left of 10s: 50% reached
+
+        assertEquals(listOf(StepReminder("Centering Breath", 50)), shown)
+        assertTrue(audio.spokenList.none { it.contains("percent left") }, "Muted: nothing is spoken")
         engine.stop()
     }
 

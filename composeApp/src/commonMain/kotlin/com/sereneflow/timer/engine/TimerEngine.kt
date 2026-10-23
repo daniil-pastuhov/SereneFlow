@@ -12,7 +12,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -48,6 +51,14 @@ class TimerEngine(
         )
     )
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
+
+    private val _reminders = MutableSharedFlow<StepReminder>(extraBufferCapacity = 4)
+
+    /**
+     * Each "% left" reminder as it fires, sound or not, for an on-screen banner: the cue for
+     * anyone who can't hear it or has the routine muted.
+     */
+    val reminders: SharedFlow<StepReminder> = _reminders.asSharedFlow()
 
     private var timerJob: Job? = null
 
@@ -295,6 +306,7 @@ class TimerEngine(
         if (crossed.isEmpty()) return
         announcedReminders += crossed
         // Announce only the lowest crossed threshold; it is the most current information.
+        _reminders.tryEmit(StepReminder(step.title, crossed.min()))
         announceReminder(step.title, crossed.min())
     }
 
@@ -316,6 +328,9 @@ class TimerEngine(
         private const val TICK_MS = 200L
     }
 }
+
+/** A "% left" reminder: [percentLeft] of the step called [stepTitle] remains. */
+data class StepReminder(val stepTitle: String, val percentLeft: Int)
 
 /** Current wall-clock time in epoch milliseconds. */
 fun nowEpochMs(): Long = Clock.System.now().toEpochMilliseconds()
