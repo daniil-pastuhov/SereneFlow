@@ -68,6 +68,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -394,6 +395,11 @@ private fun TimerDial(
     val colors = LocalSereneColors.current
     val auraSize = 240.dp * scale
     val gap = 16.dp * scale
+    // The numerals fill a fixed-size dial, so they are sized in dp: a large font scale would
+    // otherwise clip them. They are already far larger than any text the font scale gives.
+    val density = LocalDensity.current
+    val countdownSize = with(density) { (68.dp * scale).toSp() }
+    val countdownSpacing = with(density) { (3.dp * scale).toSp() }
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier.weight(1f).padding(bottom = gap),
@@ -439,9 +445,9 @@ private fun TimerDial(
 
             Text(
                 text = remaining,
-                fontSize = 68.sp * scale,
+                fontSize = countdownSize,
                 fontWeight = FontWeight.Light,
-                letterSpacing = 3.sp * scale,
+                letterSpacing = countdownSpacing,
                 color = colors.onBackground,
                 softWrap = false
             )
