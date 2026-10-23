@@ -27,11 +27,16 @@ fun startRoutineFromShortcut(routineId: String) {
     ExternalActions.post(ExternalAction.StartRoutine(routineId))
 }
 
-/** `-demoScreen timer -demoRoutine <id> -demoElapsed <seconds>`; see [DemoLaunch]. */
+/** `-demoScreen timer -demoRoutine <id> -demoElapsed <seconds> [-demoBackground 1]`; see [DemoLaunch]. */
 @OptIn(ExperimentalNativeApi::class)
 private fun demoLaunchFromArguments(): DemoLaunch? {
     if (!Platform.isDebugBinary) return null
     val arguments = NSProcessInfo.processInfo.arguments.map { it.toString() }
     fun value(name: String) = arguments.indexOf(name).takeIf { it >= 0 }?.let { arguments.getOrNull(it + 1) }
-    return DemoLaunch.parse(value("-demoScreen"), value("-demoRoutine"), value("-demoElapsed")?.toIntOrNull())
+    return DemoLaunch.parse(
+        value("-demoScreen"),
+        value("-demoRoutine"),
+        value("-demoElapsed")?.toIntOrNull(),
+        backgroundMode = value("-demoBackground") == "1"
+    )
 }

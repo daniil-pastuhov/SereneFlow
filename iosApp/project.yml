@@ -20,6 +20,8 @@ targets:
       - path: Shared
     dependencies:
       - target: SereneFlowWidget
+      # Embedded as the companion watch app (Watch/), installed on a paired Apple Watch.
+      - target: SereneFlowWatch
     preBuildScripts:
       - name: "Compile Kotlin/Native Framework"
         script: |
@@ -76,4 +78,24 @@ targets:
         CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]: "SereneFlowWidget/SereneFlowWidget.entitlements"
         ARCHS: "arm64"
         ONLY_ACTIVE_ARCH: "YES"
+        SKIP_INSTALL: "YES"
+  # Apple Watch companion: mirrors the routine running on the iPhone (WatchConnectivity, sent by
+  # iosApp/WatchSessionManager.swift). A single-target watchOS app; it doesn't run routines itself.
+  SereneFlowWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: SereneFlowWatch
+    settings:
+      base:
+        # Not "SereneFlow": the phone app's product, and the two must not collide in a build folder.
+        PRODUCT_NAME: "SereneFlowWatch"
+        PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer.watchkitapp"
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: "SereneFlow"
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: "com.sereneflow.timer"
+        INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp: "NO"
+        ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
+        CODE_SIGN_IDENTITY[sdk=watchsimulator*]: "-"
         SKIP_INSTALL: "YES"

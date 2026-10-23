@@ -43,6 +43,32 @@ object LiveActivityRegistry {
 }
 
 /**
+ * Implemented in Swift (WatchSessionManager, WatchConnectivity) and registered in [WatchRegistry]
+ * at launch: mirrors the session to the Apple Watch app. Times are seconds since 1970.
+ */
+interface WatchBridge {
+    fun update(
+        routineTitle: String,
+        stepTitle: String,
+        stepIndex: Int,
+        stepCount: Int,
+        nextStepTitle: String?,
+        stepDurationSeconds: Double,
+        stepEndEpochSeconds: Double,
+        remainingSeconds: Double,
+        isPaused: Boolean,
+        isCompleted: Boolean,
+        roundLabel: String?
+    )
+
+    fun end()
+}
+
+object WatchRegistry {
+    var bridge: WatchBridge? = null
+}
+
+/**
  * Mirrors the session to the Live Activity (Lock Screen + Dynamic Island) and, while the app is in
  * the background, posts a notification banner on each step change and on completion.
  */
@@ -67,6 +93,22 @@ private class IosSessionPresenter : SessionPresenter {
             rounds = snapshot.rounds
         )
 
+        // The third path, beside the Live Activity (which also reaches the watch's Smart Stack):
+        // the watch app's own screen.
+        WatchRegistry.bridge?.update(
+            routineTitle = snapshot.routineTitle,
+            stepTitle = snapshot.stepTitle,
+            stepIndex = snapshot.stepIndex,
+            stepCount = snapshot.stepCount,
+            nextStepTitle = snapshot.nextStepTitle,
+            stepDurationSeconds = snapshot.stepDurationMs / 1000.0,
+            stepEndEpochSeconds = (snapshot.stepEndEpochMs ?: 0L) / 1000.0,
+            remainingSeconds = snapshot.stepRemainingMs / 1000.0,
+            isPaused = snapshot.isPaused,
+            isCompleted = snapshot.isCompleted,
+            roundLabel = snapshot.roundLabel
+        )
+
         val stepChanged = lastStepIndex != -1 && snapshot.stepIndex != lastStepIndex
         val justCompleted = snapshot.isCompleted && !lastCompleted
         lastStepIndex = snapshot.stepIndex
@@ -89,6 +131,7 @@ private class IosSessionPresenter : SessionPresenter {
 
     override fun end() = onMain {
         LiveActivityRegistry.bridge?.end()
+        WatchRegistry.bridge?.end()
         UNUserNotificationCenter.currentNotificationCenter().removeAllDeliveredNotifications()
         lastStepIndex = -1
         lastCompleted = false

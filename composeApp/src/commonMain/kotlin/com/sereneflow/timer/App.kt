@@ -78,7 +78,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
     LaunchedEffect(Unit) {
         if (demoLaunch !is DemoLaunch.Timer) return@LaunchedEffect
         val routine = routineRepository.getRoutine(demoLaunch.routineId) ?: return@LaunchedEffect
-        TimerSession.start(routine, preferences, backgroundMode = false)
+        TimerSession.start(routine, preferences, backgroundMode = demoLaunch.backgroundMode)
             .engine.fastForward(demoLaunch.elapsedSeconds * 1000L)
     }
 

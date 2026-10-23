@@ -11,6 +11,8 @@ struct SereneFlowApp: App {
         LiveActivityRegistry.shared.bridge = LiveActivityManager()
         // Lets Settings → App icon switch the alternate app icons.
         AppIconRegistry.shared.bridge = AppIconManager()
+        // Lets the session show on the Apple Watch app (SereneFlowWatch).
+        WatchRegistry.shared.bridge = WatchSessionManager()
         // Siri / Shortcuts / Live Activity buttons (TimerControlIntents.swift) reach the session.
         TimerControl.handler = { control in
             let session = TimerSession.shared

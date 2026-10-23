@@ -316,6 +316,26 @@ try write("""
 
 """, "iosApp/iosApp/Assets.xcassets/Contents.json")
 
+// The Apple Watch app (SereneFlowWatch): Zen Sage only, as watchOS has no alternate icons.
+// watchOS masks it to a circle itself.
+let watchDir = "iosApp/SereneFlowWatch/Assets.xcassets"
+try write(render(size: 1024, palette: defaultTheme.light), "\(watchDir)/AppIcon.appiconset/AppIcon.png")
+try write("""
+{
+  "images" : [
+    { "filename" : "AppIcon.png", "idiom" : "universal", "platform" : "watchos", "size" : "1024x1024" }
+  ],
+  "info" : { "author" : "xcode", "version" : 1 }
+}
+
+""", "\(watchDir)/AppIcon.appiconset/Contents.json")
+try write("""
+{
+  "info" : { "author" : "xcode", "version" : 1 }
+}
+
+""", "\(watchDir)/Contents.json")
+
 let res = "androidApp/src/main/res"
 let densities: [(String, Int)] = [("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144), ("xxxhdpi", 192)]
 for theme in themes {
