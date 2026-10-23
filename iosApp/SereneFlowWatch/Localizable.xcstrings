@@ -7,12 +7,42 @@
     "Done": {
       "comment": "The countdown's place once the routine is complete"
     },
+    "End": {
+      "comment": "Control button (icon only; the Live Activity's label): end the routine"
+    },
+    "End routine": {
+      "comment": "VoiceOver: the End button"
+    },
+    "iPhone not reachable": {
+      "comment": "Shown briefly when a control button can't reach the iPhone"
+    },
     "No routine running": {},
+    "No routine running on iPhone": {
+      "comment": "Shown briefly when a control button reached the iPhone but its routine had already ended"
+    },
+    "Pause": {
+      "comment": "Control button (icon and label), as on the Live Activity"
+    },
+    "Pause routine": {
+      "comment": "VoiceOver: the Pause button"
+    },
     "Paused": {},
+    "Resume": {
+      "comment": "Control button (icon and label) while paused, as on the Live Activity"
+    },
+    "Resume routine": {
+      "comment": "VoiceOver: the Resume button"
+    },
     "Round %lld of %lld · %@": {
       "comment": "Round 2 of 4, then \"Step 3 of 5\""
     },
     "Routine complete": {},
+    "Skip": {
+      "comment": "Control button (icon only; the Live Activity's label): skip to the next step"
+    },
+    "Skip to next step": {
+      "comment": "VoiceOver: the Skip button"
+    },
     "Start one on your iPhone to follow it here.": {
       "comment": "Under \"No routine running\": the watch shows the routine the iPhone runs"
     },

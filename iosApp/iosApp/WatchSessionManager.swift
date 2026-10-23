@@ -4,7 +4,8 @@ import WatchConnectivity
 
 /// Swift side of the Kotlin `WatchBridge`: sends the running routine to the Apple Watch app as
 /// WatchConnectivity application context (the latest state wins, delivered when the watch app
-/// next runs). Keys are read by SereneFlowWatch/SereneFlowWatchApp.swift.
+/// next runs). Keys are read by SereneFlowWatch/SereneFlowWatchApp.swift. It also takes the watch
+/// app's Pause/Resume, Skip and End buttons, sent as messages (see `didReceiveMessage`).
 final class WatchSessionManager: NSObject, WatchBridge, WCSessionDelegate {
     private var pending: [String: Any]?
 
@@ -70,6 +71,26 @@ final class WatchSessionManager: NSObject, WatchBridge, WCSessionDelegate {
                 self.pending = nil
                 self.send(pending)
             }
+        }
+    }
+
+    /// A control from the watch: `["command": "pause" | "resume" | "skip" | "end"]`, answered with
+    /// `["ok": Bool]` (false when no routine is running or the command is unknown). It runs the same
+    /// session calls as the Live Activity's buttons (TimerControl.handler, set in iosApp.swift); the
+    /// new state then reaches the watch through `update` / `end` as usual. The watch sends pause and
+    /// resume rather than a toggle, so a repeated tap, or one made on a stale screen, can't flip the
+    /// state back.
+    func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
+        let control: TimerControl? = switch message["command"] as? String {
+        case "pause": .pause
+        case "resume": .resume
+        case "skip": .skip
+        case "end": .end
+        default: nil
+        }
+        DispatchQueue.main.async {
+            let ok = control.flatMap { TimerControl.handler?($0) } ?? false
+            replyHandler(["ok": ok])
         }
     }
 

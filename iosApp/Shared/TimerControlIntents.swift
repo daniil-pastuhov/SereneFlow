@@ -4,8 +4,10 @@ import Foundation
 /// What the timer controls do. The app sets it at launch (iosApp.swift) to call the shared Kotlin
 /// session; the widget extension compiles these intents too (for the Live Activity's buttons) but
 /// leaves it unset, as a LiveActivityIntent's perform() runs in the app's process.
+/// `pause` and `resume` are the Apple Watch app's (WatchSessionManager.swift): unlike `toggle` they
+/// do nothing when the routine is already in that state, so a repeated tap can't flip it back.
 enum TimerControl {
-    case toggle, skip, end
+    case toggle, pause, resume, skip, end
 
     /// Set once at launch, always called on the main thread.
     static var handler: ((TimerControl) -> Bool)?

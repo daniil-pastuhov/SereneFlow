@@ -17,12 +17,15 @@ struct SereneFlowApp: App {
         // A routine left running when the app was killed never told the watch it ended; no session
         // survives a launch, so clear it (sent once WatchConnectivity has activated).
         if TimerSession.shared.active.value == nil { watch.end() }
-        // Siri / Shortcuts / Live Activity buttons (TimerControlIntents.swift) reach the session.
+        // Siri / Shortcuts / Live Activity buttons (TimerControlIntents.swift) and the watch app's
+        // buttons (WatchSessionManager.swift) reach the session.
         TimerControl.handler = { control in
             let session = TimerSession.shared
             guard session.active.value != nil else { return false }
             switch control {
             case .toggle: session.togglePlayPause()
+            case .pause: session.pause()
+            case .resume: session.resume()
             case .skip: session.skipStep()
             case .end: session.stop()
             }
