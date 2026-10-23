@@ -13,6 +13,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -66,6 +67,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -198,7 +200,10 @@ fun ActiveTimerScreen(
             0.dp
         }
 
-        Box(modifier = Modifier.fillMaxSize().padding(end = stageEndPadding)) {
+        // Under the completion overlay, nothing is left for a screen reader to reach.
+        val hiddenWhenCompleted = if (state.isCompleted) Modifier.clearAndSetSemantics {} else Modifier
+
+        Box(modifier = Modifier.fillMaxSize().padding(end = stageEndPadding).then(hiddenWhenCompleted)) {
             // 1. Full-screen animated backdrop. Decorative: the dial below says the same in words.
             Box(modifier = Modifier.fillMaxSize().clearAndSetSemantics {}) {
                 when (session.cues.visualEffect) {
@@ -272,6 +277,7 @@ fun ActiveTimerScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .then(hiddenWhenCompleted)
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
@@ -657,7 +663,9 @@ private fun CelebrationOverlay(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.65f))
-            .clickable { onDismiss() }
+            // A tap anywhere dismisses it too. Not a button for screen readers, which would merge
+            // the whole card into it; they get the Return button.
+            .pointerInput(onDismiss) { detectTapGestures { onDismiss() } }
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(24.dp),
         contentAlignment = Alignment.Center
@@ -675,11 +683,13 @@ private fun CelebrationOverlay(
         ) {
             Text(
                 text = "✨",
-                fontSize = 44.sp
+                fontSize = 44.sp,
+                modifier = Modifier.clearAndSetSemantics {}
             )
 
             Text(
                 text = "Routine Complete",
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
                 color = colors.onSurface
@@ -700,7 +710,7 @@ private fun CelebrationOverlay(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(colors.primary)
-                    .clickable { onDismiss() }
+                    .clickable(role = Role.Button) { onDismiss() }
                     .padding(vertical = 14.dp),
                 contentAlignment = Alignment.Center
             ) {
