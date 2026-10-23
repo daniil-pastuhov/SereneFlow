@@ -48,7 +48,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.zIndex
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.shape.CircleShape
@@ -144,6 +155,41 @@ fun RoutineListScreen(
     val selecting = selectedIds.isNotEmpty()
     var confirmDeleteSelected by remember { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current
+
+    // Manual order: while a card is dragged the grid shows this list, rearranged as it moves; on
+    // drop the move is saved, and the list stays until the repository's order has caught up.
+    var dragOrder by remember { mutableStateOf<List<String>?>(null) }
+    val shownRoutines = remember(routines, dragOrder) {
+        val order = dragOrder ?: return@remember routines
+        val byId = routines.associateBy { it.id }
+        order.mapNotNull { byId[it] } + routines.filter { it.id !in order }
+    }
+    val reorder = rememberGridReorderState(
+        gridState = gridState,
+        onMove = { from, to ->
+            val order = (dragOrder ?: routines.map { it.id }).toMutableList()
+            if (from in order.indices && to in order.indices) {
+                order.add(to, order.removeAt(from))
+                dragOrder = order
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+            }
+        },
+        onDrop = { key ->
+            val order = dragOrder ?: return@rememberGridReorderState
+            routineRepository.moveRoutine(key as String, order.indexOf(key))
+        }
+    )
+    LaunchedEffect(reorder.draggingKey) {
+        val order = dragOrder ?: return@LaunchedEffect
+        if (reorder.draggingKey != null) return@LaunchedEffect
+        // Normally the next emission; if the list changed some other way meanwhile, it wins.
+        withTimeoutOrNull(1000) { snapshotFlow { routines.map { it.id } }.first { it == order } }
+        dragOrder = null
+    }
+    fun moveBy(routine: Routine, by: Int) {
+        val index = routines.indexOfFirst { it.id == routine.id }
+        if (index >= 0) routineRepository.moveRoutine(routine.id, index + by)
+    }
 
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
@@ -250,14 +296,37 @@ fun RoutineListScreen(
             // unfolded iPhone Duo, landscape, tablets).
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 300.dp),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().onGloballyPositioned { reorder.gridCoordinates = it },
                 state = gridState,
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 96.dp, top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(18.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                items(routines, key = { it.id }) { routine ->
+                itemsIndexed(shownRoutines, key = { _, it -> it.id }) { index, routine ->
+                    val dragging = reorder.draggingKey == routine.id
+                    val raised = reorder.isLifted(routine.id)
                     RoutineCard(
+                        modifier = Modifier
+                            // The others slide out of the way; the dragged card follows the finger.
+                            .animateItem(placementSpec = if (raised) null else spring(stiffness = Spring.StiffnessMediumLow))
+                            .zIndex(if (raised) 1f else 0f)
+                            .graphicsLayer {
+                                val translation = reorder.translationOf(routine.id)
+                                translationX = translation.x
+                                translationY = translation.y
+                            },
+                        lifted = dragging,
+                        dragHandle = Modifier.reorderHandle(
+                            reorder,
+                            routine.id,
+                            onPickUp = { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                            onDrop = { haptics.performHapticFeedback(HapticFeedbackType.GestureEnd) }
+                        ),
+                        // Reordering without dragging, for screen readers.
+                        moveActions = listOfNotNull(
+                            if (index > 0) CustomAccessibilityAction("Move up") { moveBy(routine, -1); true } else null,
+                            if (index < shownRoutines.lastIndex) CustomAccessibilityAction("Move down") { moveBy(routine, 1); true } else null
+                        ),
                         routine = routine,
                         visualEffect = routine.visualEffect ?: defaultVisualEffect,
                         onPlay = { onStartRoutine(routine) },
@@ -409,10 +478,18 @@ private fun RoutineCard(
     selecting: Boolean,
     selected: Boolean,
     onToggleSelected: () -> Unit,
-    onStartSelecting: () -> Unit
+    onStartSelecting: () -> Unit,
+    /** Applied to the drag handle shown while selecting. */
+    dragHandle: Modifier,
+    /** Being dragged: raised above the others. */
+    lifted: Boolean,
+    moveActions: List<CustomAccessibilityAction>,
+    modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
     var showMenu by remember { mutableStateOf(false) }
+    val elevation by animateDpAsState(if (lifted) 14.dp else 2.dp, label = "CardElevation")
+    val scale by animateFloatAsState(if (lifted) 1.03f else 1f, label = "CardScale")
     var confirmDelete by remember { mutableStateOf(false) }
     val accent = routine.accentColor
 
@@ -431,10 +508,14 @@ private fun RoutineCard(
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             // Shadow must come before clip/background, otherwise it is drawn inside the card.
-            .shadow(2.dp, RoundedCornerShape(24.dp), ambientColor = colors.accentGlow, spotColor = colors.accentGlow)
+            .shadow(elevation, RoundedCornerShape(24.dp), ambientColor = colors.accentGlow, spotColor = colors.accentGlow)
             .clip(RoundedCornerShape(24.dp))
             .background(colors.cardBackground)
             .then(
@@ -456,7 +537,10 @@ private fun RoutineCard(
                     // One stop for a screen reader: the card, its selected state and a tap to toggle.
                     Modifier
                         .selectable(selected = selected, role = Role.Checkbox, onClick = onToggleSelected)
-                        .semantics { stateDescription = if (selected) "Selected" else "Not selected" }
+                        .semantics {
+                            stateDescription = if (selected) "Selected" else "Not selected"
+                            customActions = moveActions
+                        }
                 } else {
                     // The card's buttons take their own presses; a long press anywhere else selects.
                     Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onStartSelecting() }) }
@@ -475,7 +559,10 @@ private fun RoutineCard(
                 // Long press is the touch gesture; screen readers get it as this stop's action.
                 Column(
                     modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {
-                        if (!selecting) onLongClick(label = "Select") { onStartSelecting(); true }
+                        if (!selecting) {
+                            onLongClick(label = "Select") { onStartSelecting(); true }
+                            customActions = moveActions
+                        }
                     }
                 ) {
                     Text(
@@ -496,10 +583,21 @@ private fun RoutineCard(
                     }
                 }
 
-                if (selecting) {
+                if (selecting) Row(modifier = Modifier.offset(x = 6.dp, y = (-6).dp)) {
+                    // Drag to reorder (screen readers get Move up / Move down on the card instead).
+                    Box(
+                        modifier = Modifier.size(48.dp).clearAndSetSemantics {}.then(dragHandle),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DragHandle,
+                            contentDescription = null,
+                            tint = colors.onSurfaceVariant
+                        )
+                    }
                     // Where the options button was: whether the card is selected (the card says it).
                     Box(
-                        modifier = Modifier.offset(x = 6.dp, y = (-6).dp).size(48.dp).clearAndSetSemantics {},
+                        modifier = Modifier.size(48.dp).clearAndSetSemantics {},
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(

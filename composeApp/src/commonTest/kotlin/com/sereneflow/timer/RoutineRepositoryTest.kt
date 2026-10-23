@@ -155,4 +155,24 @@ class RoutineRepositoryTest {
         assertEquals(listOf("Morning Awakening", "a", "c"), to.routines.value.map { it.title })
         assertEquals(shared.map { it.steps.map { s -> s.title to s.durationSeconds } }, imported.map { it.steps.map { s -> s.title to s.durationSeconds } })
     }
+
+    @Test
+    fun movingARoutineReordersAndPersists() = runTest {
+        val storage = FakeFileStorage()
+        val repo = routineRepo(storage)
+        repo.deleteRoutine(repo.routines.value.single().id)
+        listOf("a", "b", "c", "d").forEach { repo.saveRoutine(routine(it)) }
+
+        repo.moveRoutine("a", 2)
+        assertEquals(listOf("b", "c", "a", "d"), repo.routines.value.map { it.id })
+        repo.moveRoutine("d", 0)
+        assertEquals(listOf("d", "b", "c", "a"), repo.routines.value.map { it.id })
+        // Move up / down past the ends stays in the list; unknown ids change nothing.
+        repo.moveRoutine("d", -1)
+        repo.moveRoutine("a", 9)
+        repo.moveRoutine("zzz", 1)
+        assertEquals(listOf("d", "b", "c", "a"), repo.routines.value.map { it.id })
+
+        assertEquals(listOf("d", "b", "c", "a"), routineRepo(storage).routines.value.map { it.id }, "The order is saved")
+    }
 }

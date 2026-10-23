@@ -90,6 +90,19 @@ class RoutineRepository(
         _routines.update { routines -> routines.filter { it.id !in ids } }
     }
 
+    /**
+     * Moves the routine with [id] to [toIndex] (kept within the list); the others keep their
+     * order. The list order is the order the user sees, saved with the routines.
+     */
+    fun moveRoutine(id: String, toIndex: Int) {
+        _routines.update { routines ->
+            val from = routines.indexOfFirst { it.id == id }
+            val to = toIndex.coerceIn(0, routines.lastIndex.coerceAtLeast(0))
+            if (from < 0 || from == to) routines
+            else routines.toMutableList().apply { add(to, removeAt(from)) }
+        }
+    }
+
     fun duplicateRoutine(id: String): Routine? {
         val original = getRoutine(id) ?: return null
         return duplicateRoutine(original)
