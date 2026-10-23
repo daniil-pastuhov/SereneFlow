@@ -11,6 +11,9 @@
 # cloud-managed distribution certificates, and an App Manager key fails with "Cloud signing
 # permission error".
 #
+# The signing team comes from Secrets.xcconfig at the repository root (git-ignored; copy
+# Secrets.xcconfig.example). CI writes it from the DEVELOPMENT_TEAM Actions secret.
+#
 # BUILD_NUMBER defaults to the current UTC time (yyyymmddHHMM): App Store Connect wants every
 # upload of a version to have a higher build number, and a timestamp always is, whether the
 # build comes from CI or from this Mac.
@@ -20,6 +23,11 @@ ROOT=${0:A:h:h}
 : "${ASC_KEY_ID:?set ASC_KEY_ID to the App Store Connect API key ID}"
 : "${ASC_ISSUER_ID:?set ASC_ISSUER_ID to the App Store Connect issuer ID}"
 : "${ASC_KEY_PATH:?set ASC_KEY_PATH to the .p8 key file}"
+if ! grep -Eq '^TEAM_ID *= *[A-Z0-9]{10} *$' "$ROOT/Secrets.xcconfig" 2>/dev/null; then
+  echo "error: $ROOT/Secrets.xcconfig is missing or has no TEAM_ID. Copy Secrets.xcconfig.example" \
+    "to Secrets.xcconfig and set TEAM_ID to your Apple Developer team ID." >&2
+  exit 1
+fi
 BUILD_NUMBER=${BUILD_NUMBER:-$(date -u +%Y%m%d%H%M)}
 OUT=$ROOT/build/ios-release
 AUTH=(-allowProvisioningUpdates

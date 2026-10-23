@@ -28,7 +28,12 @@ scripts/ios_screenshots.sh build/raw-iphone && scripts/frame_screenshots.py buil
 ```
 
 Store credentials live outside the repo in `~/.config/sereneflow/` (`source store.env`) and in the
-private GitHub repo's Actions secrets; never copy them into the repo. Release work is documented in
+private GitHub repo's Actions secrets; never copy them into the repo. That includes the Apple team
+ID: it lives only in `Secrets.xcconfig` at the repo root (git-ignored, from
+`Secrets.xcconfig.example`), which `Version.xcconfig` includes with `#include?`, and in the
+`DEVELOPMENT_TEAM` Actions secret, from which CI writes that file before archiving. Never put a
+`DEVELOPMENT_TEAM` in `project.yml` or the pbxproj: it would override the xcconfig. Simulator
+builds don't need the file; device builds and `scripts/ios_release.sh` do. Release work is documented in
 README.md ("Releasing") and `store-listing/*/README.md`.
 
 Run the Android app from Android Studio with the shared `androidApp` configuration (`.run/androidApp.run.xml`), which starts `SereneFlowActivity` directly. "Default Activity" starts the `.MainActivity` launcher alias, which is disabled once another theme's icon is chosen, and fails with "Activity class ... does not exist". To reset a device: `adb shell pm enable com.sereneflow.timer/com.sereneflow.timer.MainActivity`.

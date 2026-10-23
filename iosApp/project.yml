@@ -10,7 +10,8 @@ configFiles:
   Release: ../Version.xcconfig
 settings:
   base:
-    DEVELOPMENT_TEAM: "S8Q8KHX6G5"
+    # DEVELOPMENT_TEAM comes from Secrets.xcconfig (git-ignored), included by Version.xcconfig. Don't
+    # set it here: project and target settings override the base configuration.
     CODE_SIGN_STYLE: Automatic
     # The Swift targets' text is in String Catalogs, English only for now: Localizable.xcstrings
     # in each target's folder, plus the app's InfoPlist.xcstrings, and its Siri phrases in

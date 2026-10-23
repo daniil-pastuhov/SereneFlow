@@ -5,3 +5,8 @@
 MARKETING_VERSION = 1.0.1
 // scripts/ios_release.sh passes a timestamp for each upload; local builds use this one.
 CURRENT_PROJECT_VERSION = 1
+
+// The signing team (TEAM_ID, DEVELOPMENT_TEAM) is kept out of the repository: copy
+// Secrets.xcconfig.example to Secrets.xcconfig next to this file. Optional, so simulator builds
+// work without it; device builds and scripts/ios_release.sh need it. CI writes it from a secret.
+#include? "Secrets.xcconfig"

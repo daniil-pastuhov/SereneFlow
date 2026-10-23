@@ -53,7 +53,9 @@ Only these are done by hand in App Store Connect, as they have no API:
 ## 1. One-time setup (done)
 
 - App record "SereneFlow" (id 6825780663), bundle IDs `com.sereneflow.timer` and
-  `com.sereneflow.timer.widget` (Live Activity), team `S8Q8KHX6G5`.
+  `com.sereneflow.timer.widget` (Live Activity). The team ID is not in the repository: it is in
+  `Secrets.xcconfig` (git-ignored; see `Secrets.xcconfig.example`) and the `DEVELOPMENT_TEAM`
+  Actions secret.
 - API key `26GZL2YVV9`, role Admin (automatic cloud signing needs Admin). The key, its issuer ID
   and the Android upload key are in `~/.config/sereneflow/` (`source store.env`) and in the
   repository's Actions secrets.

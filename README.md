@@ -92,6 +92,11 @@ directly, because the launcher entry Android Studio picks by default (`.MainActi
 whenever a theme other than Zen Sage is chosen: the app icon follows the theme.
 
 ### iOS
+To build for a device or archive, give Xcode your Apple Developer team: copy
+`Secrets.xcconfig.example` to `Secrets.xcconfig` (git-ignored) and set `TEAM_ID` in it.
+`Version.xcconfig` includes it, so every target signs with that team. Simulator builds are ad-hoc
+signed and work without it.
+
 1. Build the shared framework:
    ```bash
    ./gradlew :composeApp:compileKotlinIosSimulatorArm64
@@ -140,9 +145,12 @@ as `MARKETING_VERSION`. CI sets Android's `versionCode` (`-PversionCode`) and th
 (a UTC timestamp).
 
 **Secrets**: the repository's Actions secrets hold the Android upload key (`ANDROID_*`), the Play
-service account (`PLAY_SERVICE_ACCOUNT_JSON`) and the App Store Connect API key (`ASC_*`). Local
-copies live outside the repo in `~/.config/sereneflow/`; `source ~/.config/sereneflow/store.env`
-before running `scripts/ios_release.sh`, `scripts/testflight.py` or `scripts/play_upload.py` by hand.
+service account (`PLAY_SERVICE_ACCOUNT_JSON`), the App Store Connect API key (`ASC_*`) and the Apple
+team ID (`DEVELOPMENT_TEAM`), which the TestFlight job writes into `Secrets.xcconfig`. Local copies
+live outside the repo in `~/.config/sereneflow/`; `source ~/.config/sereneflow/store.env` before
+running `scripts/ios_release.sh`, `scripts/testflight.py` or `scripts/play_upload.py` by hand.
+`scripts/ios_release.sh` also needs `Secrets.xcconfig` at the repository root (see iOS above) and
+stops with an error without it.
 
 ### Release signing
 

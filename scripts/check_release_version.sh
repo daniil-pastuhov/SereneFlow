@@ -20,6 +20,11 @@ grep -qx "MARKETING_VERSION = $VERSION" "$ROOT/Version.xcconfig" ||
 if grep -q "MARKETING_VERSION" "$ROOT/iosApp/iosApp.xcodeproj/project.pbxproj"; then
   fail "project.pbxproj sets MARKETING_VERSION; keep the version in Version.xcconfig only"
 fi
+# The team ID stays out of the repository (Secrets.xcconfig); one in the project would also
+# override it.
+if grep -Eq "DEVELOPMENT_TEAM|DevelopmentTeam" "$ROOT/iosApp/iosApp.xcodeproj/project.pbxproj"; then
+  fail "project.pbxproj sets a development team; it belongs in Secrets.xcconfig only"
+fi
 for locale in "${LOCALES[@]}"; do
   notes="$ROOT/release-notes/v$VERSION/$locale.txt"
   [[ -s $notes ]] || fail "missing release notes: release-notes/v$VERSION/$locale.txt"
