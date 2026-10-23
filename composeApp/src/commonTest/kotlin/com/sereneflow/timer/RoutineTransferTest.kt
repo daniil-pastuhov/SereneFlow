@@ -47,14 +47,14 @@ class RoutineTransferTest {
     }
 
     @Test
-    fun importAddsCopiesWithFreshIdsAtTheTop() = runTest {
+    fun importAddsCopiesWithFreshIdsAtTheEnd() = runTest {
         val repo = repo()
         val existing = repo.routines.value.single()
         val imported = repo.import(RoutineTransfer.encode(listOf(routine)))
 
         assertEquals(2, repo.routines.value.size)
-        assertEquals(imported.single(), repo.routines.value.first())
-        assertEquals(existing, repo.routines.value.last(), "Nothing is replaced")
+        assertEquals(existing, repo.routines.value.first(), "Nothing is replaced or moved")
+        assertEquals(imported.single(), repo.routines.value.last())
         val copy = imported.single()
         assertNotEquals(routine.id, copy.id)
         assertTrue(copy.steps.none { step -> routine.steps.any { it.id == step.id } })
@@ -76,7 +76,7 @@ class RoutineTransferTest {
         val repo = repo()
         val backup = RoutineTransfer.encode(listOf(routine.copy(title = "A"), routine.copy(title = "B")))
         repo.import(backup)
-        assertEquals(listOf("A", "B", "Morning Awakening"), repo.routines.value.map { it.title })
+        assertEquals(listOf("Morning Awakening", "A", "B"), repo.routines.value.map { it.title })
     }
 
     @Test

@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -91,10 +93,25 @@ fun RoutineListScreen(
     onEditRoutine: (Routine) -> Unit,
     onCreateNewRoutine: () -> Unit,
     onOpenSettings: () -> Unit,
+    /** A routine just added (at the end of the list) to scroll into view, then [onRevealed]. */
+    revealRoutineId: String? = null,
+    onRevealed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
     val routines by routineRepository.routines.collectAsState()
+    val gridState = rememberLazyGridState()
+    // Added here (template, duplicate) rather than from another screen.
+    var addedHere by remember { mutableStateOf<String?>(null) }
+
+    // New routines go to the end of the list, which may be off screen: bring them into view.
+    val toReveal = addedHere ?: revealRoutineId
+    LaunchedEffect(toReveal, routines) {
+        val index = routines.indexOfFirst { it.id == toReveal }
+        if (index < 0) return@LaunchedEffect
+        gridState.animateScrollToItem(index)
+        if (toReveal == addedHere) addedHere = null else onRevealed()
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -109,7 +126,7 @@ fun RoutineListScreen(
                     title = "New routine",
                     actions = listOf(MenuAction("Blank routine", Icons.Default.Add, onClick = onCreateNewRoutine)) +
                         StarterTemplates.all.map { template ->
-                            MenuAction("From template: ${template.title}") { routineRepository.addFromTemplate(template) }
+                            MenuAction("From template: ${template.title}") { addedHere = routineRepository.addFromTemplate(template).id }
                         },
                     onDismiss = { showNewMenu = false }
                 )
@@ -156,6 +173,7 @@ fun RoutineListScreen(
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 300.dp),
                 modifier = Modifier.fillMaxSize(),
+                state = gridState,
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 96.dp, top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(18.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -166,7 +184,7 @@ fun RoutineListScreen(
                         visualEffect = routine.visualEffect ?: defaultVisualEffect,
                         onPlay = { onStartRoutine(routine) },
                         onEdit = { onEditRoutine(routine) },
-                        onDuplicate = { routineRepository.duplicateRoutine(routine.id) },
+                        onDuplicate = { addedHere = routineRepository.duplicateRoutine(routine.id)?.id },
                         onDelete = { routineRepository.deleteRoutine(routine.id) }
                     )
                 }

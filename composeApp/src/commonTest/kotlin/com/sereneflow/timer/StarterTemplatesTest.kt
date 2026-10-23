@@ -37,11 +37,11 @@ class StarterTemplatesTest {
     }
 
     @Test
-    fun addFromTemplatePutsItFirst() = runTest {
+    fun addFromTemplatePutsItLast() = runTest {
         val scope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
         val repo = RoutineRepository(FakeFileStorage(), scope)
         val added = repo.addFromTemplate(StarterTemplates.all.last())
-        assertEquals(added, repo.routines.value.first())
+        assertEquals(added, repo.routines.value.last())
         assertEquals(2, repo.routines.value.size)
     }
 }

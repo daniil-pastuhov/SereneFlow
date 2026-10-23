@@ -46,18 +46,18 @@ class RoutineRepository(
         return _routines.value.find { it.id == id }
     }
 
+    /**
+     * Replaces the routine with [routine]'s id where it is in the list, or adds [routine] at the
+     * end when it is new. The list order is the order the user sees (and can rearrange).
+     */
     fun saveRoutine(routine: Routine) {
-        val current = _routines.value.toMutableList()
-        val index = current.indexOfFirst { it.id == routine.id }
-        if (index >= 0) {
-            current[index] = routine
-        } else {
-            current.add(0, routine)
+        _routines.update { current ->
+            val index = current.indexOfFirst { it.id == routine.id }
+            if (index >= 0) current.toMutableList().apply { set(index, routine) } else current + routine
         }
-        _routines.value = current
     }
 
-    /** Adds a new routine made from one of [StarterTemplates], at the top of the list. */
+    /** Adds a new routine made from one of [StarterTemplates], at the end of the list. */
     fun addFromTemplate(template: Routine): Routine {
         val routine = StarterTemplates.instantiate(template)
         saveRoutine(routine)
@@ -65,7 +65,7 @@ class RoutineRepository(
     }
 
     /**
-     * Adds the routines in a `.sereneflow` file ([RoutineTransfer.decode]) at the top of the list,
+     * Adds the routines in a `.sereneflow` file ([RoutineTransfer.decode]) at the end of the list,
      * in the file's order, each with a fresh id and fresh step ids so they never replace a routine
      * already here (importing the same file twice gives two copies).
      *
@@ -78,7 +78,7 @@ class RoutineRepository(
                 steps = routine.steps.map { it.copy(id = newStepId()) }
             )
         }
-        _routines.update { imported + it }
+        _routines.update { it + imported }
         return imported
     }
 
@@ -91,7 +91,7 @@ class RoutineRepository(
         return duplicateRoutine(original)
     }
 
-    /** Saves a copy of [original] (which may contain unsaved edits) under a new id. */
+    /** Saves a copy of [original] (which may contain unsaved edits) under a new id, at the end. */
     fun duplicateRoutine(original: Routine): Routine {
         val rand = kotlin.random.Random.nextLong().let { if (it < 0) -it else it }
         val duplicate = original.copy(

@@ -58,6 +58,8 @@ fun App(demoLaunch: DemoLaunch? = null) {
     val activeSession by TimerSession.active.collectAsState()
     val requestNotificationPermission = rememberNotificationPermissionRequest()
     var showBackgroundPrompt by remember { mutableStateOf(false) }
+    // A routine just added at the end of the list, which the list scrolls to when it next shows.
+    var revealRoutineId by remember { mutableStateOf<String?>(null) }
     val backStack = remember {
         mutableStateListOf<AppScreen>(AppScreen.List).apply {
             when (demoLaunch) {
@@ -202,7 +204,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
                     destructive = false,
                     onConfirm = {
                         ExternalActions.consume(importAction)
-                        routineRepository.import(importAction.contents)
+                        revealRoutineId = routineRepository.import(importAction.contents).firstOrNull()?.id
                     },
                     onDismiss = { ExternalActions.consume(importAction) }
                 )
@@ -239,7 +241,9 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         },
                         onEditRoutine = { routine -> push(AppScreen.Editor(routine)) },
                         onCreateNewRoutine = { push(AppScreen.Editor(null)) },
-                        onOpenSettings = { push(AppScreen.Settings) }
+                        onOpenSettings = { push(AppScreen.Settings) },
+                        revealRoutineId = revealRoutineId,
+                        onRevealed = { revealRoutineId = null }
                     )
                 }
                 is AppScreen.Editor -> {
@@ -247,12 +251,14 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         routine = screen.routine,
                         preferences = preferences,
                         onSaveRoutine = { saved ->
+                            val isNew = routineRepository.getRoutine(saved.id) == null
                             routineRepository.saveRoutine(saved)
+                            if (isNew) revealRoutineId = saved.id
                             pop()
                             if (!preferences.backgroundModeAsked) showBackgroundPrompt = true
                         },
                         onDuplicateRoutine = { toDuplicate ->
-                            routineRepository.duplicateRoutine(toDuplicate)
+                            revealRoutineId = routineRepository.duplicateRoutine(toDuplicate).id
                             pop()
                         },
                         onBack = ::pop

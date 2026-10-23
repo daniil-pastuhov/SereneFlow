@@ -2,11 +2,15 @@ package com.sereneflow.timer
 
 import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.model.CueSound
+import com.sereneflow.timer.model.Routine
+import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.model.VoiceGuidance
 import com.sereneflow.timer.repository.PreferencesRepository
 import com.sereneflow.timer.repository.RoutineRepository
+import com.sereneflow.timer.repository.StarterTemplates
 import com.sereneflow.timer.storage.FileStorage
+import com.sereneflow.timer.transfer.RoutineTransfer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -92,5 +96,33 @@ class RoutineRepositoryTest {
         assertEquals(VisualEffectType.WATER, prefs.defaultVisualEffect)
         assertEquals(CueSound.KALIMBA, prefs.defaultSound)
         assertEquals(false, prefs.keepScreenOn)
+    }
+
+    private fun routine(id: String) = Routine(id = id, title = id, steps = listOf(RoutineStep("s_$id", "Step", 30)))
+
+    @Test
+    fun newRoutinesAreAddedAtTheEnd() = runTest {
+        val storage = FakeFileStorage()
+        val repo = routineRepo(storage)
+        val seed = repo.routines.value.single()
+
+        repo.saveRoutine(routine("a"))
+        repo.saveRoutine(routine("b"))
+        val copy = repo.duplicateRoutine("a")!!
+        val template = repo.addFromTemplate(StarterTemplates.all.first())
+        val imported = repo.import(RoutineTransfer.encode(listOf(routine("c")))).single()
+
+        val expected = listOf(seed.id, "a", "b", copy.id, template.id, imported.id)
+        assertEquals(expected, repo.routines.value.map { it.id })
+        assertEquals(expected, routineRepo(storage).routines.value.map { it.id }, "The order is saved")
+    }
+
+    @Test
+    fun editingKeepsTheRoutinesPlace() = runTest {
+        val repo = routineRepo(FakeFileStorage())
+        repo.saveRoutine(routine("a"))
+        repo.saveRoutine(routine("b"))
+        repo.saveRoutine(routine("a").copy(title = "Edited"))
+        assertEquals(listOf("Morning Awakening", "Edited", "b"), repo.routines.value.map { it.title })
     }
 }
