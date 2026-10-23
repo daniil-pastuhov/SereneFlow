@@ -135,6 +135,25 @@ class TimerEngine(
         sync()
     }
 
+    /**
+     * Gives the current step [ms] more time ("+30s"): a ticking step's end moves later, a paused or
+     * not-yet-started one gets more remaining time. Nothing once the routine is complete.
+     */
+    fun extendStep(ms: Long) {
+        if (ms <= 0) return
+        val state = _timerState.value
+        if (state.isCompleted || state.currentStep == null) return
+        val now = clock()
+        _timerState.update {
+            val extended = it.copy(
+                stepEndEpochMs = it.stepEndEpochMs?.plus(ms),
+                pausedRemainingMs = if (it.stepEndEpochMs == null) it.pausedRemainingMs + ms else it.pausedRemainingMs,
+                stepExtensionMs = it.stepExtensionMs + ms
+            )
+            extended.copy(secondsRemainingInStep = ceilSeconds(extended.stepRemainingMsAt(now)))
+        }
+    }
+
     fun restartStep() {
         transitionToStep(_timerState.value.currentStepIndex, announceWhenPaused = true)
     }
@@ -181,7 +200,8 @@ class TimerEngine(
                 it.copy(
                     currentStepIndex = index,
                     stepEndEpochMs = newEnd,
-                    secondsRemainingInStep = routine.steps[index].durationSeconds
+                    secondsRemainingInStep = routine.steps[index].durationSeconds,
+                    stepExtensionMs = 0
                 )
             }
             // Only the step we landed on is announced, even if several were skipped while suspended.
@@ -217,7 +237,8 @@ class TimerEngine(
                 currentStepIndex = index,
                 secondsRemainingInStep = step.durationSeconds,
                 stepEndEpochMs = stepEnd,
-                pausedRemainingMs = step.durationMs
+                pausedRemainingMs = step.durationMs,
+                stepExtensionMs = 0
             )
         }
         if (ticking || (announceWhenPaused && state.isRunning)) {

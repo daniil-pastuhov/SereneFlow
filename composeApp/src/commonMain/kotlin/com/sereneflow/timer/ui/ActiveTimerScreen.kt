@@ -29,6 +29,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
@@ -212,6 +216,9 @@ fun ActiveTimerScreen(
                 next = state.nextStep?.let { "Up next: ${it.title} (${it.formattedDuration})" },
                 scale = dialScale,
                 auraScale = auraScale,
+                onExtend = if (state.isCompleted) null else {
+                    { engine.extendStep(EXTEND_STEP_SECONDS * 1000L) }
+                },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -348,6 +355,8 @@ private fun TimerDial(
     next: String?,
     scale: Float,
     auraScale: Float,
+    /** Adds time to the current step; null hides the button. */
+    onExtend: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
@@ -399,24 +408,58 @@ private fun TimerDial(
             modifier = Modifier.weight(1f).padding(top = gap),
             contentAlignment = Alignment.TopCenter
         ) {
-            // Up Next Step Banner
-            if (next != null) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(colors.surface.copy(alpha = 0.75f))
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = next,
-                        fontSize = 12.sp * scale.coerceAtMost(1.4f),
-                        color = colors.onSurfaceVariant
-                    )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Up Next Step Banner
+                if (next != null) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(colors.surface.copy(alpha = 0.75f))
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = next,
+                            fontSize = 12.sp * scale.coerceAtMost(1.4f),
+                            color = colors.onSurfaceVariant
+                        )
+                    }
                 }
+                if (onExtend != null) ExtendStepButton(onClick = onExtend)
             }
         }
     }
 }
+
+/** "+30s": gives the current step a little more time. A small pill with a 48dp touch target. */
+@Composable
+private fun ExtendStepButton(onClick: () -> Unit) {
+    val colors = LocalSereneColors.current
+    Box(
+        modifier = Modifier
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .clickable(onClickLabel = "Add 30 seconds to this step", role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "+${EXTEND_STEP_SECONDS}s",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.primary,
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(colors.surface.copy(alpha = 0.85f))
+                .border(1.dp, colors.primary.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .padding(horizontal = 14.dp, vertical = 6.dp)
+                .semantics { contentDescription = "Add $EXTEND_STEP_SECONDS seconds" }
+        )
+    }
+}
+
+private const val EXTEND_STEP_SECONDS = 30
 
 /** Segmented progress rail: one segment per step, filled up to the current one. */
 @Composable

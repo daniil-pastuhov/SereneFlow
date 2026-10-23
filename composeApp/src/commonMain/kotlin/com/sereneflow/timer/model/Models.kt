@@ -220,7 +220,9 @@ data class TimerState(
     val isRunning: Boolean = false,
     val isPaused: Boolean = false,
     val isCompleted: Boolean = false,
-    val isMuted: Boolean = false
+    val isMuted: Boolean = false,
+    /** Time added to the current step while it runs ("+30s"); back to 0 on the next step. */
+    val stepExtensionMs: Long = 0
 ) {
     val currentStep: RoutineStep?
         get() = routine.steps.getOrNull(currentStepIndex)
@@ -228,30 +230,33 @@ data class TimerState(
     val nextStep: RoutineStep?
         get() = routine.steps.getOrNull(currentStepIndex + 1)
 
+    /** The current step's length, including any time added to it. */
+    val currentStepDurationMs: Long
+        get() = (currentStep?.durationSeconds ?: 0) * 1000L + stepExtensionMs
+
     fun stepRemainingMsAt(nowEpochMs: Long): Long =
         (stepEndEpochMs?.let { it - nowEpochMs } ?: pausedRemainingMs).coerceAtLeast(0)
 
     /** Exact progress through the current step at [nowEpochMs], for smooth visuals. */
     fun stepProgressAt(nowEpochMs: Long): Float {
-        val step = currentStep ?: return 1f
-        if (isCompleted || step.durationSeconds <= 0) return 1f
-        val durationMs = step.durationSeconds * 1000f
+        if (currentStep == null || isCompleted) return 1f
+        val durationMs = currentStepDurationMs.toFloat()
+        if (durationMs <= 0f) return 1f
         return (1f - stepRemainingMsAt(nowEpochMs) / durationMs).coerceIn(0f, 1f)
     }
 
     val stepProgress: Float
         get() {
-            val step = currentStep ?: return 1f
-            if (step.durationSeconds <= 0) return 1f
-            return 1f - (secondsRemainingInStep.toFloat() / step.durationSeconds.toFloat()).coerceIn(0f, 1f)
+            if (currentStep == null || currentStepDurationMs <= 0) return 1f
+            return 1f - (secondsRemainingInStep * 1000f / currentStepDurationMs).coerceIn(0f, 1f)
         }
 
     val overallProgress: Float
         get() {
-            val total = routine.totalDurationSeconds
+            val total = routine.totalDurationSeconds * 1000L + stepExtensionMs
             if (total <= 0) return 1f
-            val elapsedSoFar = routine.steps.take(currentStepIndex).sumOf { it.durationSeconds } +
-                    ((currentStep?.durationSeconds ?: 0) - secondsRemainingInStep)
+            val elapsedSoFar = routine.steps.take(currentStepIndex).sumOf { it.durationSeconds } * 1000L +
+                    (currentStepDurationMs - secondsRemainingInStep * 1000L)
             return (elapsedSoFar.toFloat() / total.toFloat()).coerceIn(0f, 1f)
         }
 

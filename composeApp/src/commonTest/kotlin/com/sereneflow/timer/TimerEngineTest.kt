@@ -470,6 +470,76 @@ class TimerEngineTest {
     }
 
     @Test
+    fun testExtendStepMovesTheRunningStepEnd() = runTest {
+        val audio = FakeAudioController()
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = audio,
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+        engine.start()
+        advanceTimeBy(6_100) // 4s left of the 10s step
+        engine.extendStep(30_000)
+        var state = engine.timerState.value
+        assertEquals(34, state.secondsRemainingInStep)
+        assertEquals(40_000, state.currentStepDurationMs)
+        assertEquals(0.15f, state.stepProgressAt(testScheduler.currentTime), 0.01f)
+
+        advanceTimeBy(30_000) // still in step 1 thanks to the extra time
+        assertEquals(0, engine.timerState.value.currentStepIndex)
+        advanceTimeBy(4_000)
+        state = engine.timerState.value
+        assertEquals(1, state.currentStepIndex)
+        assertEquals(0, state.stepExtensionMs, "The next step starts without the extension")
+        assertEquals(20, state.secondsRemainingInStep)
+        engine.stop()
+    }
+
+    @Test
+    fun testExtendStepWhilePausedAddsRemainingTime() = runTest {
+        val audio = FakeAudioController()
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = audio,
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+        engine.start()
+        advanceTimeBy(2_100)
+        engine.pause()
+        engine.extendStep(30_000)
+        assertEquals(38, engine.timerState.value.secondsRemainingInStep)
+
+        engine.resume()
+        advanceTimeBy(37_000)
+        assertEquals(0, engine.timerState.value.currentStepIndex)
+        advanceTimeBy(1_500)
+        assertEquals(1, engine.timerState.value.currentStepIndex)
+        engine.stop()
+    }
+
+    @Test
+    fun testExtendStepAfterCompletionDoesNothing() = runTest {
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = FakeAudioController(),
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+        engine.start()
+        advanceTimeBy(31_000)
+        engine.extendStep(30_000)
+        val state = engine.timerState.value
+        assertTrue(state.isCompleted)
+        assertEquals(0, state.secondsRemainingInStep)
+        assertEquals(0, state.stepExtensionMs)
+    }
+
+    @Test
     fun testNoHapticsWhenOff() = runTest {
         val audio = FakeAudioController()
         val engine = TimerEngine(

@@ -61,7 +61,7 @@ object TimerSession {
             .distinctUntilChangedBy { state ->
                 listOf(
                     state.currentStepIndex, state.isPaused, state.isRunning, state.isCompleted,
-                    state.isMuted, state.secondsRemainingInStep / PROGRESS_REFRESH_SECONDS
+                    state.isMuted, state.stepExtensionMs, state.secondsRemainingInStep / PROGRESS_REFRESH_SECONDS
                 )
             }
             .onEach { state ->
@@ -120,14 +120,17 @@ data class SessionSnapshot(
 
 private fun TimerState.toSnapshot(): SessionSnapshot {
     val step = currentStep
-    val durations = routine.steps.map { it.durationSeconds }
+    // The current step's segment includes any time added to it.
+    val durations = routine.steps.mapIndexed { index, it ->
+        if (index == currentStepIndex) (currentStepDurationMs / 1000).toInt() else it.durationSeconds
+    }
     return SessionSnapshot(
         routineTitle = routine.title,
         stepTitle = step?.title.orEmpty(),
         stepIndex = currentStepIndex,
         stepCount = routine.steps.size,
         nextStepTitle = nextStep?.title,
-        stepDurationMs = (step?.durationSeconds ?: 0) * 1000L,
+        stepDurationMs = currentStepDurationMs,
         stepEndEpochMs = stepEndEpochMs,
         stepRemainingMs = if (stepEndEpochMs != null) secondsRemainingInStep * 1000L else pausedRemainingMs,
         stepDurationsSeconds = durations,
