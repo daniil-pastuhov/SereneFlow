@@ -27,14 +27,19 @@ class TimerService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = pendingNotification
-        if (notification == null) {
-            stopSelf()
-            return START_NOT_STICKY
-        }
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
         } else {
             0
+        }
+        if (notification == null) {
+            // The session ended between startForegroundService and now. A service started that way
+            // must still call startForeground, or the system throws
+            // ForegroundServiceDidNotStartInTimeException; post a placeholder, then stop at once.
+            TimerNotifications.ensureChannel(this)
+            ServiceCompat.startForeground(this, TimerNotifications.ONGOING_ID, TimerNotifications.buildPlaceholder(this), type)
+            stopSelf()
+            return START_NOT_STICKY
         }
         ServiceCompat.startForeground(this, TimerNotifications.ONGOING_ID, notification, type)
         updateWakeLock()

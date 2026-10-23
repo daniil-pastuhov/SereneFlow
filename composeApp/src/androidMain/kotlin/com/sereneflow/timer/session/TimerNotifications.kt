@@ -67,6 +67,14 @@ internal object TimerNotifications {
             .setShowWhen(true)
             .build()
 
+    /** Shown only for the instant the service needs to satisfy startForeground after the session ended. */
+    fun buildPlaceholder(context: Context): Notification =
+        NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_timer)
+            .setContentTitle("Routine ended")
+            .setSilent(true)
+            .build()
+
     private fun baseBuilder(context: Context, snapshot: SessionSnapshot) =
         NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_timer)
