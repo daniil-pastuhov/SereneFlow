@@ -1,6 +1,8 @@
 package com.sereneflow.timer
 
+import android.content.Intent
 import android.content.pm.ApplicationInfo
+import com.sereneflow.timer.transfer.readText
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,9 +21,22 @@ class SereneFlowActivity : ComponentActivity() {
         enableEdgeToEdge()
         // Only on a fresh start, so a rotation doesn't restart the demo routine.
         val demoLaunch = if (savedInstanceState == null) demoLaunchFromIntent() else null
+        if (savedInstanceState == null) handleIntent(intent)
         setContent {
             App(demoLaunch = demoLaunch)
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    /** A routine file opened with the app: [App] offers to import it. */
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        readText(this, uri)?.let { ExternalActions.post(ExternalAction.ImportRoutines(it)) }
     }
 
     override fun onStop() {

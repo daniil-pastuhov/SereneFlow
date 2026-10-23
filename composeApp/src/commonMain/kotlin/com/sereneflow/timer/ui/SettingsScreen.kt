@@ -61,6 +61,10 @@ import com.sereneflow.timer.resources.app_icon_ocean_mist
 import com.sereneflow.timer.resources.app_icon_sunset_clay
 import com.sereneflow.timer.resources.app_icon_zen_sage
 import com.sereneflow.timer.session.TimerSession
+import com.sereneflow.timer.ExternalAction
+import com.sereneflow.timer.ExternalActions
+import com.sereneflow.timer.transfer.rememberRoutineFilePicker
+import androidx.compose.material.icons.filled.Backup
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.ui.platform.PlatformIcons
@@ -73,10 +77,17 @@ fun SettingsScreen(
     preferencesRepository: PreferencesRepository,
     onOpenSoundPicker: () -> Unit,
     onOpenVoicePicker: () -> Unit,
+    /** How many routines a backup would hold. */
+    routineCount: Int,
+    onExportRoutines: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
+    // The picked file is confirmed and imported by App, like a file opened from another app.
+    val pickRoutineFile = rememberRoutineFilePicker { contents ->
+        ExternalActions.post(ExternalAction.ImportRoutines(contents))
+    }
     val preferences by preferencesRepository.preferences.collectAsState()
     // The chosen voice's name; "Default" too for one that was since removed from the device.
     val voices by produceState<List<VoiceOption>?>(initialValue = null) {
@@ -368,6 +379,36 @@ fun SettingsScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                // Backup: every routine to one .sereneflow file, and back
+                item {
+                    SectionHeader(title = "BACKUP", icon = Icons.Default.Backup)
+                    SectionNote("Save your routines to a file, or add routines from one. Importing never replaces a routine.")
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(vertical = 6.dp)
+                    ) {
+                        if (routineCount > 0) {
+                            NavigationRow(
+                                title = "Export all routines",
+                                description = "Share or save a backup file",
+                                value = if (routineCount == 1) "1 routine" else "$routineCount routines",
+                                onClick = onExportRoutines
+                            )
+                        }
+                        NavigationRow(
+                            title = "Import routines",
+                            description = "From a .sereneflow file",
+                            value = "",
+                            onClick = pickRoutineFile
+                        )
                     }
                 }
             }

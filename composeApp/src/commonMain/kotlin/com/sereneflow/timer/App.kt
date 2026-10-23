@@ -25,6 +25,8 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.repository.Repositories
 import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
+import com.sereneflow.timer.transfer.RoutineTransfer
+import com.sereneflow.timer.transfer.shareFile
 import com.sereneflow.timer.ui.platform.ConfirmDialog
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.theme.SereneFlowTheme
@@ -138,6 +140,49 @@ fun App(demoLaunch: DemoLaunch? = null) {
             )
         }
 
+        // A routine file opened with the app or picked in Settings: confirm, then add its routines.
+        val pendingAction by ExternalActions.pending.collectAsState()
+        val importAction = pendingAction as? ExternalAction.ImportRoutines
+        if (importAction != null) {
+            val offered = remember(importAction) {
+                try {
+                    RoutineTransfer.decode(importAction.contents)
+                } catch (_: IllegalArgumentException) {
+                    null
+                }
+            }
+            if (offered == null) {
+                ConfirmDialog(
+                    title = "Can't import this file",
+                    message = "It isn't a SereneFlow routine file, or it is damaged.",
+                    confirmLabel = "OK",
+                    destructive = false,
+                    onConfirm = { ExternalActions.consume(importAction) },
+                    onDismiss = { ExternalActions.consume(importAction) }
+                )
+            } else {
+                ConfirmDialog(
+                    title = if (offered.size == 1) "Import \"${offered.single().title}\"?"
+                        else "Import ${offered.size} routines?",
+                    message = if (offered.size == 1) {
+                        "${offered.single().stepCountText} · ${offered.single().formattedTotalDuration}. " +
+                            "It is added to your routines; nothing is replaced."
+                    } else {
+                        offered.take(5).joinToString("\n") { it.title } +
+                            (if (offered.size > 5) "\n…" else "") +
+                            "\n\nThey are added to your routines; nothing is replaced."
+                    },
+                    confirmLabel = "Import",
+                    destructive = false,
+                    onConfirm = {
+                        ExternalActions.consume(importAction)
+                        routineRepository.import(importAction.contents)
+                    },
+                    onDismiss = { ExternalActions.consume(importAction) }
+                )
+            }
+        }
+
         screenTransition.AnimatedContent(
             // The theme's background under screens that are part-way in or out, rather than the
             // window's launch background.
@@ -203,6 +248,14 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         preferencesRepository = preferencesRepository,
                         onOpenSoundPicker = { push(AppScreen.SoundPicker) },
                         onOpenVoicePicker = { push(AppScreen.VoicePicker) },
+                        routineCount = routineRepository.routines.collectAsState().value.size,
+                        onExportRoutines = {
+                            shareFile(
+                                RoutineTransfer.BACKUP_FILE_NAME,
+                                RoutineTransfer.MIME_TYPE,
+                                RoutineTransfer.encode(routineRepository.routines.value)
+                            )
+                        },
                         onBack = ::pop
                     )
                 }

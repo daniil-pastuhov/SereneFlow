@@ -22,6 +22,50 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!-- .sereneflow routine files (shared routines and backups), opened with the app. -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>SereneFlow Routine</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.sereneflow.timer.routine</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.sereneflow.timer.routine</string>
+			<key>UTTypeDescription</key>
+			<string>SereneFlow Routine</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>sereneflow</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/vnd.sereneflow.routine+json</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<!-- Opened files are copied in and read once, never edited where they are. -->
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIBackgroundModes</key>

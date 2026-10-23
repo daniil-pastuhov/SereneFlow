@@ -194,8 +194,9 @@ actual object PlatformIcons {
     actual val More: ImageVector = Icons.Rounded.MoreHoriz
 }
 
+/** Presents [controller] over whatever is on screen, anchored mid-screen where it is a popover (iPad). */
 @OptIn(ExperimentalForeignApi::class)
-private fun present(controller: UIViewController) {
+internal fun present(controller: UIViewController) {
     val presenter = topViewController() ?: return
     // iPad presents action sheets as popovers, which need an anchor or UIKit throws.
     controller.popoverPresentationController?.let { popover ->
@@ -221,7 +222,8 @@ private fun topViewController(): UIViewController? {
         .flatMap { scene -> scene.windows.filterIsInstance<UIWindow>() }
         .firstOrNull { it.isKeyWindow() }
     var top = window?.rootViewController
-    while (top?.presentedViewController != null) {
+    // Not onto one on its way out (an action sheet whose action presents something next).
+    while (top?.presentedViewController?.isBeingDismissed() == false) {
         top = top.presentedViewController
     }
     return top

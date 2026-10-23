@@ -2,12 +2,19 @@ package com.sereneflow.timer
 
 import androidx.compose.runtime.remember
 import androidx.compose.ui.window.ComposeUIViewController
+import com.sereneflow.timer.transfer.readRoutineFile
 import platform.Foundation.NSProcessInfo
+import platform.Foundation.NSURL
 import platform.UIKit.UIViewController
 import kotlin.experimental.ExperimentalNativeApi
 
 fun MainViewController(): UIViewController = ComposeUIViewController {
     App(demoLaunch = remember { demoLaunchFromArguments() })
+}
+
+/** Called by the Swift app (onOpenURL) for a `.sereneflow` file opened with SereneFlow. */
+fun openRoutineFile(url: NSURL) {
+    readRoutineFile(url)?.let { ExternalActions.post(ExternalAction.ImportRoutines(it)) }
 }
 
 /** `-demoScreen timer -demoRoutine <id> -demoElapsed <seconds>`; see [DemoLaunch]. */

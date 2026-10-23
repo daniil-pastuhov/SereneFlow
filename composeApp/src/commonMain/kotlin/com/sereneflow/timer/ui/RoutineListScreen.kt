@@ -65,6 +65,9 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.RoutineRepository
 import com.sereneflow.timer.repository.StarterTemplates
+import com.sereneflow.timer.transfer.RoutineTransfer
+import com.sereneflow.timer.transfer.shareFile
+import androidx.compose.material.icons.filled.Share
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.theme.accentColor
 import com.sereneflow.timer.ui.platform.ActionMenu
@@ -321,6 +324,13 @@ private fun RoutineCard(
                         actions = listOf(
                             MenuAction("Edit", Icons.Default.Edit, onClick = onEdit),
                             MenuAction("Duplicate", Icons.Default.ContentCopy, onClick = onDuplicate),
+                            MenuAction("Share", Icons.Default.Share) {
+                                shareFile(
+                                    RoutineTransfer.fileNameFor(routine),
+                                    RoutineTransfer.MIME_TYPE,
+                                    RoutineTransfer.encode(listOf(routine))
+                                )
+                            },
                             MenuAction("Delete", Icons.Default.Delete, destructive = true) { confirmDelete = true }
                         ),
                         onDismiss = { showMenu = false }

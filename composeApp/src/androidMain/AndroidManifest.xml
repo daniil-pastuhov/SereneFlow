@@ -25,5 +25,16 @@
         <receiver
             android:name="com.sereneflow.timer.session.TimerActionReceiver"
             android:exported="false" />
+
+        <!-- Shares .sereneflow routine files (transfer/FileSharing.android.kt). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/shared_file_paths" />
+        </provider>
     </application>
 </manifest>

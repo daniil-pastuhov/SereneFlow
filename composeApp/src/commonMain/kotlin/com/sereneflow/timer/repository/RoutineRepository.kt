@@ -6,6 +6,9 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.VisualEffectType
+import com.sereneflow.timer.model.newStepId
+import com.sereneflow.timer.transfer.RoutineTransfer
+import kotlin.random.Random
 import com.sereneflow.timer.storage.FileStorage
 import com.sereneflow.timer.storage.StorageJson
 import com.sereneflow.timer.storage.load
@@ -59,6 +62,24 @@ class RoutineRepository(
         val routine = StarterTemplates.instantiate(template)
         saveRoutine(routine)
         return routine
+    }
+
+    /**
+     * Adds the routines in a `.sereneflow` file ([RoutineTransfer.decode]) at the top of the list,
+     * in the file's order, each with a fresh id and fresh step ids so they never replace a routine
+     * already here (importing the same file twice gives two copies).
+     *
+     * @throws IllegalArgumentException when [json] isn't SereneFlow routines.
+     */
+    fun import(json: String): List<Routine> {
+        val imported = RoutineTransfer.decode(json).map { routine ->
+            routine.copy(
+                id = "routine_${Random.nextLong(Long.MAX_VALUE)}",
+                steps = routine.steps.map { it.copy(id = newStepId()) }
+            )
+        }
+        _routines.update { imported + it }
+        return imported
     }
 
     fun deleteRoutine(id: String) {
