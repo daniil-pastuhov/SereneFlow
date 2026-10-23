@@ -12,7 +12,9 @@
 		22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F543015C899423D4B01CEB2E /* Assets.xcassets */; };
 		286BA5B2656DC8914398C0CC /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */; };
 		2B02D273B8048A357782D40A /* SereneFlowWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F5782C4478E998FE210E691C /* SereneFlowWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2C8712CDBFCF1CC46C17EE6B /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = D530281DDD45BB536CC313C6 /* InfoPlist.xcstrings */; };
 		42ED48A4498491AA3E211076 /* RoutineIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DEFB19023F56EE03E51342 /* RoutineIntents.swift */; };
+		4361743AA269158A01337511 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D1EB5C724332B1C0F728D /* Localizable.xcstrings */; };
 		48715B3CF0D9958D5E1F99C5 /* iosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3771E0E755C03BF5A873EAE2 /* iosApp.swift */; };
 		56B0305B5D3847FC6B326502 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */; };
 		59E289532787BCB122A9D648 /* TimerControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5079ED09904627029AFE433 /* TimerControlIntents.swift */; };
@@ -20,11 +22,14 @@
 		5C5CCEF6FC29EAAD81B63C2B /* QuickActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC983C9182807BB46198B3F /* QuickActions.swift */; };
 		6EDBDEF57087535AE16C26D6 /* TimerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09A8B87794DF76A2697A309 /* TimerLiveActivity.swift */; };
 		700CBD72B671F1FE45C9C771 /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */; };
+		83DEA7DF45BB0B54FC8837EE /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = BBD5F3B43FE3C04AF6B0CE5C /* Localizable.xcstrings */; };
 		A4020294DADC227342BD3416 /* SereneFlowWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2BE9B6904DB262B81C91CA6F /* SereneFlowWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A4C11C73AB9F3050DF1DC273 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FBB13DD6FE282D7D1F2D8FB1 /* Localizable.xcstrings */; };
 		ABA7E9D6494CAB45C28BBC28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4BAB7F95778EE0543A49C0CE /* Assets.xcassets */; };
 		D08086F801A885C1C84FB588 /* TimerControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5079ED09904627029AFE433 /* TimerControlIntents.swift */; };
 		D93BD5B69D2EE684C4885351 /* SereneFlowWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */; };
 		DA83D2B83C66956B25D90BD3 /* WatchTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF388058C0075ADD6A0299E /* WatchTimerView.swift */; };
+		E6E22E7564576CD396443760 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = DED174F20CCA6C76C0437524 /* AppShortcuts.strings */; };
 		E9D04B7779AD29AAAB7589C2 /* QuickStartWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECA5FE58CFCF1F0EF59031D8 /* QuickStartWidget.swift */; };
 		ED39A82197EA1B549C64D0D5 /* SereneFlowWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F43ADB982A625621E962893 /* SereneFlowWatchApp.swift */; };
 		FADAC6B78CC0760D79FFBE28 /* AppIconManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20C8D999D5F6A6674705005F /* AppIconManager.swift */; };
@@ -74,6 +79,7 @@
 
 /* Begin PBXFileReference section */
 		12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SereneFlowWidgetBundle.swift; sourceTree = "<group>"; };
+		13460834AD319CDAB0309B74 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		1405A1434510C5F0CBFB7F9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerActivityAttributes.swift; sourceTree = "<group>"; };
 		1FF388058C0075ADD6A0299E /* WatchTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTimerView.swift; sourceTree = "<group>"; };
@@ -81,11 +87,12 @@
 		2BE9B6904DB262B81C91CA6F /* SereneFlowWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SereneFlowWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3771E0E755C03BF5A873EAE2 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
 		4BAB7F95778EE0543A49C0CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6A8D1EB5C724332B1C0F728D /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		7F43ADB982A625621E962893 /* SereneFlowWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SereneFlowWatchApp.swift; sourceTree = "<group>"; };
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		90DEFB19023F56EE03E51342 /* RoutineIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineIntents.swift; sourceTree = "<group>"; };
-		9F8A95C3258486AAD0034187 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		A8E52D11578FC7DA1FAF045F /* SereneFlowWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SereneFlowWidget.entitlements; sourceTree = "<group>"; };
+		BBD5F3B43FE3C04AF6B0CE5C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		C09A8B87794DF76A2697A309 /* TimerLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerLiveActivity.swift; sourceTree = "<group>"; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C49B0B02429FBBC9F867DDE1 /* iosApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iosApp.entitlements; sourceTree = "<group>"; };
@@ -93,10 +100,13 @@
 		CDC983C9182807BB46198B3F /* QuickActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActions.swift; sourceTree = "<group>"; };
 		CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D3E93DA1FF128B6CF42FE73C /* WatchSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
+		D530281DDD45BB536CC313C6 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		E5079ED09904627029AFE433 /* TimerControlIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlIntents.swift; sourceTree = "<group>"; };
 		ECA5FE58CFCF1F0EF59031D8 /* QuickStartWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStartWidget.swift; sourceTree = "<group>"; };
 		F543015C899423D4B01CEB2E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F5782C4478E998FE210E691C /* SereneFlowWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SereneFlowWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FBB13DD6FE282D7D1F2D8FB1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		FE064572C370901341B90A81 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		FEC4F0A5217577A3B46AA2F5 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -105,6 +115,7 @@
 			isa = PBXGroup;
 			children = (
 				1405A1434510C5F0CBFB7F9A /* Info.plist */,
+				FBB13DD6FE282D7D1F2D8FB1 /* Localizable.xcstrings */,
 				ECA5FE58CFCF1F0EF59031D8 /* QuickStartWidget.swift */,
 				A8E52D11578FC7DA1FAF045F /* SereneFlowWidget.entitlements */,
 				12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */,
@@ -120,13 +131,16 @@
 				F543015C899423D4B01CEB2E /* Assets.xcassets */,
 				CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */,
 				C117AD187833E2513BD2F553 /* Info.plist */,
+				D530281DDD45BB536CC313C6 /* InfoPlist.xcstrings */,
 				C49B0B02429FBBC9F867DDE1 /* iosApp.entitlements */,
 				3771E0E755C03BF5A873EAE2 /* iosApp.swift */,
 				FEC4F0A5217577A3B46AA2F5 /* LiveActivityManager.swift */,
+				6A8D1EB5C724332B1C0F728D /* Localizable.xcstrings */,
 				C6D2DD7FE2E0BF5DB2A96B4B /* PrivacyInfo.xcprivacy */,
 				CDC983C9182807BB46198B3F /* QuickActions.swift */,
 				90DEFB19023F56EE03E51342 /* RoutineIntents.swift */,
 				D3E93DA1FF128B6CF42FE73C /* WatchSessionManager.swift */,
+				DED174F20CCA6C76C0437524 /* AppShortcuts.strings */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -134,32 +148,33 @@
 		38B69C3F79CD97858CF7B609 = {
 			isa = PBXGroup;
 			children = (
-				8786EEF7E053C7539D8AE864 /* agent-a0dde540d5aba0e24 */,
 				1DB4B685CAEE8BEFEBBAEF94 /* iosApp */,
 				64DC8490FBF0040A1D5F7C0A /* SereneFlowWatch */,
 				125AF96DE90E67F9A33D5174 /* SereneFlowWidget */,
 				D729CB25B4FA03B3484F4F1E /* Shared */,
+				5A401711BDDC9F0B23300161 /* Timer */,
 				94C98B8B3A2BFC1966447269 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		5A401711BDDC9F0B23300161 /* Timer */ = {
+			isa = PBXGroup;
+			children = (
+				13460834AD319CDAB0309B74 /* Version.xcconfig */,
+			);
+			name = Timer;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		64DC8490FBF0040A1D5F7C0A /* SereneFlowWatch */ = {
 			isa = PBXGroup;
 			children = (
 				4BAB7F95778EE0543A49C0CE /* Assets.xcassets */,
+				BBD5F3B43FE3C04AF6B0CE5C /* Localizable.xcstrings */,
 				7F43ADB982A625621E962893 /* SereneFlowWatchApp.swift */,
 				1FF388058C0075ADD6A0299E /* WatchTimerView.swift */,
 			);
 			path = SereneFlowWatch;
-			sourceTree = "<group>";
-		};
-		8786EEF7E053C7539D8AE864 /* agent-a0dde540d5aba0e24 */ = {
-			isa = PBXGroup;
-			children = (
-				9F8A95C3258486AAD0034187 /* Version.xcconfig */,
-			);
-			name = "agent-a0dde540d5aba0e24";
-			path = ..;
 			sourceTree = "<group>";
 		};
 		94C98B8B3A2BFC1966447269 /* Products */ = {
@@ -207,6 +222,7 @@
 			buildConfigurationList = 298C4E2C5A40E6BD0D0554FF /* Build configuration list for PBXNativeTarget "SereneFlowWidget" */;
 			buildPhases = (
 				A04EAF7AD7A124F8B5795113 /* Sources */,
+				6B3E813647AC1DF567885112 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -291,8 +307,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E6E22E7564576CD396443760 /* AppShortcuts.strings in Resources */,
 				22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */,
+				2C8712CDBFCF1CC46C17EE6B /* InfoPlist.xcstrings in Resources */,
+				4361743AA269158A01337511 /* Localizable.xcstrings in Resources */,
 				09FED4B446BD58DF150C455A /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B3E813647AC1DF567885112 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A4C11C73AB9F3050DF1DC273 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,6 +328,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ABA7E9D6494CAB45C28BBC28 /* Assets.xcassets in Resources */,
+				83DEA7DF45BB0B54FC8837EE /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -380,10 +408,21 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin PBXVariantGroup section */
+		DED174F20CCA6C76C0437524 /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FE064572C370901341B90A81 /* en */,
+			);
+			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		11814011E7D6EC822BFBC66D /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9F8A95C3258486AAD0034187 /* Version.xcconfig */;
+			baseConfigurationReference = 13460834AD319CDAB0309B74 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -430,10 +469,12 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 			};
@@ -485,7 +526,7 @@
 		};
 		6C824A6EB4BAD43AE2A4BB29 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9F8A95C3258486AAD0034187 /* Version.xcconfig */;
+			baseConfigurationReference = 13460834AD319CDAB0309B74 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -538,11 +579,13 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};

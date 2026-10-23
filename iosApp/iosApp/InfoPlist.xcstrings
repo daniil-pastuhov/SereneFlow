@@ -1,0 +1,21 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "CFBundleDisplayName": {
+      "comment": "The app's name on the Home Screen",
+      "shouldTranslate": false,
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SereneFlow"
+          }
+        }
+      }
+    },
+    "SereneFlow Routine": {
+      "comment": "The kind of file a shared .sereneflow routine is (CFBundleTypeName, UTTypeDescription)"
+    }
+  },
+  "version": "1.0"
+}

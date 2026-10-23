@@ -38,7 +38,7 @@ private struct RunningView: View {
                 Countdown(snapshot: snapshot)
                     .font(.title3.weight(.light).monospacedDigit())
             }
-            Text(snapshot.isCompleted ? "Routine complete" : snapshot.stepTitle)
+            Text(snapshot.isCompleted ? String(localized: "Routine complete") : snapshot.stepTitle)
                 .font(.headline)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
@@ -52,9 +52,10 @@ private struct RunningView: View {
 
     private var statusLine: String {
         if snapshot.isCompleted { return snapshot.routineTitle }
-        if snapshot.isPaused { return "Paused" }
-        let step = "Step \(snapshot.stepIndex + 1) of \(snapshot.stepCount)"
-        return snapshot.rounds > 1 ? "Round \(snapshot.round) of \(snapshot.rounds) · \(step)" : step
+        if snapshot.isPaused { return String(localized: "Paused") }
+        let step = String(localized: "Step \(snapshot.stepIndex + 1) of \(snapshot.stepCount)")
+        guard snapshot.rounds > 1 else { return step }
+        return String(localized: "Round \(snapshot.round) of \(snapshot.rounds) · \(step)")
     }
 }
 
@@ -68,7 +69,7 @@ private struct Countdown: View {
         } else {
             time
                 .multilineTextAlignment(.center)
-                .accessibilityLabel(Text("Time left ") + time)
+                .accessibilityLabel(Text("Time left \(time)"))
         }
     }
 

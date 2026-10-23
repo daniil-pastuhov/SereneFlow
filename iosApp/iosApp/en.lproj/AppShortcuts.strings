@@ -1,0 +1,27 @@
+/* Siri phrases of the App Shortcuts (RoutineIntents.swift). A .strings file rather than an
+   AppShortcuts.xcstrings catalog, which needs iOS 17; the app supports iOS 16. Each phrase must
+   keep ${applicationName}; ${routine} stands for one of the user's routines. */
+
+/* ${routine} is one of the user's routines */
+"Start ${routine} in ${applicationName}" = "Start ${routine} in ${applicationName}";
+
+/* ${routine} is one of the user's routines */
+"Start ${routine} with ${applicationName}" = "Start ${routine} with ${applicationName}";
+
+"Start a routine in ${applicationName}" = "Start a routine in ${applicationName}";
+
+/* Pauses the running routine */
+"Pause ${applicationName}" = "Pause ${applicationName}";
+
+/* Resumes the paused routine */
+"Resume ${applicationName}" = "Resume ${applicationName}";
+
+"Skip step in ${applicationName}" = "Skip step in ${applicationName}";
+
+/* Skips to the next step */
+"Next step in ${applicationName}" = "Next step in ${applicationName}";
+
+"End routine in ${applicationName}" = "End routine in ${applicationName}";
+
+/* Ends the running routine */
+"Stop ${applicationName}" = "Stop ${applicationName}";

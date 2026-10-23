@@ -1,0 +1,40 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@": {
+      "comment": "A routine's title or summary in Shortcuts, shown as it is",
+      "shouldTranslate": false
+    },
+    "End Routine": {
+      "comment": "The End Routine intent's name and App Shortcut title"
+    },
+    "Ends the running SereneFlow routine.": {
+      "comment": "The End Routine intent's description"
+    },
+    "Moves the running SereneFlow routine on to its next step.": {
+      "comment": "The Skip Step intent's description"
+    },
+    "Opens SereneFlow and starts one of your routines.": {
+      "comment": "The Start Routine intent's description"
+    },
+    "Pause or Resume": {
+      "comment": "The Pause/Resume App Shortcut's short title"
+    },
+    "Pause or Resume Routine": {
+      "comment": "The Pause/Resume intent's name (Shortcuts, Siri, Live Activity button)"
+    },
+    "Pauses the running SereneFlow routine, or resumes it.": {
+      "comment": "The Pause/Resume intent's description"
+    },
+    "Routine": {
+      "comment": "What a routine is called in Shortcuts and Siri; the Start Routine intent's parameter"
+    },
+    "Skip Step": {
+      "comment": "The Skip Step intent's name and App Shortcut title"
+    },
+    "Start Routine": {
+      "comment": "The Start Routine intent's name and App Shortcut title"
+    }
+  },
+  "version": "1.0"
+}

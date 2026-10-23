@@ -1,0 +1,28 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld percent": {
+      "comment": "VoiceOver: how far through the step"
+    },
+    "Done": {
+      "comment": "The countdown's place once the routine is complete"
+    },
+    "No routine running": {},
+    "Paused": {},
+    "Round %lld of %lld · %@": {
+      "comment": "Round 2 of 4, then \"Step 3 of 5\""
+    },
+    "Routine complete": {},
+    "Start one on your iPhone, with Follow routine with screen off turned on.": {
+      "comment": "\"Follow routine with screen off\" is the iPhone app's setting"
+    },
+    "Step %lld of %lld": {},
+    "Step progress": {
+      "comment": "VoiceOver: the step's progress ring"
+    },
+    "Time left %@": {
+      "comment": "VoiceOver, before the countdown"
+    }
+  },
+  "version": "1.0"
+}

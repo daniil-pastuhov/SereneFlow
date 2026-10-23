@@ -1,0 +1,97 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ · %@": {
+      "comment": "The step's position, then what comes next (\"Up next: Rest\")"
+    },
+    "%lld/%lld": {
+      "comment": "Step 3 of 5, short, in the Dynamic Island"
+    },
+    "4 steps · 15 min": {
+      "comment": "A sample routine summary in the widget gallery"
+    },
+    "Done": {
+      "comment": "The countdown's place once the routine is complete"
+    },
+    "End": {
+      "comment": "Live Activity button: end the routine"
+    },
+    "End Routine": {
+      "comment": "The End Routine intent's name and App Shortcut title"
+    },
+    "Ends the running SereneFlow routine.": {
+      "comment": "The End Routine intent's description"
+    },
+    "Final step": {},
+    "Last routine": {
+      "comment": "The widget's button before the app has published its routines"
+    },
+    "Morning Awakening": {
+      "comment": "A sample routine name in the widget gallery"
+    },
+    "Moves the running SereneFlow routine on to its next step.": {
+      "comment": "The Skip Step intent's description"
+    },
+    "Pause": {
+      "comment": "Live Activity button"
+    },
+    "Pause or Resume Routine": {
+      "comment": "The Pause/Resume intent's name (Shortcuts, Siri, Live Activity button)"
+    },
+    "Paused": {},
+    "Pauses the running SereneFlow routine, or resumes it.": {
+      "comment": "The Pause/Resume intent's description"
+    },
+    "Quick Start": {
+      "comment": "The widget's name"
+    },
+    "Resume": {
+      "comment": "Live Activity button"
+    },
+    "Round %lld of %lld · %@": {
+      "comment": "Round 2 of 4, then \"Step 3 of 5\""
+    },
+    "Round %lld of %lld, %@": {
+      "comment": "VoiceOver: round 2 of 4, then \"Step 3 of 5\""
+    },
+    "Round %lld/%lld · %lld/%lld": {
+      "comment": "Round 2 of 4, step 3 of 5, short, on the Apple Watch Smart Stack"
+    },
+    "Routine complete": {},
+    "Routine complete. Well done.": {},
+    "Running": {
+      "comment": "VoiceOver: the routine is running (the leaf icon)"
+    },
+    "Skip": {
+      "comment": "Live Activity button: skip to the next step"
+    },
+    "Skip Step": {
+      "comment": "The Skip Step intent's name and App Shortcut title"
+    },
+    "Start %@": {
+      "comment": "VoiceOver: %@ is a routine's name"
+    },
+    "Start a routine in one tap.": {
+      "comment": "The widget's description in the gallery"
+    },
+    "Start your last routine": {
+      "comment": "VoiceOver"
+    },
+    "Step %lld of %lld": {},
+    "Step %lld/%lld": {
+      "comment": "Step 3 of 5, short, on the Apple Watch Smart Stack"
+    },
+    "Step progress": {
+      "comment": "VoiceOver: the step's progress bar"
+    },
+    "Tap to start": {},
+    "Time left %@": {
+      "comment": "VoiceOver, before the countdown"
+    },
+    "Up next: %@": {
+      "comment": "%@ is the next step's name"
+    },
+    "Well done.": {}
+  },
+  "version": "1.0"
+}

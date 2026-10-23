@@ -1,6 +1,7 @@
 name: iosApp
 options:
   bundleIdPrefix: com.sereneflow
+  developmentLanguage: en
   deploymentTarget:
     iOS: "16.0"
 # Version.xcconfig (repository root) holds MARKETING_VERSION for both apps; see the comment there.
@@ -11,6 +12,12 @@ settings:
   base:
     DEVELOPMENT_TEAM: "S8Q8KHX6G5"
     CODE_SIGN_STYLE: Automatic
+    # The Swift targets' text is in String Catalogs, English only for now: Localizable.xcstrings
+    # in each target's folder, plus the app's InfoPlist.xcstrings, and its Siri phrases in
+    # en.lproj/AppShortcuts.strings (an AppShortcuts.xcstrings catalog needs iOS 17). Shared/ is compiled into the app and the widget, so its strings are in
+    # both of their catalogs. A language is added in Xcode's catalog editor, in the same files.
+    SWIFT_EMIT_LOC_STRINGS: "YES"
+    LOCALIZATION_PREFERS_STRING_CATALOGS: "YES"
 targets:
   iosApp:
     type: application

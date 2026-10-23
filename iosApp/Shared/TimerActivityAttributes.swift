@@ -20,8 +20,6 @@ struct TimerActivityAttributes: ActivityAttributes {
         var rounds: Int = 1
 
         var stepStart: Date { stepEnd.addingTimeInterval(-stepDuration) }
-        /// "Round 2 of 4", or nil without rounds.
-        var roundLabel: String? { rounds > 1 ? "Round \(round) of \(rounds)" : nil }
         var isPaused: Bool { pausedRemaining != nil }
     }
 

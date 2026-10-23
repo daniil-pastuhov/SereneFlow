@@ -34,7 +34,14 @@ struct QuickStartEntry: TimelineEntry {
 
 struct QuickStartProvider: TimelineProvider {
     func placeholder(in context: Context) -> QuickStartEntry {
-        QuickStartEntry(date: Date(), routines: [QuickStartRoutine(id: "last", title: "Morning Awakening", subtitle: "4 steps · 15 min")])
+        // A sample of what the widget shows, in the gallery and while it loads.
+        QuickStartEntry(date: Date(), routines: [
+            QuickStartRoutine(
+                id: "last",
+                title: String(localized: "Morning Awakening"),
+                subtitle: String(localized: "4 steps · 15 min")
+            )
+        ])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (QuickStartEntry) -> Void) {
@@ -95,11 +102,11 @@ struct QuickStartView: View {
                     .foregroundStyle(widgetAccent)
                     .accessibilityHidden(true)
                 Spacer(minLength: 0)
-                Text(routine?.title ?? "Last routine")
+                Text(routine?.title ?? String(localized: "Last routine"))
                     .font(.headline)
                     .foregroundStyle(.black)
                     .lineLimit(2)
-                Text(routine?.subtitle ?? "Tap to start")
+                Text(routine?.subtitle ?? String(localized: "Tap to start"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -107,7 +114,9 @@ struct QuickStartView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .widgetURL(startURL(routine?.id ?? "last"))
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Start \(routine?.title ?? "your last routine")")
+            .accessibilityLabel(
+                routine.map { String(localized: "Start \($0.title)") } ?? String(localized: "Start your last routine")
+            )
         }
     }
 }

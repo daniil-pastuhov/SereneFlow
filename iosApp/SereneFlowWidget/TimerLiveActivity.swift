@@ -71,7 +71,7 @@ private func timerActivityConfiguration() -> ActivityConfiguration<TimerActivity
                 .padding(.leading, 4)
                 // "3/5" and a decorative leaf; VoiceOver hears "Step 3 of 5".
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(state.isCompleted ? "Done" : stepPositionLabel(for: state))
+                .accessibilityLabel(state.isCompleted ? String(localized: "Done") : stepPositionLabel(for: state))
             }
             DynamicIslandExpandedRegion(.trailing) {
                 CountdownText(state: state)
@@ -161,7 +161,7 @@ private struct WatchSmallView: View {
                         .accessibilityLabel(state.isPaused ? "Paused" : "Running")
                 }
             VStack(alignment: .leading, spacing: 1) {
-                Text(state.isCompleted ? "Routine complete" : state.stepTitle)
+                Text(state.isCompleted ? String(localized: "Routine complete") : state.stepTitle)
                     .font(.headline)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -184,17 +184,30 @@ private struct WatchSmallView: View {
     }
 }
 
+/// "Step 3 of 5".
+private func stepLabel(for state: TimerActivityAttributes.ContentState) -> String {
+    String(localized: "Step \(state.stepIndex + 1) of \(state.stepCount)")
+}
+
 /// "Round 2 of 4, Step 3 of 5" for VoiceOver, where the layout shows "2/4 · 3/5".
 private func stepPositionLabel(for state: TimerActivityAttributes.ContentState) -> String {
-    [state.roundLabel, "Step \(state.stepIndex + 1) of \(state.stepCount)"]
-        .compactMap { $0 }.joined(separator: ", ")
+    guard state.rounds > 1 else { return stepLabel(for: state) }
+    return String(localized: "Round \(state.round) of \(state.rounds), \(stepLabel(for: state))")
 }
 
 private func subtitle(for state: TimerActivityAttributes.ContentState) -> String {
-    if state.isCompleted { return "Routine complete. Well done." }
-    if state.isPaused { return "Paused" }
-    if let next = state.nextStepTitle { return "Up next: \(next)" }
-    return "Final step"
+    if state.isCompleted { return String(localized: "Routine complete. Well done.") }
+    if state.isPaused { return String(localized: "Paused") }
+    if let next = state.nextStepTitle { return String(localized: "Up next: \(next)") }
+    return String(localized: "Final step")
+}
+
+/// The Lock Screen's line under the step: "Round 2 of 4 · Step 3 of 5 · Up next: Rest".
+private func lockScreenStatus(for state: TimerActivityAttributes.ContentState) -> String {
+    let position = state.rounds > 1
+        ? String(localized: "Round \(state.round) of \(state.rounds) · \(stepLabel(for: state))")
+        : stepLabel(for: state)
+    return String(localized: "\(position) · \(subtitle(for: state))")
 }
 
 private struct LockScreenView: View {
@@ -209,15 +222,11 @@ private struct LockScreenView: View {
                     Text(routineTitle.uppercased())
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(accent)
-                    Text(state.isCompleted ? "Routine complete" : state.stepTitle)
+                    Text(state.isCompleted ? String(localized: "Routine complete") : state.stepTitle)
                         .font(.headline)
                         .foregroundStyle(.white)
                         .lineLimit(1)
-                    Text(state.isCompleted ? "Well done." : [
-                        state.roundLabel,
-                        "Step \(state.stepIndex + 1) of \(state.stepCount)",
-                        subtitle(for: state)
-                    ].compactMap { $0 }.joined(separator: " · "))
+                    Text(state.isCompleted ? String(localized: "Well done.") : lockScreenStatus(for: state))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.7))
                         .lineLimit(1)
@@ -271,7 +280,7 @@ private struct CountdownText: View {
         if state.isCompleted {
             Text("Done")
         } else {
-            time.accessibilityLabel(Text("Time left ") + time)
+            time.accessibilityLabel(Text("Time left \(time)"))
         }
     }
 
