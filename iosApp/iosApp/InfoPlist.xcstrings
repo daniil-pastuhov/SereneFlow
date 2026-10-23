@@ -1,21 +1,34 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "CFBundleDisplayName": {
-      "comment": "The app's name on the Home Screen",
-      "shouldTranslate": false,
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SereneFlow"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "The app's name on the Home Screen",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SereneFlow"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
-    "SereneFlow Routine": {
-      "comment": "The kind of file a shared .sereneflow routine is (CFBundleTypeName, UTTypeDescription)"
+    "CFBundleName" : {
+      "comment" : "The app's short name; a brand name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SereneFlow"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "SereneFlow Routine" : {
+      "comment" : "The kind of file a shared .sereneflow routine is (CFBundleTypeName, UTTypeDescription)"
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }
