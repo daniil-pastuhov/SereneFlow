@@ -515,7 +515,7 @@ private fun StepsPreviewBar(steps: List<com.sereneflow.timer.model.RoutineStep>)
 
         if (steps.size > 3) {
             Text(
-                text = "+ ${steps.size - 3} more steps",
+                text = "+ ${(steps.size - 3).plural("more step")}",
                 fontSize = 11.sp,
                 color = colors.primary,
                 fontWeight = FontWeight.Medium,
