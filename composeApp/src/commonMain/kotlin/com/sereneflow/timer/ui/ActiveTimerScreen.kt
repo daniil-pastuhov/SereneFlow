@@ -195,7 +195,7 @@ fun ActiveTimerScreen(
         val dialScale = (minOf(maxWidth, maxHeight) / 440.dp).coerceIn(0.7f, 2f)
         // Controls grow less: touch targets need no more than a little extra on a tablet.
         val controlScale = dialScale.coerceIn(1f, 1.3f)
-        // The ring effects draw a ring around the centre that would run under the side column of
+        // The ring effects draw a ring (or a lotus) around the centre that would run under the side column of
         // controls, so beside it they are centred on the space that is left. The others fill the
         // screen and stay clear of the column on their own.
         val ringEffect = session.cues.visualEffect == VisualEffectType.COSMIC_ORBIT ||
@@ -241,8 +241,7 @@ fun ActiveTimerScreen(
                         BreathingLotusCanvas(
                             progress = progress,
                             petalColor = canvasAccent,
-                            goldAccent = colors.secondary,
-                            trackColor = colors.onBackground.copy(alpha = 0.12f)
+                            waterColor = colors.secondary
                         )
                     }
                     VisualEffectType.HOURGLASS -> {
