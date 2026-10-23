@@ -2,6 +2,11 @@ package com.sereneflow.timer.theme
 
 import androidx.compose.ui.graphics.Color
 import com.sereneflow.timer.model.AppThemeMode
+import com.sereneflow.timer.model.Routine
+
+/** The routine's own accent colour, or null to use the theme's. */
+val Routine.accentColor: Color?
+    get() = accentColorHex?.let { Color(it) }
 
 data class SerenePalette(
     val primary: Color,

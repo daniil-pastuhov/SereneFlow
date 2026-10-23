@@ -21,4 +21,6 @@ struct TimerActivityAttributes: ActivityAttributes {
     }
 
     var routineTitle: String
+    /// The routine's accent colour as ARGB; nil (or 0) for the app's own colour.
+    var accentArgb: Int64? = nil
 }

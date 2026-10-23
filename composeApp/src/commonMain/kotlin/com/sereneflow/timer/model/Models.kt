@@ -101,6 +101,28 @@ data class RoutineStep(
         }
 }
 
+/**
+ * The colours a routine can be tinted with. Mid-tones, so they read on every theme, light or dark.
+ * Stored as ARGB in [Routine.accentColorHex].
+ */
+enum class RoutineAccent(val displayName: String, val argb: Long) {
+    SAGE("Sage", 0xFF6FA287L),
+    TEAL("Teal", 0xFF3FA7A0L),
+    OCEAN("Ocean", 0xFF4F8FBFL),
+    LAVENDER("Lavender", 0xFF8E7CC3L),
+    ROSE("Rose", 0xFFD27D8EL),
+    CLAY("Clay", 0xFFC98458L),
+    AMBER("Amber", 0xFFD4A84BL),
+    SLATE("Slate", 0xFF7A8794L);
+
+    companion object {
+        fun of(argb: Long?): RoutineAccent? = entries.firstOrNull { it.argb == argb }
+    }
+}
+
+/** The accents versions up to 1.0.x stored on every routine without ever showing them. */
+private val UnusedLegacyAccents = setOf(0xFF5B8A72L, 0xFF436B54L)
+
 /** A fresh, unique id for a step the editor creates. */
 fun newStepId(): String = "step_${Random.nextLong(Long.MAX_VALUE)}"
 
@@ -124,15 +146,22 @@ data class Routine(
     val sound: CueSound? = null,
     val voice: VoiceGuidance = VoiceGuidance.DEFAULT,
     val steps: List<RoutineStep> = emptyList(),
-    val accentColorHex: Long = 0xFF5B8A72L,
+    /** ARGB colour from [RoutineAccent] tinting the routine's card and timer; null = the theme's. */
+    val accentColorHex: Long? = null,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @SerialName("soundMode") val legacySoundMode: LegacySoundMode? = null
 ) {
-    /** This routine with a sound setting from an older version turned into [sound] and [voice]. */
+    /**
+     * This routine as this version stores it: a sound setting from an older version turned into
+     * [sound] and [voice], and the accent colour versions up to 1.0.x stored without showing it
+     * (always one of two fixed values) cleared, so those routines follow the theme.
+     */
     fun migrated(): Routine {
-        val legacy = legacySoundMode ?: return this
-        return copy(
+        var routine = this
+        if (accentColorHex in UnusedLegacyAccents) routine = routine.copy(accentColorHex = null)
+        val legacy = legacySoundMode ?: return routine
+        return routine.copy(
             sound = legacy.sound,
             voice = if (legacy.voice) VoiceGuidance.ON else VoiceGuidance.OFF,
             legacySoundMode = null

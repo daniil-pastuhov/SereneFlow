@@ -29,7 +29,8 @@ final class LiveActivityManager: NSObject, LiveActivityBridge {
         stepEndEpochSeconds: Double,
         remainingSeconds: Double,
         isPaused: Bool,
-        isCompleted: Bool
+        isCompleted: Bool,
+        accentArgb: Int64
     ) {
         guard #available(iOS 16.2, *) else { return }
         let state = TimerActivityAttributes.ContentState(
@@ -69,7 +70,10 @@ final class LiveActivityManager: NSObject, LiveActivityBridge {
             guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
             do {
                 activity = try Activity.request(
-                    attributes: TimerActivityAttributes(routineTitle: routineTitle),
+                    attributes: TimerActivityAttributes(
+                        routineTitle: routineTitle,
+                        accentArgb: accentArgb == 0 ? nil : accentArgb
+                    ),
                     content: content,
                     pushType: nil
                 )

@@ -84,7 +84,6 @@ class RoutineRepository(
                     id = "morning_awakening",
                     title = "Morning Awakening",
                     description = "Awaken your body and mind with mindful hydration, gentle flow, and breathwork",
-                    accentColorHex = 0xFF436B54L,
                     steps = listOf(
                         RoutineStep("s1", "Warm Lemon Water & Presence", 120, "Hydrate and savor the morning warmth"),
                         RoutineStep("s2", "Cat-Cow & Spine Awakening", 180, "Gentle spinal wave stretches"),

@@ -81,6 +81,7 @@ import com.sereneflow.timer.physics.CosmicOrbitCanvas
 import com.sereneflow.timer.physics.HourglassCanvas
 import com.sereneflow.timer.physics.WaterWaveCanvas
 import com.sereneflow.timer.theme.LocalSereneColors
+import com.sereneflow.timer.theme.accentColor
 import com.sereneflow.timer.ui.platform.ConfirmDialog
 
 @Composable
@@ -94,6 +95,8 @@ fun ActiveTimerScreen(
     val routine = session.routine
     val engine = session.engine
     val state by engine.timerState.collectAsState()
+    // The routine's own colour leads the visual effect; the theme's otherwise.
+    val canvasAccent = routine.accentColor ?: colors.primary
 
     KeepScreenOn(enabled = keepScreenOn && !state.isCompleted)
 
@@ -170,7 +173,7 @@ fun ActiveTimerScreen(
                 VisualEffectType.WATER -> {
                     WaterWaveCanvas(
                         progress = { 1f - progress() }, // Drains down gracefully
-                        primaryColor = colors.primary,
+                        primaryColor = canvasAccent,
                         secondaryColor = colors.secondary
                     )
                 }
@@ -178,14 +181,14 @@ fun ActiveTimerScreen(
                     BonsaiTreeCanvas(
                         progress = progress, // Blooms and grows
                         trunkColor = colors.onBackground.copy(alpha = 0.6f),
-                        foliageColor = colors.primary,
+                        foliageColor = canvasAccent,
                         leafColor = colors.secondary
                     )
                 }
                 VisualEffectType.COSMIC_ORBIT -> {
                     CosmicOrbitCanvas(
                         progress = progress,
-                        coreColor = colors.primary,
+                        coreColor = canvasAccent,
                         accentColor = colors.secondary,
                         trackColor = colors.onBackground.copy(alpha = 0.12f)
                     )
@@ -193,7 +196,7 @@ fun ActiveTimerScreen(
                 VisualEffectType.BREATHING_LOTUS -> {
                     BreathingLotusCanvas(
                         progress = progress,
-                        petalColor = colors.primary,
+                        petalColor = canvasAccent,
                         goldAccent = colors.secondary,
                         trackColor = colors.onBackground.copy(alpha = 0.12f)
                     )
@@ -202,7 +205,7 @@ fun ActiveTimerScreen(
                     HourglassCanvas(
                         progress = progress,
                         glassColor = colors.surfaceVariant,
-                        sandColor = colors.primary,
+                        sandColor = canvasAccent,
                         accentColor = colors.secondary
                     )
                 }

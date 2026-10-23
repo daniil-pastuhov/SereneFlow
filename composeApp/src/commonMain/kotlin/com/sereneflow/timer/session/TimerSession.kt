@@ -113,7 +113,9 @@ data class SessionSnapshot(
     /** Routine time elapsed before the current step started. */
     val elapsedBeforeStepMs: Long,
     val isPaused: Boolean,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    /** The routine's accent colour (ARGB); null = the app's own. */
+    val accentArgb: Long? = null
 ) {
     val totalDurationMs: Long get() = stepDurationsSeconds.sumOf { it * 1000L }
 }
@@ -136,7 +138,8 @@ private fun TimerState.toSnapshot(): SessionSnapshot {
         stepDurationsSeconds = durations,
         elapsedBeforeStepMs = durations.take(currentStepIndex).sumOf { it * 1000L },
         isPaused = isPaused || !isRunning,
-        isCompleted = isCompleted
+        isCompleted = isCompleted,
+        accentArgb = routine.accentColorHex
     )
 }
 

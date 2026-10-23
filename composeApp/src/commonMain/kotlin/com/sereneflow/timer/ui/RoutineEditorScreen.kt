@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -80,7 +81,15 @@ import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.VisualEffectType
+import com.sereneflow.timer.model.RoutineAccent
 import com.sereneflow.timer.model.VoiceGuidance
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.sereneflow.timer.model.newStepId
 import com.sereneflow.timer.model.withDuplicatedStep
 import com.sereneflow.timer.session.TimerSession
@@ -109,6 +118,8 @@ fun RoutineEditorScreen(
     var selectedVisualEffect by remember { mutableStateOf(routine?.visualEffect) }
     var selectedSound by remember { mutableStateOf(routine?.sound) }
     var selectedVoice by remember { mutableStateOf(routine?.voice ?: VoiceGuidance.DEFAULT) }
+    // null: the theme's colour.
+    var selectedAccent by remember { mutableStateOf(routine?.accentColorHex) }
 
     var steps by remember {
         mutableStateOf(
@@ -129,13 +140,14 @@ fun RoutineEditorScreen(
         "routine_${kotlin.random.Random.nextLong().let { if (it < 0) -it else it }}"
     }
 
-    // Edits are applied on top of the original so fields the editor doesn't expose (accent color) survive.
+    // Edits are applied on top of the original so fields the editor doesn't expose survive.
     fun buildRoutine(): Routine = (routine ?: Routine(id = newRoutineId, title = "")).copy(
         title = title.ifBlank { "Untitled Routine" },
         description = description,
         visualEffect = selectedVisualEffect,
         sound = selectedSound,
         voice = selectedVoice,
+        accentColorHex = selectedAccent,
         steps = steps
     )
 
@@ -375,6 +387,14 @@ fun RoutineEditorScreen(
                         }
                     }
 
+                    // Accent colour: tints the routine's card and its timer
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SectionLabel("ACCENT COLOUR")
+                            AccentSwatches(selected = selectedAccent, onSelect = { selectedAccent = it })
+                        }
+                    }
+
                     // Steps Timeline Header & Summary
                     item {
                         Row(
@@ -537,8 +557,50 @@ fun RoutineEditorScreen(
 /** [UntouchedDefaults] key of the routine name; steps use their ids. */
 private const val TITLE_FIELD = "title"
 
-/** LazyColumn index of the first step: after the name, look & sound, voice and timeline header items. */
-private const val FIRST_STEP_ITEM = 4
+/** LazyColumn index of the first step: after the name, look & sound, voice, accent and timeline header items. */
+private const val FIRST_STEP_ITEM = 5
+
+/** The theme's colour, then each [RoutineAccent], as round swatches with 48dp targets. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AccentSwatches(selected: Long?, onSelect: (Long?) -> Unit) {
+    val colors = LocalSereneColors.current
+    val options = listOf<Pair<Long?, String>>(null to "Theme colour") +
+        RoutineAccent.entries.map { it.argb to it.displayName }
+    FlowRow(modifier = Modifier.fillMaxWidth().selectableGroup()) {
+        options.forEach { (argb, name) ->
+            val isSelected = argb == selected
+            val swatch = argb?.let { Color(it.toInt()) } ?: colors.primary
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(argb) })
+                    .semantics { contentDescription = name },
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(swatch)
+                        .border(
+                            width = if (isSelected) 3.dp else 1.dp,
+                            color = if (isSelected) colors.onBackground else colors.cardBorder,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        isSelected -> Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        // Marks the theme swatch, which changes with the theme.
+                        argb == null -> Icon(Icons.Default.Palette, contentDescription = null, tint = colors.onPrimary, modifier = Modifier.size(16.dp))
+                    }
+                }
+            }
+        }
+    }
+}
 
 /** The lists the editor opens over itself. */
 private enum class EditorPicker { VisualEffect, Sound }

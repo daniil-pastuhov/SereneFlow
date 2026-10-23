@@ -50,7 +50,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +65,7 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.RoutineRepository
 import com.sereneflow.timer.theme.LocalSereneColors
+import com.sereneflow.timer.theme.accentColor
 import com.sereneflow.timer.ui.platform.ActionMenu
 import com.sereneflow.timer.ui.platform.ConfirmDialog
 import com.sereneflow.timer.ui.platform.MenuAction
@@ -224,6 +229,7 @@ private fun RoutineCard(
     val colors = LocalSereneColors.current
     var showMenu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    val accent = routine.accentColor
 
     if (confirmDelete) {
         ConfirmDialog(
@@ -246,7 +252,16 @@ private fun RoutineCard(
             .shadow(2.dp, RoundedCornerShape(24.dp), ambientColor = colors.accentGlow, spotColor = colors.accentGlow)
             .clip(RoundedCornerShape(24.dp))
             .background(colors.cardBackground)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(24.dp))
+            .then(
+                if (accent == null) Modifier else Modifier.drawBehind {
+                    // The routine's colour: a soft wash and a band along the leading edge.
+                    drawRect(accent.copy(alpha = 0.08f))
+                    val band = 6.dp.toPx()
+                    val x = if (layoutDirection == LayoutDirection.Ltr) 0f else size.width - band
+                    drawRect(accent, topLeft = Offset(x, 0f), size = Size(band, size.height))
+                }
+            )
+            .border(1.dp, accent?.copy(alpha = 0.55f) ?: colors.cardBorder, RoundedCornerShape(24.dp))
             .padding(20.dp)
     ) {
         Column {

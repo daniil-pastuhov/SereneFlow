@@ -2,7 +2,31 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-private let accent = Color(red: 0.44, green: 0.66, blue: 0.54)
+private let defaultAccent = Color(red: 0.44, green: 0.66, blue: 0.54)
+
+private struct RoutineAccentKey: EnvironmentKey {
+    static let defaultValue = defaultAccent
+}
+
+extension EnvironmentValues {
+    /// The running routine's accent colour, set at the root of each activity view.
+    fileprivate var routineAccent: Color {
+        get { self[RoutineAccentKey.self] }
+        set { self[RoutineAccentKey.self] = newValue }
+    }
+}
+
+extension TimerActivityAttributes {
+    /// The routine's own colour, or the app's when it follows the theme.
+    fileprivate var accent: Color {
+        guard let argb = accentArgb, argb != 0 else { return defaultAccent }
+        return Color(
+            red: Double((argb >> 16) & 0xFF) / 255,
+            green: Double((argb >> 8) & 0xFF) / 255,
+            blue: Double(argb & 0xFF) / 255
+        )
+    }
+}
 
 /// Lock Screen banner and Dynamic Island for a running routine. Countdowns and progress use
 /// `timerInterval` views, which the system animates on its own, so they stay live between updates.
@@ -29,10 +53,12 @@ struct TimerLiveActivity: Widget {
 private func timerActivityConfiguration() -> ActivityConfiguration<TimerActivityAttributes> {
     ActivityConfiguration(for: TimerActivityAttributes.self) { context in
         ActivityContentView(routineTitle: context.attributes.routineTitle, state: context.state)
+            .environment(\.routineAccent, context.attributes.accent)
             .activityBackgroundTint(Color.black.opacity(0.35))
             .activitySystemActionForegroundColor(.white)
     } dynamicIsland: { context in
         let state = context.state
+        let accent = context.attributes.accent
         return DynamicIsland {
             DynamicIslandExpandedRegion(.leading) {
                 Label {
@@ -65,6 +91,7 @@ private func timerActivityConfiguration() -> ActivityConfiguration<TimerActivity
                         .lineLimit(1)
                 }
                 .padding(.horizontal, 4)
+                .environment(\.routineAccent, accent)
             }
         } compactLeading: {
             Image(systemName: state.isPaused ? "pause.fill" : "leaf.fill")
@@ -77,6 +104,7 @@ private func timerActivityConfiguration() -> ActivityConfiguration<TimerActivity
                 .foregroundStyle(accent)
         } minimal: {
             StepProgressRing(state: state)
+                .environment(\.routineAccent, accent)
         }
         .keylineTint(accent)
     }
@@ -115,6 +143,7 @@ private struct FamilyAdaptiveView: View {
 
 /// Apple Watch Smart Stack: step name, live countdown, step X/Y and a progress ring.
 private struct WatchSmallView: View {
+    @Environment(\.routineAccent) private var accent
     let state: TimerActivityAttributes.ContentState
 
     var body: some View {
@@ -156,6 +185,7 @@ private func subtitle(for state: TimerActivityAttributes.ContentState) -> String
 }
 
 private struct LockScreenView: View {
+    @Environment(\.routineAccent) private var accent
     let routineTitle: String
     let state: TimerActivityAttributes.ContentState
 
@@ -209,6 +239,7 @@ private struct CountdownText: View {
 }
 
 private struct StepProgressBar: View {
+    @Environment(\.routineAccent) private var accent
     let state: TimerActivityAttributes.ContentState
 
     var body: some View {
@@ -231,6 +262,7 @@ private struct StepProgressBar: View {
 }
 
 private struct StepProgressRing: View {
+    @Environment(\.routineAccent) private var accent
     let state: TimerActivityAttributes.ContentState
 
     var body: some View {

@@ -27,7 +27,9 @@ interface LiveActivityBridge {
         stepEndEpochSeconds: Double,
         remainingSeconds: Double,
         isPaused: Boolean,
-        isCompleted: Boolean
+        isCompleted: Boolean,
+        /** The routine's accent colour as ARGB, or 0 for the app's own. */
+        accentArgb: Long
     )
 
     fun end()
@@ -56,7 +58,8 @@ private class IosSessionPresenter : SessionPresenter {
             stepEndEpochSeconds = (snapshot.stepEndEpochMs ?: 0L) / 1000.0,
             remainingSeconds = snapshot.stepRemainingMs / 1000.0,
             isPaused = snapshot.isPaused,
-            isCompleted = snapshot.isCompleted
+            isCompleted = snapshot.isCompleted,
+            accentArgb = snapshot.accentArgb ?: 0L
         )
 
         val stepChanged = lastStepIndex != -1 && snapshot.stepIndex != lastStepIndex

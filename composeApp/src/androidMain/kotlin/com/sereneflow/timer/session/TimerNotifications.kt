@@ -84,6 +84,7 @@ internal object TimerNotifications {
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setContentIntent(openAppIntent(context))
+            .apply { snapshot.accentArgb?.let { setColor(it.toInt()) } }
 
     private fun statusLine(snapshot: SessionSnapshot): String {
         val step = "Step ${snapshot.stepIndex + 1} of ${snapshot.stepCount}"
