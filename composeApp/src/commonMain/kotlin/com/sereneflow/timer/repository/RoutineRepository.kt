@@ -199,6 +199,10 @@ class PreferencesRepository(
         _preferences.update { it.copy(backgroundMode = enabled, backgroundModeAsked = true) }
     }
 
+    fun setVoiceTipShown() {
+        _preferences.update { if (it.voiceTipShown) it else it.copy(voiceTipShown = true) }
+    }
+
     fun toggleReminderThreshold(percent: Int) {
         _preferences.update {
             val current = it.reminderThresholds

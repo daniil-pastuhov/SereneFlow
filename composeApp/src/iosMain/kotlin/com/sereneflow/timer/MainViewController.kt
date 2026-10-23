@@ -17,9 +17,13 @@ fun openRoutineFile(url: NSURL) {
     readRoutineFile(url)?.let { ExternalActions.post(ExternalAction.ImportRoutines(it)) }
 }
 
-/** Called by the Swift app for a `sereneflow://start?routine=<id>` link (widget, links). */
+/**
+ * Called by the Swift app for a `sereneflow://start?routine=<id>` link (widget, links). Only
+ * start links: Siri controls the routine through App Intents, so a link from a web page or
+ * another app can't end or skip it.
+ */
 fun openAppUrl(url: String) {
-    ExternalAction.parseUrl(url)?.let(ExternalActions::post)
+    (ExternalAction.parseUrl(url) as? ExternalAction.StartRoutine)?.let(ExternalActions::post)
 }
 
 /** Called by the Swift SceneDelegate for a Home Screen quick action. */

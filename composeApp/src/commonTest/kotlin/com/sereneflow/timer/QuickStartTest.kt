@@ -4,8 +4,10 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.platform.MAX_QUICK_START_ITEMS
 import com.sereneflow.timer.platform.quickStartRoutines
+import com.sereneflow.timer.session.TimerSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 class QuickStartTest {
@@ -37,9 +39,36 @@ class QuickStartTest {
     }
 
     @Test
+    fun controlLinksRoundTrip() {
+        TimerCommand.entries.forEach { command ->
+            assertEquals(ExternalAction.ControlTimer(command), ExternalAction.parseUrl(ExternalAction.controlUrl(command)))
+        }
+        assertEquals("sereneflow://pause", ExternalAction.controlUrl(TimerCommand.PAUSE))
+    }
+
+    @Test
+    fun controlLinksIgnoreCaseAndParameters() {
+        // Assistant may add the exercise it heard; there is only one running routine to act on.
+        assertEquals(ExternalAction.ControlTimer(TimerCommand.SKIP), ExternalAction.parseUrl("SereneFlow://Skip"))
+        assertEquals(ExternalAction.ControlTimer(TimerCommand.RESUME), ExternalAction.parseUrl("sereneflow://resume?name=Yoga"))
+        assertEquals(ExternalAction.ControlTimer(TimerCommand.END), ExternalAction.parseUrl("sereneflow://end/"))
+    }
+
+    @Test
+    fun controlWithoutARunningRoutineDoesNothing() {
+        TimerCommand.entries.forEach { assertFalse(TimerSession.control(it)) }
+        // Not queued for the UI either, so it can't act on a routine started later.
+        ExternalActions.post(ExternalAction.ControlTimer(TimerCommand.END))
+        assertNull(ExternalActions.pending.value)
+    }
+
+    @Test
     fun otherLinksAreIgnored() {
         assertNull(ExternalAction.parseUrl("https://example.com/start?routine=a"))
         assertNull(ExternalAction.parseUrl("sereneflow://delete?routine=a"))
+        assertNull(ExternalAction.parseUrl("sereneflow://starting"))
+        assertNull(ExternalAction.parseUrl("sereneflow://pauses"))
+        assertNull(ExternalAction.parseUrl("sereneflow://"))
     }
 
     @Test

@@ -26,6 +26,28 @@
             android:name="com.sereneflow.timer.session.TimerActionReceiver"
             android:exported="false" />
 
+        <!-- Google Assistant's pause / resume / skip / end (androidApp res/xml/shortcuts.xml):
+             no window and a task of its own, so the command doesn't bring the app forward.
+             Exported for Assistant, which starts it by class; the filter lets
+             `adb shell am start -a android.intent.action.VIEW -d sereneflow://skip` reach it. -->
+        <activity
+            android:name="com.sereneflow.timer.session.TimerControlActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="sereneflow" />
+                <data android:host="pause" />
+                <data android:host="resume" />
+                <data android:host="skip" />
+                <data android:host="end" />
+            </intent-filter>
+        </activity>
+
         <!-- Shares .sereneflow routine files (transfer/FileSharing.android.kt). -->
         <provider
             android:name="androidx.core.content.FileProvider"

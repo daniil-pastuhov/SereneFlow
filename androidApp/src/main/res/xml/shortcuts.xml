@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Google Assistant App Actions. Each capability turns a built-in intent into a sereneflow:// link,
-  which SereneFlowActivity hands to the shared code (ExternalAction.parseUrl):
+  Google Assistant App Actions, matching the iOS Siri phrases (iosApp RoutineIntents.swift). Each
+  capability turns an intent into a sereneflow:// link, which the shared code reads
+  (ExternalAction.parseUrl):
   - "Hey Google, open Morning Awakening in SereneFlow" (OPEN_APP_FEATURE, matched against the
     dynamic launcher shortcuts, which carry this capability; see QuickStart.android.kt);
-  - "Hey Google, start an exercise in SereneFlow" (START_EXERCISE: the named routine, or the last).
-  Pausing and skipping stay on the notification's buttons: Assistant has no built-in intent for them.
-  Assistant only uses these for an app published on Play; test with the Google Assistant plugin.
+  - "Hey Google, start an exercise in SereneFlow" (START_EXERCISE: the named routine, or the last);
+  - "Hey Google, pause / resume / stop my exercise in SereneFlow" (PAUSE_, RESUME_, STOP_EXERCISE);
+  - "Hey Google, open SereneFlow and pause / resume / skip step / end routine" (custom intents;
+    their query patterns are string arrays in composeApp's androidMain res/values/strings.xml).
+    Skipping a step has no built-in intent, so it is only a custom intent.
+  Start goes to SereneFlowActivity; the controls go to TimerControlActivity, which acts on the
+  running routine without bringing the app forward (or opens the app if nothing is running).
+  The exercise name Assistant fills in for the controls is ignored: there is one running routine.
+  Custom intents are en-US only. Assistant only uses these for an app published on Play; test with
+  the Google Assistant plugin.
 -->
-<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+<shortcuts
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <capability android:name="actions.intent.OPEN_APP_FEATURE">
         <intent
             android:action="android.intent.action.VIEW"
@@ -29,6 +39,73 @@
             <parameter
                 android:name="exercise.name"
                 android:key="name" />
+        </intent>
+    </capability>
+    <capability
+        android:name="actions.intent.PAUSE_EXERCISE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.session.TimerControlActivity">
+            <url-template android:value="sereneflow://pause" />
+        </intent>
+    </capability>
+    <capability
+        android:name="actions.intent.RESUME_EXERCISE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.session.TimerControlActivity">
+            <url-template android:value="sereneflow://resume" />
+        </intent>
+    </capability>
+    <capability
+        android:name="actions.intent.STOP_EXERCISE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.session.TimerControlActivity">
+            <url-template android:value="sereneflow://end" />
+        </intent>
+    </capability>
+    <capability
+        android:name="custom.actions.intent.PAUSE_ROUTINE"
+        app:queryPatterns="@array/assistant_pause_queries">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.session.TimerControlActivity">
+            <url-template android:value="sereneflow://pause" />
+        </intent>
+    </capability>
+    <capability
+        android:name="custom.actions.intent.RESUME_ROUTINE"
+        app:queryPatterns="@array/assistant_resume_queries">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.session.TimerControlActivity">
+            <url-template android:value="sereneflow://resume" />
+        </intent>
+    </capability>
+    <capability
+        android:name="custom.actions.intent.SKIP_STEP"
+        app:queryPatterns="@array/assistant_skip_queries">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.session.TimerControlActivity">
+            <url-template android:value="sereneflow://skip" />
+        </intent>
+    </capability>
+    <capability
+        android:name="custom.actions.intent.END_ROUTINE"
+        app:queryPatterns="@array/assistant_end_queries">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.session.TimerControlActivity">
+            <url-template android:value="sereneflow://end" />
         </intent>
     </capability>
 </shortcuts>

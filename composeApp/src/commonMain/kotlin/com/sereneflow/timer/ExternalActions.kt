@@ -1,6 +1,7 @@
 package com.sereneflow.timer
 
 import com.sereneflow.timer.model.Routine
+import com.sereneflow.timer.session.TimerSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,13 @@ sealed interface ExternalAction {
      */
     data class StartRoutine(val routineId: String) : ExternalAction
 
+    /**
+     * Pause, resume, skip a step of or end the running routine (Google Assistant, a
+     * `sereneflow://pause` link). [ExternalActions.post] hands it straight to
+     * [TimerSession.control] rather than waiting for [App]; nothing happens if no routine is running.
+     */
+    data class ControlTimer(val command: TimerCommand) : ExternalAction
+
     companion object {
         const val LAST_ROUTINE = "last"
         const val URL_SCHEME = "sereneflow"
@@ -32,10 +40,17 @@ sealed interface ExternalAction {
         /** `sereneflow://start?routine=<id>`, which [parseUrl] reads back. */
         fun startUrl(routineId: String): String = "$URL_SCHEME://start?routine=${encode(routineId)}"
 
+        /** `sereneflow://pause` and the like, which [parseUrl] reads back. */
+        fun controlUrl(command: TimerCommand): String = "$URL_SCHEME://${command.urlName}"
+
         /** The action a `sereneflow://` link asks for, or null for anything else. */
         fun parseUrl(url: String): ExternalAction? {
-            val prefix = "$URL_SCHEME://start"
+            val prefix = "$URL_SCHEME://"
             if (!url.startsWith(prefix, ignoreCase = true)) return null
+            val host = url.substring(prefix.length).substringBefore('?').substringBefore('/')
+            TimerCommand.entries.firstOrNull { it.urlName.equals(host, ignoreCase = true) }
+                ?.let { return ControlTimer(it) }
+            if (!host.equals("start", ignoreCase = true)) return null
             val query = url.substringAfter('?', "")
             val id = query.split('&')
                 .map { it.substringBefore('=') to it.substringAfter('=', "") }
@@ -77,6 +92,18 @@ sealed interface ExternalAction {
 }
 
 /**
+ * What a voice assistant or link can do to the running routine, named as in its `sereneflow://`
+ * link (and as the Apple Watch's commands). [PAUSE] and [RESUME] do nothing when the routine is
+ * already in that state, so a repeated request can't flip it back.
+ */
+enum class TimerCommand(val urlName: String) {
+    PAUSE("pause"),
+    RESUME("resume"),
+    SKIP("skip"),
+    END("end")
+}
+
+/**
  * Hands requests from the platform (a file opened with the app, a file picker's result) to the
  * running UI. Process-wide, so a request posted before the UI exists waits until [App] takes it.
  */
@@ -84,7 +111,12 @@ object ExternalActions {
     private val _pending = MutableStateFlow<ExternalAction?>(null)
     val pending: StateFlow<ExternalAction?> = _pending.asStateFlow()
 
+    /** Call on the main thread. A [ExternalAction.ControlTimer] is carried out at once, not queued. */
     fun post(action: ExternalAction) {
+        if (action is ExternalAction.ControlTimer) {
+            TimerSession.control(action.command)
+            return
+        }
         _pending.value = action
     }
 

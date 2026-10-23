@@ -28,6 +28,7 @@ import com.sereneflow.timer.session.rememberNotificationPermissionRequest
 import com.sereneflow.timer.platform.publishQuickStart
 import com.sereneflow.timer.platform.QuickStartItem
 import com.sereneflow.timer.platform.quickStartItems
+import com.sereneflow.timer.platform.quickStartRoutines
 import com.sereneflow.timer.transfer.RoutineTransfer
 import com.sereneflow.timer.transfer.shareFile
 import com.sereneflow.timer.ui.platform.ConfirmDialog
@@ -38,6 +39,7 @@ import com.sereneflow.timer.ui.RoutineEditorScreen
 import com.sereneflow.timer.ui.RoutineListScreen
 import com.sereneflow.timer.ui.SettingsScreen
 import com.sereneflow.timer.ui.SoundPickerScreen
+import com.sereneflow.timer.ui.VoiceCommandsScreen
 import com.sereneflow.timer.ui.VoicePickerScreen
 import com.sereneflow.timer.ui.rememberPredictiveBackTransition
 import com.sereneflow.timer.resources.*
@@ -52,6 +54,7 @@ sealed class AppScreen {
     data object Settings : AppScreen()
     data object SoundPicker : AppScreen()
     data object VoicePicker : AppScreen()
+    data object VoiceCommands : AppScreen()
 }
 
 @Composable
@@ -289,6 +292,8 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         ActiveTimerScreen(
                             session = session,
                             keepScreenOn = preferences.keepScreenOn,
+                            offerVoiceTip = !preferences.voiceTipShown,
+                            onVoiceTipShown = preferencesRepository::setVoiceTipShown,
                             onClose = ::pop
                         )
                     }
@@ -298,6 +303,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         preferencesRepository = preferencesRepository,
                         onOpenSoundPicker = { push(AppScreen.SoundPicker) },
                         onOpenVoicePicker = { push(AppScreen.VoicePicker) },
+                        onOpenVoiceCommands = { push(AppScreen.VoiceCommands) },
                         routineCount = routines.size,
                         onExportRoutines = {
                             shareFile(
@@ -314,6 +320,12 @@ fun App(demoLaunch: DemoLaunch? = null) {
                 }
                 is AppScreen.VoicePicker -> {
                     VoicePickerScreen(preferencesRepository = preferencesRepository, onBack = ::pop)
+                }
+                is AppScreen.VoiceCommands -> {
+                    // The start phrase names a real routine: the one started last, as Siri and
+                    // Assistant also offer it first.
+                    val example = quickStartRoutines(routines, preferences.lastRoutineId, limit = 1).firstOrNull()
+                    VoiceCommandsScreen(routineTitle = example?.title, onBack = ::pop)
                 }
             }
         }

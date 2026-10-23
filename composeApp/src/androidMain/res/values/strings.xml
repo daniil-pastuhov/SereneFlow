@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Android-only text of the shared module: the running routine's notification and launcher
-     shortcuts. Android resources: apostrophes and quotes are escaped (\' and \"). -->
+<!-- The Android-only text of the shared module: the running routine's notification, launcher
+     shortcuts and Google Assistant's phrases. Android resources: apostrophes and quotes are escaped (\' and \"). -->
 <resources>
     <string name="notification_channel_name">Running routine</string>
     <string name="notification_channel_description">Shows the current step and time left while a routine runs</string>
@@ -25,4 +25,36 @@
 
     <!-- A launcher shortcut's long label. %1$s: the routine's name -->
     <string name="shortcut_start_routine">Start %1$s</string>
+
+    <!-- Google Assistant query patterns (custom App Actions intents, androidApp res/xml/shortcuts.xml):
+         what follows "Hey Google, open SereneFlow and". Assistant matches them exactly; (word)?
+         marks an optional word. Custom intents are en-US only. -->
+    <string-array name="assistant_pause_queries">
+        <item>pause</item>
+        <item>pause (the)? routine</item>
+        <item>pause (my)? routine</item>
+        <item>pause (the)? timer</item>
+    </string-array>
+    <string-array name="assistant_resume_queries">
+        <item>resume</item>
+        <item>resume (the)? routine</item>
+        <item>resume (my)? routine</item>
+        <item>continue (the)? routine</item>
+        <item>resume (the)? timer</item>
+    </string-array>
+    <string-array name="assistant_skip_queries">
+        <item>skip (the)? step</item>
+        <item>skip this step</item>
+        <item>next step</item>
+        <item>go to the next step</item>
+        <item>skip to the next step</item>
+    </string-array>
+    <string-array name="assistant_end_queries">
+        <item>stop</item>
+        <item>end (the)? routine</item>
+        <item>end (my)? routine</item>
+        <item>stop (the)? routine</item>
+        <item>finish (the)? routine</item>
+        <item>stop (the)? timer</item>
+    </string-array>
 </resources>

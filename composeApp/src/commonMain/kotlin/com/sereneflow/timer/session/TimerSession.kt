@@ -1,6 +1,8 @@
 package com.sereneflow.timer.session
 
 import androidx.compose.runtime.Composable
+import com.sereneflow.timer.ExternalAction
+import com.sereneflow.timer.TimerCommand
 import com.sereneflow.timer.audio.AudioController
 import com.sereneflow.timer.audio.createAudioController
 import com.sereneflow.timer.engine.TimerEngine
@@ -111,6 +113,21 @@ object TimerSession {
 
     fun skipStep() {
         _active.value?.engine?.skipStep()
+    }
+
+    /**
+     * Carries out a voice assistant's or link's [command] (see [ExternalAction.ControlTimer]).
+     * Returns false, doing nothing, when no routine is running.
+     */
+    fun control(command: TimerCommand): Boolean {
+        if (_active.value == null) return false
+        when (command) {
+            TimerCommand.PAUSE -> pause()
+            TimerCommand.RESUME -> resume()
+            TimerCommand.SKIP -> skipStep()
+            TimerCommand.END -> stop()
+        }
+        return true
     }
 
     private const val PROGRESS_REFRESH_SECONDS = 5

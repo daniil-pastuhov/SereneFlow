@@ -260,6 +260,11 @@
     <!-- %1$s: routine name; %2$s: its total duration, e.g. "15 min" -->
     <string name="timer_complete_message">You accomplished "%1$s" (%2$s). Take a moment to feel centered and refreshed.</string>
     <string name="timer_return">Return to Routines</string>
+    <!-- The one-time voice tip, at the first pause or the first completed routine. %1$s: a phrase below -->
+    <string name="voice_tip_title">Hands busy?</string>
+    <string name="voice_tip_paused">Say %1$s to carry on. Pausing, skipping a step and stopping work the same way. All voice commands are in Settings.</string>
+    <string name="voice_tip_completed">Next time, start it by voice: %1$s. You can pause, skip a step and stop the same way. All voice commands are in Settings.</string>
+    <string name="voice_tip_dismiss">Hide tip</string>
 
     <!-- Routine editor -->
     <string name="editor_new_title">New Mindful Routine</string>
@@ -369,6 +374,38 @@
     </plurals>
     <string name="settings_import">Import routines</string>
     <string name="settings_import_description">From a .sereneflow file</string>
+    <string name="settings_voice_commands">VOICE COMMANDS</string>
+    <string name="settings_voice_commands_description">Start and control routines hands-free</string>
+
+    <!-- Voice commands. The phrases must match iosApp's AppShortcuts.strings (Siri) and androidApp's
+         shortcuts.xml (Google Assistant); %1$s: a routine's name -->
+    <string name="voice_assistant_siri">Siri</string>
+    <string name="voice_assistant_google">Google Assistant</string>
+    <string name="voice_commands_title">Voice commands</string>
+    <string name="voice_commands_note_siri">Say these to Siri. Use a routine's name as it appears in your list. You'll also find them in Spotlight and the Shortcuts app, where you can put a routine on the Action button.</string>
+    <string name="voice_commands_note_google">Say these to Google Assistant. Use a routine's name as it appears in your list. Where Gemini has replaced Google Assistant, they may not work yet.</string>
+    <string name="voice_commands_open_shortcuts">Open Shortcuts</string>
+    <!-- Stands in for a routine's name when there are no routines -->
+    <string name="voice_example_routine">Morning Calm</string>
+    <string name="voice_siri_start">“Hey Siri, start %1$s in SereneFlow”</string>
+    <string name="voice_siri_start_any">“Hey Siri, start a routine in SereneFlow”</string>
+    <string name="voice_siri_pause">“Hey Siri, pause SereneFlow”</string>
+    <string name="voice_siri_resume">“Hey Siri, resume SereneFlow”</string>
+    <string name="voice_siri_next">“Hey Siri, next step in SereneFlow”</string>
+    <string name="voice_siri_stop">“Hey Siri, stop SereneFlow”</string>
+    <string name="voice_google_start">“Hey Google, open %1$s in SereneFlow”</string>
+    <string name="voice_google_start_last">“Hey Google, start an exercise in SereneFlow”</string>
+    <string name="voice_google_pause">“Hey Google, pause my exercise in SereneFlow”</string>
+    <string name="voice_google_resume">“Hey Google, resume my exercise in SereneFlow”</string>
+    <string name="voice_google_next">“Hey Google, open SereneFlow and skip step”</string>
+    <string name="voice_google_stop">“Hey Google, stop my exercise in SereneFlow”</string>
+    <string name="voice_action_start">Starts that routine</string>
+    <string name="voice_action_start_any">Asks which routine to start</string>
+    <string name="voice_action_start_last">Starts the routine you used last</string>
+    <string name="voice_action_pause">Pauses the running routine</string>
+    <string name="voice_action_resume">Carries on after a pause</string>
+    <string name="voice_action_next">Skips to the next step</string>
+    <string name="voice_action_stop">Ends the routine</string>
 
     <!-- Spoken by the timer -->
     <!-- %1$s: step name; %2$s: its duration in words -->
