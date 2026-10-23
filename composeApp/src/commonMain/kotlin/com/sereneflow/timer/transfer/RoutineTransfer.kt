@@ -9,7 +9,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 
-/** The contents of a `.sereneflow` file: one shared routine, or a whole backup. */
+/** The contents of a `.sereneflow` file: shared routines (one or several), or a whole backup. */
 @Serializable
 data class RoutineBundle(
     val format: String = RoutineTransfer.FORMAT,
@@ -66,6 +66,12 @@ object RoutineTransfer {
         val base = routine.title.filter { it.isLetterOrDigit() || it == ' ' || it == '-' }.trim().take(40)
         return "${base.ifEmpty { "Routine" }}.$FILE_EXTENSION"
     }
+
+    /** A file name for sharing [routines]: the routine's own for one, a general one for several. */
+    fun fileNameFor(routines: List<Routine>): String =
+        routines.singleOrNull()?.let(::fileNameFor) ?: SHARED_FILE_NAME
+
+    const val SHARED_FILE_NAME = "SereneFlow Routines.$FILE_EXTENSION"
 
     const val BACKUP_FILE_NAME = "SereneFlow Backup.$FILE_EXTENSION"
 

@@ -8,7 +8,29 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.stateDescription
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -93,6 +115,8 @@ fun RoutineListScreen(
     onEditRoutine: (Routine) -> Unit,
     onCreateNewRoutine: () -> Unit,
     onOpenSettings: () -> Unit,
+    /** Deletes the routines with these ids (and ends a session running one of them). */
+    onDeleteRoutines: (Set<String>) -> Unit,
     /** A routine just added (at the end of the list) to scroll into view, then [onRevealed]. */
     revealRoutineId: String? = null,
     onRevealed: () -> Unit = {},
@@ -113,6 +137,37 @@ fun RoutineListScreen(
         if (toReveal == addedHere) addedHere = null else onRevealed()
     }
 
+    // Selection mode: entered by long-pressing a card, left when nothing is selected any more.
+    var selection by remember { mutableStateOf(emptySet<String>()) }
+    // Routines deleted meanwhile (here or elsewhere) drop out of the selection.
+    val selectedIds = remember(selection, routines) { selection.filterTo(mutableSetOf()) { id -> routines.any { it.id == id } } }
+    val selecting = selectedIds.isNotEmpty()
+    var confirmDeleteSelected by remember { mutableStateOf(false) }
+    val haptics = LocalHapticFeedback.current
+
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = selecting,
+        onBackCompleted = { selection = emptySet() }
+    )
+
+    if (confirmDeleteSelected && selecting) {
+        val doomed = routines.filter { it.id in selectedIds }
+        ConfirmDialog(
+            title = doomed.singleOrNull()?.let { "Delete \"${it.title}\"?" } ?: "Delete ${doomed.size} routines?",
+            message = if (doomed.size == 1) "This routine will be removed permanently."
+                else "These routines will be removed permanently.",
+            confirmLabel = "Delete",
+            destructive = true,
+            onConfirm = {
+                confirmDeleteSelected = false
+                onDeleteRoutines(selectedIds)
+                selection = emptySet()
+            },
+            onDismiss = { confirmDeleteSelected = false }
+        )
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = colors.background,
@@ -120,6 +175,8 @@ fun RoutineListScreen(
         floatingActionButton = {
             // Blank, or one of the starter templates, which is added straight to the list.
             var showNewMenu by remember { mutableStateOf(false) }
+            // Out of the way while selecting, as the contextual bar holds that mode's actions.
+            AnimatedVisibility(visible = !selecting, enter = fadeIn() + scaleIn(), exit = fadeOut() + scaleOut()) {
             Box {
                 ActionMenu(
                     expanded = showNewMenu,
@@ -153,6 +210,7 @@ fun RoutineListScreen(
                     }
                 }
             }
+            }
         }
     ) { paddingValues ->
         Column(
@@ -160,8 +218,28 @@ fun RoutineListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Ambient Top Bar & Header
-            HeaderSection(onOpenSettings = onOpenSettings)
+            // Ambient Top Bar & Header, or the contextual bar while selecting.
+            AnimatedContent(
+                targetState = selecting,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "ListTopBar"
+            ) { showSelectionBar ->
+                if (showSelectionBar) {
+                    SelectionBar(
+                        count = selectedIds.size,
+                        allSelected = selectedIds.size == routines.size,
+                        onClose = { selection = emptySet() },
+                        onSelectAll = { selection = routines.mapTo(mutableSetOf()) { it.id } },
+                        onShare = {
+                            val shared = routines.filter { it.id in selectedIds }
+                            shareFile(RoutineTransfer.fileNameFor(shared), RoutineTransfer.MIME_TYPE, RoutineTransfer.encode(shared))
+                        },
+                        onDelete = { confirmDeleteSelected = true }
+                    )
+                } else {
+                    HeaderSection(onOpenSettings = onOpenSettings)
+                }
+            }
 
             // Routine Cards List
             if (routines.isEmpty()) {
@@ -185,10 +263,69 @@ fun RoutineListScreen(
                         onPlay = { onStartRoutine(routine) },
                         onEdit = { onEditRoutine(routine) },
                         onDuplicate = { addedHere = routineRepository.duplicateRoutine(routine.id)?.id },
-                        onDelete = { routineRepository.deleteRoutine(routine.id) }
+                        onDelete = { onDeleteRoutines(setOf(routine.id)) },
+                        selecting = selecting,
+                        selected = routine.id in selectedIds,
+                        onToggleSelected = {
+                            selection = if (routine.id in selectedIds) selectedIds - routine.id else selectedIds + routine.id
+                        },
+                        onStartSelecting = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            selection = setOf(routine.id)
+                        }
                     )
                 }
             }
+        }
+    }
+}
+
+/** The list's top bar while routines are selected: how many, and what can be done with them. */
+@Composable
+private fun SelectionBar(
+    count: Int,
+    allSelected: Boolean,
+    onClose: () -> Unit,
+    onSelectAll: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val colors = LocalSereneColors.current
+    Row(
+        // As tall as the header it replaces, so the cards don't move.
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 12.dp, top = 26.dp, bottom = 26.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
+            Icon(Icons.Default.Close, contentDescription = "Cancel selection", tint = colors.onSurfaceVariant)
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "$count selected",
+            modifier = Modifier
+                .weight(1f)
+                .semantics {
+                    heading()
+                    liveRegion = LiveRegionMode.Polite
+                },
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Normal,
+            color = colors.onBackground
+        )
+        IconButton(onClick = onSelectAll, enabled = !allSelected, modifier = Modifier.size(48.dp)) {
+            Icon(
+                Icons.Default.SelectAll,
+                contentDescription = "Select all",
+                tint = colors.onSurfaceVariant.copy(alpha = if (allSelected) 0.38f else 1f)
+            )
+        }
+        IconButton(onClick = onShare, modifier = Modifier.size(48.dp)) {
+            Icon(Icons.Default.Share, contentDescription = "Share", tint = colors.onSurfaceVariant)
+        }
+        IconButton(onClick = onDelete, modifier = Modifier.size(48.dp)) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = colors.onSurfaceVariant)
         }
     }
 }
@@ -267,7 +404,12 @@ private fun RoutineCard(
     onPlay: () -> Unit,
     onEdit: () -> Unit,
     onDuplicate: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    /** Selection mode: a tap toggles [selected], and the card's own buttons are off. */
+    selecting: Boolean,
+    selected: Boolean,
+    onToggleSelected: () -> Unit,
+    onStartSelecting: () -> Unit
 ) {
     val colors = LocalSereneColors.current
     var showMenu by remember { mutableStateOf(false) }
@@ -304,7 +446,22 @@ private fun RoutineCard(
                     drawRect(accent, topLeft = Offset(x, 0f), size = Size(band, size.height))
                 }
             )
-            .border(1.dp, accent?.copy(alpha = 0.55f) ?: colors.cardBorder, RoundedCornerShape(24.dp))
+            .then(
+                if (selected) Modifier.background(colors.primary.copy(alpha = 0.10f))
+                    .border(3.dp, colors.primary, RoundedCornerShape(24.dp))
+                else Modifier.border(1.dp, accent?.copy(alpha = 0.55f) ?: colors.cardBorder, RoundedCornerShape(24.dp))
+            )
+            .then(
+                if (selecting) {
+                    // One stop for a screen reader: the card, its selected state and a tap to toggle.
+                    Modifier
+                        .selectable(selected = selected, role = Role.Checkbox, onClick = onToggleSelected)
+                        .semantics { stateDescription = if (selected) "Selected" else "Not selected" }
+                } else {
+                    // The card's buttons take their own presses; a long press anywhere else selects.
+                    Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onStartSelecting() }) }
+                }
+            )
             .padding(20.dp)
     ) {
         Column {
@@ -315,7 +472,12 @@ private fun RoutineCard(
                 verticalAlignment = Alignment.Top
             ) {
                 // Title and description, read as one.
-                Column(modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
+                // Long press is the touch gesture; screen readers get it as this stop's action.
+                Column(
+                    modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {
+                        if (!selecting) onLongClick(label = "Select") { onStartSelecting(); true }
+                    }
+                ) {
                     Text(
                         text = routine.title,
                         modifier = Modifier.semantics { heading() },
@@ -334,7 +496,20 @@ private fun RoutineCard(
                     }
                 }
 
-                Box {
+                if (selecting) {
+                    // Where the options button was: whether the card is selected (the card says it).
+                    Box(
+                        modifier = Modifier.offset(x = 6.dp, y = (-6).dp).size(48.dp).clearAndSetSemantics {},
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (selected) Icons.Default.CheckCircle else Icons.Outlined.Circle,
+                            contentDescription = null,
+                            tint = if (selected) colors.primary else colors.onSurfaceVariant,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                } else Box {
                     // A 48dp target, nudged into the card's padding so the icon stays where it was.
                     IconButton(
                         onClick = { showMenu = true },
@@ -458,6 +633,7 @@ private fun RoutineCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .alpha(if (selecting) 0.4f else 1f)
                     .clip(RoundedCornerShape(16.dp))
                     .background(
                         Brush.horizontalGradient(
@@ -467,7 +643,14 @@ private fun RoutineCard(
                             )
                         )
                     )
-                    .clickable(role = Role.Button) { onPlay() }
+                    // Off while selecting; a long press selects, like on the rest of the card.
+                    .combinedClickable(
+                        enabled = !selecting,
+                        role = Role.Button,
+                        onLongClick = onStartSelecting,
+                        onLongClickLabel = "Select",
+                        onClick = onPlay
+                    )
                     // Names the routine: every card has a button like this.
                     .semantics { contentDescription = "Start ${routine.title}" }
                     .padding(vertical = 12.dp),

@@ -242,6 +242,11 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         onEditRoutine = { routine -> push(AppScreen.Editor(routine)) },
                         onCreateNewRoutine = { push(AppScreen.Editor(null)) },
                         onOpenSettings = { push(AppScreen.Settings) },
+                        onDeleteRoutines = { ids ->
+                            // A deleted routine can't keep running (normally the timer covers this screen).
+                            if (TimerSession.active.value?.routine?.id in ids) TimerSession.stop()
+                            routineRepository.deleteRoutines(ids)
+                        },
                         revealRoutineId = revealRoutineId,
                         onRevealed = { revealRoutineId = null }
                     )

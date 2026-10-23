@@ -82,8 +82,12 @@ class RoutineRepository(
         return imported
     }
 
-    fun deleteRoutine(id: String) {
-        _routines.value = _routines.value.filter { it.id != id }
+    fun deleteRoutine(id: String) = deleteRoutines(setOf(id))
+
+    /** Removes every routine whose id is in [ids]; the rest keep their order. */
+    fun deleteRoutines(ids: Set<String>) {
+        if (ids.isEmpty()) return
+        _routines.update { routines -> routines.filter { it.id !in ids } }
     }
 
     fun duplicateRoutine(id: String): Routine? {

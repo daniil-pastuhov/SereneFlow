@@ -125,4 +125,34 @@ class RoutineRepositoryTest {
         repo.saveRoutine(routine("a").copy(title = "Edited"))
         assertEquals(listOf("Morning Awakening", "Edited", "b"), repo.routines.value.map { it.title })
     }
+
+    @Test
+    fun deleteManyKeepsTheRestInOrder() = runTest {
+        val storage = FakeFileStorage()
+        val repo = routineRepo(storage)
+        listOf("a", "b", "c", "d").forEach { repo.saveRoutine(routine(it)) }
+
+        repo.deleteRoutines(setOf("a", "c", "not-there"))
+        assertEquals(listOf("Morning Awakening", "b", "d"), repo.routines.value.map { it.title })
+        assertEquals(listOf("Morning Awakening", "b", "d"), routineRepo(storage).routines.value.map { it.title })
+
+        repo.deleteRoutines(emptySet())
+        assertEquals(3, repo.routines.value.size)
+    }
+
+    @Test
+    fun sharingSeveralRoutinesRoundTripsAsOneFile() = runTest {
+        val from = routineRepo(FakeFileStorage())
+        listOf("a", "b", "c").forEach { from.saveRoutine(routine(it)) }
+        val shared = from.routines.value.filter { it.id in setOf("c", "a") }
+        val file = RoutineTransfer.encode(shared)
+        assertEquals(RoutineTransfer.SHARED_FILE_NAME, RoutineTransfer.fileNameFor(shared))
+        assertEquals("a.sereneflow", RoutineTransfer.fileNameFor(shared.take(1)))
+
+        val to = routineRepo(FakeFileStorage())
+        val imported = to.import(file)
+        assertEquals(listOf("a", "c"), imported.map { it.title }, "In list order")
+        assertEquals(listOf("Morning Awakening", "a", "c"), to.routines.value.map { it.title })
+        assertEquals(shared.map { it.steps.map { s -> s.title to s.durationSeconds } }, imported.map { it.steps.map { s -> s.title to s.durationSeconds } })
+    }
 }
