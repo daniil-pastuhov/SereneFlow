@@ -9,7 +9,11 @@ import androidx.core.app.NotificationManagerCompat
 class TimerActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (TimerSession.active.value == null) {
-            // Process was restarted and the session is gone; clear the stale notification.
+            // The session is gone (process restarted, or it ended as the button was tapped); clear the
+            // stale notification and make sure no service is left holding it and the wake lock.
+            TimerService.pendingNotification = null
+            TimerService.wantsWakeLock = false
+            context.stopService(Intent(context, TimerService::class.java))
             NotificationManagerCompat.from(context).cancel(TimerNotifications.ONGOING_ID)
             return
         }

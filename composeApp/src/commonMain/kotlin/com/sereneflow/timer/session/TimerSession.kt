@@ -30,7 +30,9 @@ class ActiveSession(val routine: Routine, val cues: RoutineCues, val engine: Tim
  * State changes are mirrored to the platform [SessionPresenter].
  */
 object TimerSession {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // Main, like the UI and notification actions that call stop(), so a presenter update can't run
+    // concurrently with stop() and re-post the notification or restart the service after it.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val _active = MutableStateFlow<ActiveSession?>(null)
     val active: StateFlow<ActiveSession?> = _active.asStateFlow()
 
@@ -72,12 +74,13 @@ object TimerSession {
 
     fun stop() {
         val session = _active.value ?: return
+        // Cleared first: a mirror emission already in flight then sees the session is gone.
+        _active.value = null
         mirrorJob?.cancel()
         mirrorJob = null
         session.engine.stop()
         audioController.setSessionActive(false)
         presenter.end()
-        _active.value = null
     }
 
     fun togglePlayPause() {
