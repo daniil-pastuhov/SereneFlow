@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Google Assistant App Actions. Each capability turns a built-in intent into a sereneflow:// link,
+  which SereneFlowActivity hands to the shared code (ExternalAction.parseUrl):
+  - "Hey Google, open Morning Awakening in SereneFlow" (OPEN_APP_FEATURE, matched against the
+    dynamic launcher shortcuts, which carry this capability; see QuickStart.android.kt);
+  - "Hey Google, start an exercise in SereneFlow" (START_EXERCISE: the named routine, or the last).
+  Pausing and skipping stay on the notification's buttons: Assistant has no built-in intent for them.
+  Assistant only uses these for an app published on Play; test with the Google Assistant plugin.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.SereneFlowActivity">
+            <url-template android:value="sereneflow://start{?routine}" />
+            <parameter
+                android:name="feature"
+                android:key="routine" />
+        </intent>
+    </capability>
+    <capability android:name="actions.intent.START_EXERCISE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sereneflow.timer"
+            android:targetClass="com.sereneflow.timer.SereneFlowActivity">
+            <url-template android:value="sereneflow://start{?name}" />
+            <parameter
+                android:name="exercise.name"
+                android:key="name" />
+        </intent>
+    </capability>
+</shortcuts>

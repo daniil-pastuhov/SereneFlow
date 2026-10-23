@@ -223,8 +223,36 @@ private struct LockScreenView: View {
                     .frame(maxWidth: 120, alignment: .trailing)
             }
             StepProgressBar(state: state)
+            if !state.isCompleted {
+                ControlButtons(state: state)
+            }
         }
         .padding(16)
+    }
+}
+
+/// Pause/Resume, Skip and End, run in the app's process by LiveActivityIntents (iOS 17+).
+private struct ControlButtons: View {
+    @Environment(\.routineAccent) private var accent
+    let state: TimerActivityAttributes.ContentState
+
+    var body: some View {
+        if #available(iOS 17.0, *) {
+            HStack(spacing: 10) {
+                Button(intent: ToggleTimerIntent()) {
+                    Label(state.isPaused ? "Resume" : "Pause", systemImage: state.isPaused ? "play.fill" : "pause.fill")
+                }
+                Button(intent: SkipStepIntent()) {
+                    Label("Skip", systemImage: "forward.fill")
+                }
+                Button(intent: EndRoutineIntent()) {
+                    Label("End", systemImage: "xmark")
+                }
+            }
+            .font(.caption.weight(.semibold))
+            .buttonStyle(.bordered)
+            .tint(accent)
+        }
     }
 }
 

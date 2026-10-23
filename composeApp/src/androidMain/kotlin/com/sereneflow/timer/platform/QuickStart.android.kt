@@ -20,6 +20,8 @@ actual fun publishQuickStart(items: List<QuickStartItem>) {
                 .setLongLabel("Start ${item.title}".take(45))
                 .setIcon(IconCompat.createWithResource(context, context.applicationInfo.icon))
                 .setRank(rank)
+                // "Hey Google, open <routine> in SereneFlow" (App Actions, res/xml/shortcuts.xml).
+                .addCapabilityBinding("actions.intent.OPEN_APP_FEATURE", "feature", listOf(item.title))
                 .setIntent(
                     Intent(Intent.ACTION_VIEW, Uri.parse(ExternalAction.startUrl(item.routineId)))
                         .setClassName(context.packageName, ACTIVITY_CLASS)

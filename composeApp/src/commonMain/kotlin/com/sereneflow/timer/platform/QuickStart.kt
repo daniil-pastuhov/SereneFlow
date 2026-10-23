@@ -9,11 +9,15 @@ data class QuickStartItem(val routineId: String, val title: String, val subtitle
 const val MAX_QUICK_START_ITEMS = 4
 
 /** The routines to offer: the last one started first, then the list's order. */
-fun quickStartItems(routines: List<Routine>, lastRoutineId: String?): List<QuickStartItem> {
+fun quickStartItems(
+    routines: List<Routine>,
+    lastRoutineId: String?,
+    limit: Int = MAX_QUICK_START_ITEMS
+): List<QuickStartItem> {
     val last = routines.firstOrNull { it.id == lastRoutineId }
     return (listOfNotNull(last) + routines.filter { it !== last })
         .filter { it.steps.isNotEmpty() }
-        .take(MAX_QUICK_START_ITEMS)
+        .take(limit)
         .map { QuickStartItem(it.id, it.title, "${it.stepCountText} · ${it.formattedTotalDuration}") }
 }
 

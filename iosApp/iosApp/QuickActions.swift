@@ -4,6 +4,22 @@ import WidgetKit
 
 /// Routes Home Screen quick actions (long-press the app icon) to the shared code, which starts
 /// the routine. SwiftUI has no quick-action API, so a scene delegate receives them.
+/// sereneflow:// links and opened .sereneflow files, from whichever of SwiftUI's onOpenURL and the
+/// scene delegate delivers them (possibly both, for the same URL).
+enum IncomingURL {
+    private static var last: (url: URL, at: Date)?
+
+    static func handle(_ url: URL) {
+        if let last, last.url == url, Date().timeIntervalSince(last.at) < 2 { return }
+        last = (url, Date())
+        if url.isFileURL {
+            MainViewControllerKt.openRoutineFile(url: url)
+        } else {
+            MainViewControllerKt.openAppUrl(url: url.absoluteString)
+        }
+    }
+}
+
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
@@ -17,9 +33,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 }
 
 final class QuickActionSceneDelegate: NSObject, UIWindowSceneDelegate {
-    /// A cold launch from a quick action.
+    /// A cold launch from a quick action or a link / file.
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         if let item = connectionOptions.shortcutItem { handle(item) }
+        connectionOptions.urlContexts.forEach { IncomingURL.handle($0.url) }
+    }
+
+    /// A link or file while running. With a scene delegate of our own, SwiftUI's onOpenURL may not
+    /// be called, so URLs are handled here too (IncomingURL drops the duplicate if both are).
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        URLContexts.forEach { IncomingURL.handle($0.url) }
     }
 
     /// A quick action while the app is running or suspended.

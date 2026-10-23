@@ -1,8 +1,17 @@
 package com.sereneflow.timer
 
+import com.sereneflow.timer.model.Routine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+/** The routine [idOrTitle] names: by id, else by title (exact, then partial), ignoring case. */
+fun findRoutine(routines: List<Routine>, idOrTitle: String): Routine? {
+    val query = idOrTitle.trim()
+    return routines.firstOrNull { it.id == query }
+        ?: routines.firstOrNull { it.title.equals(query, ignoreCase = true) }
+        ?: routines.firstOrNull { query.isNotEmpty() && it.title.contains(query, ignoreCase = true) }
+}
 
 /** Something asked of the app from outside its own screens; [App] carries it out. */
 sealed interface ExternalAction {
@@ -10,8 +19,9 @@ sealed interface ExternalAction {
     data class ImportRoutines(val contents: String) : ExternalAction
 
     /**
-     * Start a routine (a launcher shortcut, the widget, a `sereneflow://start` link): its id, or
-     * [LAST_ROUTINE] for the one started most recently. Ignored while a routine is running.
+     * Start a routine (a launcher shortcut, the widget, Siri, a `sereneflow://start` link): its id
+     * or, failing that, its title (voice assistants know routines by name), or [LAST_ROUTINE] for
+     * the one started most recently. Ignored while a routine is running.
      */
     data class StartRoutine(val routineId: String) : ExternalAction
 
@@ -29,7 +39,8 @@ sealed interface ExternalAction {
             val query = url.substringAfter('?', "")
             val id = query.split('&')
                 .map { it.substringBefore('=') to it.substringAfter('=', "") }
-                .firstOrNull { it.first == "routine" }?.second
+                // "name" is what Google Assistant fills in (androidApp res/xml/shortcuts.xml).
+                .firstOrNull { it.first == "routine" || it.first == "name" }?.second
                 ?.let(::decode)
                 ?.takeIf { it.isNotBlank() }
                 ?: LAST_ROUTINE

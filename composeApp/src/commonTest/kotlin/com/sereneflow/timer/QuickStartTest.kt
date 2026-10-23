@@ -24,6 +24,19 @@ class QuickStartTest {
     }
 
     @Test
+    fun assistantNamesFindRoutinesByTitle() {
+        val routines = listOf(
+            Routine(id = "a", title = "Morning Awakening"),
+            Routine(id = "b", title = "Wind-down")
+        )
+        assertEquals(ExternalAction.StartRoutine("wind-down"), ExternalAction.parseUrl("sereneflow://start?name=wind-down"))
+        assertEquals("b", findRoutine(routines, "wind-down")?.id)
+        assertEquals("a", findRoutine(routines, "a")?.id)
+        assertEquals("a", findRoutine(routines, "morning")?.id)
+        assertNull(findRoutine(routines, "evening"))
+    }
+
+    @Test
     fun otherLinksAreIgnored() {
         assertNull(ExternalAction.parseUrl("https://example.com/start?routine=a"))
         assertNull(ExternalAction.parseUrl("sereneflow://delete?routine=a"))

@@ -11,12 +11,15 @@
 		22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F543015C899423D4B01CEB2E /* Assets.xcassets */; };
 		286BA5B2656DC8914398C0CC /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */; };
 		2B02D273B8048A357782D40A /* SereneFlowWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F5782C4478E998FE210E691C /* SereneFlowWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		42ED48A4498491AA3E211076 /* RoutineIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DEFB19023F56EE03E51342 /* RoutineIntents.swift */; };
 		48715B3CF0D9958D5E1F99C5 /* iosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3771E0E755C03BF5A873EAE2 /* iosApp.swift */; };
 		56B0305B5D3847FC6B326502 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */; };
+		59E289532787BCB122A9D648 /* TimerControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5079ED09904627029AFE433 /* TimerControlIntents.swift */; };
 		5B9E263BAEE021053101FA23 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEC4F0A5217577A3B46AA2F5 /* LiveActivityManager.swift */; };
 		5C5CCEF6FC29EAAD81B63C2B /* QuickActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC983C9182807BB46198B3F /* QuickActions.swift */; };
 		6EDBDEF57087535AE16C26D6 /* TimerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09A8B87794DF76A2697A309 /* TimerLiveActivity.swift */; };
 		700CBD72B671F1FE45C9C771 /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */; };
+		D08086F801A885C1C84FB588 /* TimerControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5079ED09904627029AFE433 /* TimerControlIntents.swift */; };
 		D93BD5B69D2EE684C4885351 /* SereneFlowWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */; };
 		E9D04B7779AD29AAAB7589C2 /* QuickStartWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECA5FE58CFCF1F0EF59031D8 /* QuickStartWidget.swift */; };
 		FADAC6B78CC0760D79FFBE28 /* AppIconManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20C8D999D5F6A6674705005F /* AppIconManager.swift */; };
@@ -53,6 +56,7 @@
 		20C8D999D5F6A6674705005F /* AppIconManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconManager.swift; sourceTree = "<group>"; };
 		3771E0E755C03BF5A873EAE2 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		90DEFB19023F56EE03E51342 /* RoutineIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineIntents.swift; sourceTree = "<group>"; };
 		9F8A95C3258486AAD0034187 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		A8E52D11578FC7DA1FAF045F /* SereneFlowWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SereneFlowWidget.entitlements; sourceTree = "<group>"; };
 		C09A8B87794DF76A2697A309 /* TimerLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerLiveActivity.swift; sourceTree = "<group>"; };
@@ -61,6 +65,7 @@
 		C6D2DD7FE2E0BF5DB2A96B4B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		CDC983C9182807BB46198B3F /* QuickActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActions.swift; sourceTree = "<group>"; };
 		CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		E5079ED09904627029AFE433 /* TimerControlIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlIntents.swift; sourceTree = "<group>"; };
 		ECA5FE58CFCF1F0EF59031D8 /* QuickStartWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStartWidget.swift; sourceTree = "<group>"; };
 		F543015C899423D4B01CEB2E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F5782C4478E998FE210E691C /* SereneFlowWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SereneFlowWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -92,6 +97,7 @@
 				FEC4F0A5217577A3B46AA2F5 /* LiveActivityManager.swift */,
 				C6D2DD7FE2E0BF5DB2A96B4B /* PrivacyInfo.xcprivacy */,
 				CDC983C9182807BB46198B3F /* QuickActions.swift */,
+				90DEFB19023F56EE03E51342 /* RoutineIntents.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -129,6 +135,7 @@
 			isa = PBXGroup;
 			children = (
 				1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */,
+				E5079ED09904627029AFE433 /* TimerControlIntents.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -255,7 +262,9 @@
 				56B0305B5D3847FC6B326502 /* ContentView.swift in Sources */,
 				5B9E263BAEE021053101FA23 /* LiveActivityManager.swift in Sources */,
 				5C5CCEF6FC29EAAD81B63C2B /* QuickActions.swift in Sources */,
+				42ED48A4498491AA3E211076 /* RoutineIntents.swift in Sources */,
 				286BA5B2656DC8914398C0CC /* TimerActivityAttributes.swift in Sources */,
+				D08086F801A885C1C84FB588 /* TimerControlIntents.swift in Sources */,
 				48715B3CF0D9958D5E1F99C5 /* iosApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -267,6 +276,7 @@
 				E9D04B7779AD29AAAB7589C2 /* QuickStartWidget.swift in Sources */,
 				D93BD5B69D2EE684C4885351 /* SereneFlowWidgetBundle.swift in Sources */,
 				700CBD72B671F1FE45C9C771 /* TimerActivityAttributes.swift in Sources */,
+				59E289532787BCB122A9D648 /* TimerControlIntents.swift in Sources */,
 				6EDBDEF57087535AE16C26D6 /* TimerLiveActivity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

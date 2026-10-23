@@ -105,7 +105,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
         } else {
             start.routineId
         }
-        val routine = id?.let(routineRepository::getRoutine)?.takeIf { it.steps.isNotEmpty() } ?: return@LaunchedEffect
+        val routine = id?.let { findRoutine(routines, it) }?.takeIf { it.steps.isNotEmpty() } ?: return@LaunchedEffect
         // Shown over whatever screen is open (an editor keeps its unsaved edits underneath).
         TimerSession.start(routine, preferences, preferences.backgroundMode)
         preferencesRepository.setLastRoutine(routine.id)
