@@ -22,12 +22,10 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.sereneflow.timer.model.Routine
-import com.sereneflow.timer.repository.PreferencesRepository
-import com.sereneflow.timer.repository.RoutineRepository
+import com.sereneflow.timer.repository.Repositories
 import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
 import com.sereneflow.timer.ui.platform.ConfirmDialog
-import com.sereneflow.timer.storage.createFileStorage
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.theme.SereneFlowTheme
 import com.sereneflow.timer.ui.ActiveTimerScreen
@@ -49,9 +47,8 @@ sealed class AppScreen {
 
 @Composable
 fun App(demoLaunch: DemoLaunch? = null) {
-    val storage = remember { createFileStorage() }
-    val routineRepository = remember { RoutineRepository(storage) }
-    val preferencesRepository = remember { PreferencesRepository(storage) }
+    val routineRepository = Repositories.routines
+    val preferencesRepository = Repositories.preferences
 
     val preferences by preferencesRepository.preferences.collectAsState()
     val activeSession by TimerSession.active.collectAsState()

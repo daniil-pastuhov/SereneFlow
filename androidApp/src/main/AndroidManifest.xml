@@ -13,7 +13,7 @@
         <activity
             android:name=".SereneFlowActivity"
             android:exported="true"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|density|fontScale|locale|layoutDirection"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- One launcher entry per app icon (it follows the theme); AppIconSwitcher enables one and
