@@ -55,6 +55,13 @@ const val MAX_PICKER_MINUTES = 180
 /** The duration the wheels show, as seconds no shorter than a step may be. */
 internal fun pickedDuration(minutes: Int, seconds: Int): Int = (minutes * 60 + seconds).coerceAtLeast(MIN_STEP_SECONDS)
 
+/**
+ * Whether the user asked the system for less motion: Android's animator duration scale set to off
+ * (Remove animations), iOS's Reduce Motion. Follows the setting while composed.
+ */
+@Composable
+expect fun rememberReduceMotion(): Boolean
+
 /** Keeps the display from sleeping while composed with [enabled] = true. */
 @Composable
 expect fun KeepScreenOn(enabled: Boolean)

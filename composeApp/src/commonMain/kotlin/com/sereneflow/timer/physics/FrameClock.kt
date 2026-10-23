@@ -3,6 +3,9 @@ package com.sereneflow.timer.physics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import com.sereneflow.timer.ui.platform.rememberReduceMotion
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
@@ -25,7 +28,18 @@ fun rememberFrameTimeSeconds(): State<Float> {
             withFrameNanos { frameNanos -> time.floatValue = (frameNanos - start) / 1_000_000_000f }
         }
     }
-    return time
+    // With Reduce Motion the time stands still, so every effect holds one pose and shows progress
+    // only. Reading the running time still redraws each frame, which is what moves the progress.
+    val reduceMotion by rememberUpdatedState(rememberReduceMotion())
+    return remember {
+        object : State<Float> {
+            override val value: Float
+                get() {
+                    val running = time.floatValue
+                    return if (reduceMotion) 0f else running
+                }
+        }
+    }
 }
 
 /** Fractional part in [0, 1). */

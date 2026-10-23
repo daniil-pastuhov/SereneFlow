@@ -81,6 +81,7 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.spokenDuration
 import com.sereneflow.timer.session.ActiveSession
 import com.sereneflow.timer.ui.platform.KeepScreenOn
+import com.sereneflow.timer.ui.platform.rememberReduceMotion
 import com.sereneflow.timer.engine.nowEpochMs
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.physics.BonsaiTreeCanvas
@@ -139,9 +140,10 @@ fun ActiveTimerScreen(
         )
     }
 
-    // Breathing pulse for timer aura
+    // Breathing pulse for timer aura; still with Reduce Motion.
+    val reduceMotion = rememberReduceMotion()
     val transition = rememberInfiniteTransition(label = "TimerAura")
-    val auraScale by transition.animateFloat(
+    val pulse by transition.animateFloat(
         initialValue = 0.95f,
         targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
@@ -150,6 +152,7 @@ fun ActiveTimerScreen(
         ),
         label = "AuraPulse"
     )
+    val auraScale = if (reduceMotion) 1f else pulse
 
     BoxWithConstraints(
         modifier = modifier

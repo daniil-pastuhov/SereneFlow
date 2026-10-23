@@ -3,7 +3,11 @@ package com.sereneflow.timer.ui.platform
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.database.ContentObserver
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
 import android.widget.NumberPicker
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -23,10 +27,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -134,6 +140,26 @@ private fun NumberWheel(value: Int, max: Int, onChange: (Int) -> Unit) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) picker.textColor = textColor
         }
     )
+}
+
+@Composable
+actual fun rememberReduceMotion(): Boolean {
+    val resolver = LocalContext.current.contentResolver
+    fun read() = Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    var reduce by remember(resolver) { mutableStateOf(read()) }
+    DisposableEffect(resolver) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                reduce = read()
+            }
+        }
+        resolver.registerContentObserver(
+            Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, observer
+        )
+        reduce = read()
+        onDispose { resolver.unregisterContentObserver(observer) }
+    }
+    return reduce
 }
 
 @Composable
