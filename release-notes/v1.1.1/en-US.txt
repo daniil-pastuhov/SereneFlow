@@ -1,0 +1,4 @@
+• The breathing lotus is now a flower opening on water: one petal unfolds after another as each step goes by, while ripples spread beneath it
+• The hourglass looks like a real one, with round glass bulbs, sand piling into a cone and a stream that runs faster as it falls
+• Play/Pause now sits in the centre of the timer controls, and a single back button restarts the current step or, tapped near its start, goes to the previous one
+• An empty routine list now shows a centred message with an icon
