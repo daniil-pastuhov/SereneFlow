@@ -69,6 +69,9 @@ private func timerActivityConfiguration() -> ActivityConfiguration<TimerActivity
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(accent)
                 .padding(.leading, 4)
+                // "3/5" and a decorative leaf; VoiceOver hears "Step 3 of 5".
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(state.isCompleted ? "Done" : stepPositionLabel(for: state))
             }
             DynamicIslandExpandedRegion(.trailing) {
                 CountdownText(state: state)
@@ -96,6 +99,7 @@ private func timerActivityConfiguration() -> ActivityConfiguration<TimerActivity
         } compactLeading: {
             Image(systemName: state.isPaused ? "pause.fill" : "leaf.fill")
                 .foregroundStyle(accent)
+                .accessibilityLabel(state.isPaused ? "Paused" : "Running")
         } compactTrailing: {
             CountdownText(state: state)
                 .font(.caption.monospacedDigit())
@@ -171,16 +175,19 @@ private struct WatchSmallView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
-                        .accessibilityLabel(
-                            [state.roundLabel, "Step \(state.stepIndex + 1) of \(state.stepCount)"]
-                                .compactMap { $0 }.joined(separator: ", ")
-                        )
+                        .accessibilityLabel(stepPositionLabel(for: state))
                 }
             }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 4)
     }
+}
+
+/// "Round 2 of 4, Step 3 of 5" for VoiceOver, where the layout shows "2/4 · 3/5".
+private func stepPositionLabel(for state: TimerActivityAttributes.ContentState) -> String {
+    [state.roundLabel, "Step \(state.stepIndex + 1) of \(state.stepCount)"]
+        .compactMap { $0 }.joined(separator: ", ")
 }
 
 private func subtitle(for state: TimerActivityAttributes.ContentState) -> String {
@@ -217,7 +224,7 @@ private struct LockScreenView: View {
                 }
                 Spacer(minLength: 12)
                 CountdownText(state: state)
-                    .font(.system(size: 36, weight: .light).monospacedDigit())
+                    .font(.largeTitle.weight(.light).monospacedDigit())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: 120, alignment: .trailing)
@@ -256,18 +263,23 @@ private struct ControlButtons: View {
     }
 }
 
-/// Live countdown while running; a fixed value while paused.
+/// Live countdown while running; a fixed value while paused. VoiceOver hears "Time left" first.
 private struct CountdownText: View {
     let state: TimerActivityAttributes.ContentState
 
     var body: some View {
         if state.isCompleted {
             Text("Done")
-        } else if let remaining = state.pausedRemaining {
-            Text(format(remaining))
         } else {
-            Text(timerInterval: state.stepStart...max(state.stepStart, state.stepEnd), countsDown: true)
+            time.accessibilityLabel(Text("Time left ") + time)
         }
+    }
+
+    private var time: Text {
+        if let remaining = state.pausedRemaining {
+            return Text(format(remaining))
+        }
+        return Text(timerInterval: state.stepStart...max(state.stepStart, state.stepEnd), countsDown: true)
     }
 
     private func format(_ seconds: TimeInterval) -> String {
@@ -296,6 +308,7 @@ private struct StepProgressBar: View {
         }
         .progressViewStyle(.linear)
         .tint(accent)
+        .accessibilityLabel("Step progress")
     }
 }
 
@@ -319,6 +332,7 @@ private struct StepProgressRing: View {
         }
         .progressViewStyle(.circular)
         .tint(accent)
+        .accessibilityLabel("Step progress")
     }
 }
 

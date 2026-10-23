@@ -59,20 +59,27 @@ private struct RunningView: View {
     }
 }
 
+/// The step's time left; VoiceOver hears "Time left" first.
 private struct Countdown: View {
     let snapshot: WatchSnapshot
 
     var body: some View {
         if snapshot.isCompleted {
             Text("Done")
-        } else if let end = snapshot.stepEnd, !snapshot.isPaused {
-            let start = end.addingTimeInterval(-snapshot.stepDuration)
-            Text(timerInterval: start...max(start, end), countsDown: true)
-                .multilineTextAlignment(.center)
         } else {
-            let total = Int(snapshot.remaining.rounded(.up))
-            Text(String(format: "%d:%02d", total / 60, total % 60))
+            time
+                .multilineTextAlignment(.center)
+                .accessibilityLabel(Text("Time left ") + time)
         }
+    }
+
+    private var time: Text {
+        if let end = snapshot.stepEnd, !snapshot.isPaused {
+            let start = end.addingTimeInterval(-snapshot.stepDuration)
+            return Text(timerInterval: start...max(start, end), countsDown: true)
+        }
+        let total = Int(snapshot.remaining.rounded(.up))
+        return Text(String(format: "%d:%02d", total / 60, total % 60))
     }
 }
 
@@ -81,15 +88,18 @@ private struct ProgressRing: View {
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
+            let fraction = progress(at: context.date)
             ZStack {
                 Circle().stroke(accent.opacity(0.25), lineWidth: 8)
                 Circle()
-                    .trim(from: 0, to: progress(at: context.date))
+                    .trim(from: 0, to: fraction)
                     .stroke(accent, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .rotationEffect(.degrees(-90))
             }
+            .accessibilityElement()
+            .accessibilityLabel("Step progress")
+            .accessibilityValue("\(Int((fraction * 100).rounded())) percent")
         }
-        .accessibilityHidden(true)
     }
 
     private func progress(at date: Date) -> Double {
