@@ -84,7 +84,6 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.sereneflow.timer.model.Routine
-import com.sereneflow.timer.model.spokenDuration
 import com.sereneflow.timer.session.ActiveSession
 import com.sereneflow.timer.ui.platform.KeepScreenOn
 import com.sereneflow.timer.ui.platform.rememberReduceMotion
@@ -102,6 +101,7 @@ import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.theme.accentColor
 import com.sereneflow.timer.ui.platform.ConfirmDialog
 import com.sereneflow.timer.resources.*
+import com.sereneflow.timer.text.*
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -269,8 +269,8 @@ fun ActiveTimerScreen(
                 isPaused = state.isPaused,
                 reminder = reminder?.let { stringResource(Res.string.timer_reminder, it.percentLeft, it.stepTitle) },
                 showReminder = reminderVisible && !state.isCompleted,
-                next = state.nextStep?.let { stringResource(Res.string.timer_up_next, it.title, it.formattedDuration) },
-                nextDescription = state.nextStep?.let { stringResource(Res.string.timer_up_next_description, it.title, it.spokenDuration) },
+                next = state.nextStep?.let { stringResource(Res.string.timer_up_next, it.title, shortDuration(it.durationSeconds)) },
+                nextDescription = state.nextStep?.let { stringResource(Res.string.timer_up_next_description, it.title, spokenDuration(it.durationSeconds)) },
                 scale = dialScale,
                 auraScale = auraScale,
                 onExtend = if (state.isCompleted) null else {
@@ -728,7 +728,7 @@ private fun CelebrationOverlay(
             )
 
             Text(
-                text = stringResource(Res.string.timer_complete_message, routine.title, routine.formattedTotalDuration),
+                text = stringResource(Res.string.timer_complete_message, routine.title, totalDuration(routine.totalDurationSeconds)),
                 fontSize = 14.sp,
                 color = colors.onSurfaceVariant,
                 lineHeight = 20.sp,

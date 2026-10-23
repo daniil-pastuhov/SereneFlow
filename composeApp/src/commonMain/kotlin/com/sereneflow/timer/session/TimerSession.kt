@@ -44,13 +44,14 @@ object TimerSession {
      * @param backgroundMode mirror the session to the notification / Live Activity and keep it
      * alive with the screen off. When false the timer still keeps correct time (it is
      * wall-clock based) but nothing is shown or played outside the app.
+     * @param restTitle what the step between rounds is called ("Rest", from resources).
      */
-    fun start(routine: Routine, preferences: AppPreferences, backgroundMode: Boolean): ActiveSession {
+    fun start(routine: Routine, preferences: AppPreferences, backgroundMode: Boolean, restTitle: String): ActiveSession {
         stop()
         val cues = routine.resolve(preferences)
         // Rounds become a flat list of steps, so the engine runs them like any routine.
         val engine = TimerEngine(
-            routine.expandedForRounds(), cues, audioController, preferences.reminderThresholds,
+            routine.expandedForRounds(restTitle), cues, audioController, preferences.reminderThresholds,
             haptics = preferences.hapticsEnabled
         )
         val session = ActiveSession(routine, cues, engine)

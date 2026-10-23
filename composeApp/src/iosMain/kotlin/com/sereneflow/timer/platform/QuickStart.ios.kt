@@ -2,6 +2,7 @@ package com.sereneflow.timer.platform
 
 import com.sereneflow.timer.repository.Repositories
 import com.sereneflow.timer.storage.StorageJson
+import com.sereneflow.timer.text.routineSummaryText
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.Serializable
@@ -29,9 +30,13 @@ private var publishedItems: List<QuickStartItem> = emptyList()
 /** The routines to offer as Home Screen quick actions; read by QuickActions.swift. */
 fun currentQuickStartItems(): List<QuickStartItem> = publishedItems
 
-/** Every routine that can be started, for Siri and Shortcuts (RoutineIntents.swift). */
-fun allRoutineSummaries(): List<QuickStartItem> =
-    quickStartItems(Repositories.routines.routines.value, lastRoutineId = null, limit = Int.MAX_VALUE)
+/**
+ * Every routine that can be started, for Siri and Shortcuts (RoutineIntents.swift). Suspending
+ * (async in Swift, called on the main actor): the subtitles are read from resources.
+ */
+suspend fun allRoutineSummaries(): List<QuickStartItem> =
+    quickStartRoutines(Repositories.routines.routines.value, lastRoutineId = null, limit = Int.MAX_VALUE)
+        .map { QuickStartItem(it.id, it.title, routineSummaryText(it)) }
 
 @Serializable
 private data class WidgetRoutine(val id: String, val title: String, val subtitle: String)

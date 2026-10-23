@@ -15,10 +15,13 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class StarterTemplatesTest {
 
+    // Host tests can't read resources; the resource names stand in for the words.
+    private val templates = StarterTemplates.all.map { template -> template.toRoutine { it.key } }
+
     @Test
     fun templatesAreUsableRoutines() {
-        assertTrue(StarterTemplates.all.size >= 5)
-        StarterTemplates.all.forEach { template ->
+        assertTrue(templates.size >= 5)
+        templates.forEach { template ->
             assertTrue(template.steps.isNotEmpty(), template.title)
             assertTrue(template.steps.all { it.durationSeconds >= MIN_STEP_SECONDS }, template.title)
         }
@@ -26,7 +29,7 @@ class StarterTemplatesTest {
 
     @Test
     fun eachUseGetsFreshIds() {
-        val template = StarterTemplates.all.first()
+        val template = templates.first()
         val a = StarterTemplates.instantiate(template)
         val b = StarterTemplates.instantiate(template)
         assertNotEquals(template.id, a.id)
@@ -39,8 +42,8 @@ class StarterTemplatesTest {
     @Test
     fun addFromTemplatePutsItLast() = runTest {
         val scope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
-        val repo = RoutineRepository(FakeFileStorage(), scope)
-        val added = repo.addFromTemplate(StarterTemplates.all.last())
+        val repo = RoutineRepository(FakeFileStorage(), scope, TestSeedRoutines)
+        val added = repo.addFromTemplate(templates.last())
         assertEquals(added, repo.routines.value.last())
         assertEquals(2, repo.routines.value.size)
     }

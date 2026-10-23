@@ -1,6 +1,7 @@
 package com.sereneflow.timer.platform
 
 import com.sereneflow.timer.model.Routine
+import com.sereneflow.timer.text.routineSummaryText
 
 /** One routine offered for a one-tap start outside the app. */
 data class QuickStartItem(val routineId: String, val title: String, val subtitle: String)
@@ -9,17 +10,20 @@ data class QuickStartItem(val routineId: String, val title: String, val subtitle
 const val MAX_QUICK_START_ITEMS = 4
 
 /** The routines to offer: the last one started first, then the list's order. */
-fun quickStartItems(
+fun quickStartRoutines(
     routines: List<Routine>,
     lastRoutineId: String?,
     limit: Int = MAX_QUICK_START_ITEMS
-): List<QuickStartItem> {
+): List<Routine> {
     val last = routines.firstOrNull { it.id == lastRoutineId }
     return (listOfNotNull(last) + routines.filter { it !== last })
         .filter { it.steps.isNotEmpty() }
         .take(limit)
-        .map { QuickStartItem(it.id, it.title, "${it.stepCountText} · ${it.formattedTotalDuration}") }
 }
+
+/** [quickStartRoutines] as shortcuts, each with a "4 steps · 15 min" line. */
+suspend fun quickStartItems(routines: List<Routine>, lastRoutineId: String?): List<QuickStartItem> =
+    quickStartRoutines(routines, lastRoutineId).map { QuickStartItem(it.id, it.title, routineSummaryText(it)) }
 
 /**
  * Publishes [items] where the system offers them: Android launcher shortcuts (long-press the

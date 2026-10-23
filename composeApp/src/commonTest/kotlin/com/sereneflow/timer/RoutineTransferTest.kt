@@ -37,7 +37,8 @@ class RoutineTransferTest {
 
     private fun TestScope.repo(): RoutineRepository = RoutineRepository(
         FakeFileStorage(),
-        CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
+        CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler)),
+        TestSeedRoutines
     )
 
     @Test
@@ -110,7 +111,7 @@ class RoutineTransferTest {
 
     @Test
     fun fileNamesAreSafe() {
-        assertEquals("Evening Flow.sereneflow", RoutineTransfer.fileNameFor(routine))
-        assertEquals("Routine.sereneflow", RoutineTransfer.fileNameFor(routine.copy(title = "///")))
+        assertEquals("Evening Flow.sereneflow", RoutineTransfer.fileNameFor(routine, "Routine"))
+        assertEquals("Routine.sereneflow", RoutineTransfer.fileNameFor(routine.copy(title = "///"), "Routine"))
     }
 }

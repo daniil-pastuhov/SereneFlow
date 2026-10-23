@@ -113,12 +113,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.VisualEffectType
-import com.sereneflow.timer.model.spokenDuration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.sereneflow.timer.repository.RoutineRepository
+import com.sereneflow.timer.repository.StarterTemplate
 import com.sereneflow.timer.repository.StarterTemplates
 import com.sereneflow.timer.transfer.RoutineTransfer
 import com.sereneflow.timer.transfer.shareFile
@@ -130,6 +130,7 @@ import com.sereneflow.timer.ui.platform.ConfirmDialog
 import com.sereneflow.timer.ui.platform.MenuAction
 import com.sereneflow.timer.ui.platform.PlatformIcons
 import com.sereneflow.timer.resources.*
+import com.sereneflow.timer.text.*
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -170,6 +171,8 @@ fun RoutineListScreen(
     val selectedIds = remember(selection, routines) { selection.filterTo(mutableSetOf()) { id -> routines.any { it.id == id } } }
     val selecting = selectedIds.isNotEmpty()
     var confirmDeleteSelected by remember { mutableStateOf(false) }
+    val fileFallback = stringResource(Res.string.file_routine_fallback)
+    val sharedFileName = stringResource(Res.string.file_shared_routines)
     val haptics = LocalHapticFeedback.current
 
     // Manual order: while a card is dragged the grid shows this list, rearranged as it moves; on
@@ -266,7 +269,11 @@ fun RoutineListScreen(
                         onSelectAll = { selection = routines.mapTo(mutableSetOf()) { it.id } },
                         onShare = {
                             val shared = routines.filter { it.id in selectedIds }
-                            shareFile(RoutineTransfer.fileNameFor(shared), RoutineTransfer.MIME_TYPE, RoutineTransfer.encode(shared))
+                            shareFile(
+                                RoutineTransfer.fileNameFor(shared, fileFallback, sharedFileName),
+                                RoutineTransfer.MIME_TYPE,
+                                RoutineTransfer.encode(shared)
+                            )
                         },
                         onDelete = { confirmDeleteSelected = true }
                     )
@@ -293,6 +300,7 @@ fun RoutineListScreen(
                 itemsIndexed(shownRoutines, key = { _, it -> it.id }) { index, routine ->
                     val moveUpLabel = stringResource(Res.string.list_move_up)
                     val moveDownLabel = stringResource(Res.string.list_move_down)
+                    val copyTitle = stringResource(Res.string.routine_copy_title, routine.title)
                     val dragging = reorder.draggingKey == routine.id
                     val raised = reorder.isLifted(routine.id)
                     RoutineCard(
@@ -321,7 +329,7 @@ fun RoutineListScreen(
                         visualEffect = routine.visualEffect ?: defaultVisualEffect,
                         onPlay = { onStartRoutine(routine) },
                         onEdit = { onEditRoutine(routine) },
-                        onDuplicate = { addedHere = routineRepository.duplicateRoutine(routine.id)?.id },
+                        onDuplicate = { addedHere = routineRepository.duplicateRoutine(routine, copyTitle).id },
                         onDelete = { onDeleteRoutines(setOf(routine.id)) },
                         selecting = selecting,
                         selected = routine.id in selectedIds,
@@ -411,13 +419,15 @@ private fun NewRoutineMenu(
     ) {
         // Top to bottom; the blank routine, the usual choice, sits next to the button.
         StarterTemplates.all.forEach { template ->
-            val templateDescription = stringResource(Res.string.list_template_description, template.title)
+            // In the user's language, as it is shown and as it is added.
+            val routine = template.toRoutine { stringResource(it) }
+            val templateDescription = stringResource(Res.string.list_template_description, routine.title)
             FloatingActionButtonMenuItem(
                 onClick = {
                     onExpandedChange(false)
-                    onTemplate(template)
+                    onTemplate(routine)
                 },
-                text = { Text(template.title) },
+                text = { Text(routine.title) },
                 icon = { Icon(templateIcon(template), contentDescription = null) },
                 modifier = Modifier.semantics { contentDescription = templateDescription },
                 containerColor = colors.primaryContainer,
@@ -438,7 +448,7 @@ private fun NewRoutineMenu(
 }
 
 /** An icon that hints at what each starter template is for. */
-private fun templateIcon(template: Routine): ImageVector = when (template.id) {
+private fun templateIcon(template: StarterTemplate): ImageVector = when (template.id) {
     "template_pomodoro" -> Icons.Default.Timer
     "template_box_breathing" -> Icons.Default.Air
     "template_morning_stretch" -> Icons.Default.SelfImprovement
@@ -592,6 +602,7 @@ private fun RoutineCard(
     val accent = routine.accentColor
     val selectionState = stringResource(if (selected) Res.string.list_selected else Res.string.list_not_selected)
     val selectLabel = stringResource(Res.string.action_select)
+    val fileFallback = stringResource(Res.string.file_routine_fallback)
     val startDescription = stringResource(Res.string.list_start_routine_description, routine.title)
 
     if (confirmDelete) {
@@ -729,7 +740,7 @@ private fun RoutineCard(
                             MenuAction(stringResource(Res.string.action_duplicate), Icons.Default.ContentCopy, onClick = onDuplicate),
                             MenuAction(stringResource(Res.string.action_share), Icons.Default.Share) {
                                 shareFile(
-                                    RoutineTransfer.fileNameFor(routine),
+                                    RoutineTransfer.fileNameFor(routine, fileFallback),
                                     RoutineTransfer.MIME_TYPE,
                                     RoutineTransfer.encode(listOf(routine))
                                 )
@@ -769,7 +780,7 @@ private fun RoutineCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = routine.formattedTotalDuration,
+                                text = totalDuration(routine.totalDurationSeconds),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.primary
@@ -784,7 +795,7 @@ private fun RoutineCard(
                             pluralStringResource(Res.plurals.step_count, routine.steps.size, routine.steps.size),
                             pluralStringResource(Res.plurals.rounds_count, routine.roundCount, routine.roundCount)
                         )
-                    } else routine.stepCountText
+                    } else stepCountText(routine)
                     Box(
                         modifier = Modifier
                             .clearAndSetSemantics {
@@ -795,7 +806,7 @@ private fun RoutineCard(
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = routine.stepCountText,
+                            text = stepCountText(routine),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = colors.onSurfaceVariant
@@ -803,15 +814,7 @@ private fun RoutineCard(
                     }
 
                     // Visual effect badge; the emoji is left out of what a screen reader says.
-                    val effectName = stringResource(
-                        when (visualEffect) {
-                            VisualEffectType.WATER -> Res.string.effect_water_short
-                            VisualEffectType.BONSAI_TREE -> Res.string.effect_bonsai_short
-                            VisualEffectType.COSMIC_ORBIT -> Res.string.effect_orbit_short
-                            VisualEffectType.BREATHING_LOTUS -> Res.string.effect_lotus_short
-                            VisualEffectType.HOURGLASS -> Res.string.effect_hourglass_short
-                        }
-                    )
+                    val effectName = stringResource(visualEffect.shortNameRes)
                     val effectDescription = stringResource(Res.string.list_effect_description, effectName)
                     val visualEmoji = "${visualEffect.emoji} $effectName"
                     Box(
@@ -891,7 +894,7 @@ private fun StepsPreviewBar(steps: List<com.sereneflow.timer.model.RoutineStep>)
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         steps.take(3).forEachIndexed { index, step ->
-            val stepDescription = stringResource(Res.string.list_step_description, step.title, step.spokenDuration)
+            val stepDescription = stringResource(Res.string.list_step_description, step.title, spokenDuration(step.durationSeconds))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -916,7 +919,7 @@ private fun StepsPreviewBar(steps: List<com.sereneflow.timer.model.RoutineStep>)
                 }
 
                 Text(
-                    text = step.formattedDuration,
+                    text = shortDuration(step.durationSeconds),
                     fontSize = 11.sp,
                     color = colors.onSurfaceVariant
                 )

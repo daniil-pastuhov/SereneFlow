@@ -3,7 +3,6 @@ package com.sereneflow.timer.repository
 import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.model.Routine
-import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.model.newStepId
@@ -19,26 +18,49 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlin.concurrent.Volatile
 
 class RoutineRepository(
     private val storage: FileStorage,
-    scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+    /**
+     * The routines to start with when there is no file (or one that can't be read): [seedRoutines],
+     * whose words are read from resources, so they arrive just after the repository is created.
+     */
+    defaultRoutines: suspend () -> List<Routine> = ::seedRoutines
 ) {
+    /** No file could be read: [defaultRoutines] are shown, but never written in its place. */
+    private var needsSeed = false
     private val _routines = MutableStateFlow(loadRoutines())
     val routines: StateFlow<List<Routine>> = _routines.asStateFlow()
 
+    /** The list holding just the default routines, until something changes. */
+    @Volatile
+    private var seedList: List<Routine>? = null
+
     init {
-        // Persist every change in order; conflate so rapid edits write only the latest list.
-        _routines.drop(1).conflate()
+        // Persist every change in order; conflate so rapid edits write only the latest list. The
+        // default routines alone are not a change, so they never replace a file that exists.
+        _routines.drop(1).filter { it !== seedList }.conflate()
             .onEach { storage.write(FILE_NAME, StorageJson.encodeToString(it)) }
             .launchIn(scope)
+        if (needsSeed) {
+            scope.launch {
+                val seed = defaultRoutines()
+                seedList = seed
+                // Anything added meanwhile (an imported file) follows them, and is saved.
+                _routines.update { current -> if (current.isEmpty()) seed else seed + current }
+            }
+        }
     }
 
     private fun loadRoutines(): List<Routine> =
-        storage.load(FILE_NAME, ::createDefaultRoutines) { json ->
+        storage.load(FILE_NAME, { needsSeed = true; emptyList() }) { json ->
             StorageJson.decodeFromString<List<Routine>>(json).map { it.migrated() }
         }
 
@@ -103,17 +125,15 @@ class RoutineRepository(
         }
     }
 
-    fun duplicateRoutine(id: String): Routine? {
-        val original = getRoutine(id) ?: return null
-        return duplicateRoutine(original)
-    }
-
-    /** Saves a copy of [original] (which may contain unsaved edits) under a new id, at the end. */
-    fun duplicateRoutine(original: Routine): Routine {
+    /**
+     * Saves a copy of [original] (which may contain unsaved edits) under a new id, at the end,
+     * called [title] ("Morning Awakening (Copy)", from resources).
+     */
+    fun duplicateRoutine(original: Routine, title: String): Routine {
         val rand = kotlin.random.Random.nextLong().let { if (it < 0) -it else it }
         val duplicate = original.copy(
             id = "routine_$rand",
-            title = "${original.title} (Copy)",
+            title = title,
             steps = original.steps.mapIndexed { idx, it -> it.copy(id = "step_${rand}_$idx") }
         )
         saveRoutine(duplicate)
@@ -122,22 +142,6 @@ class RoutineRepository(
 
     companion object {
         const val FILE_NAME = "routines.json"
-
-        fun createDefaultRoutines(): List<Routine> {
-            return listOf(
-                Routine(
-                    id = "morning_awakening",
-                    title = "Morning Awakening",
-                    description = "Awaken your body and mind with mindful hydration, gentle flow, and breathwork",
-                    steps = listOf(
-                        RoutineStep("s1", "Warm Lemon Water & Presence", 120, "Hydrate and savor the morning warmth"),
-                        RoutineStep("s2", "Cat-Cow & Spine Awakening", 180, "Gentle spinal wave stretches"),
-                        RoutineStep("s3", "Box Breathing (4-4-4-4)", 240, "Center your nervous system"),
-                        RoutineStep("s4", "Morning Intention Journaling", 360, "Set your positive focus for today")
-                    )
-                )
-            )
-        }
     }
 }
 

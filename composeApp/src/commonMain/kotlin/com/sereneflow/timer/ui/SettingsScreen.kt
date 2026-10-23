@@ -62,6 +62,7 @@ import com.sereneflow.timer.platform.AppIconSwitcher
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.PreferencesRepository
 import com.sereneflow.timer.resources.*
+import com.sereneflow.timer.text.*
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import com.sereneflow.timer.resources.app_icon_midnight_starlight
@@ -202,7 +203,7 @@ fun SettingsScreen(
                                     Spacer(modifier = Modifier.width(14.dp))
 
                                     Text(
-                                        text = mode.displayName,
+                                        text = mode.displayName(),
                                         fontSize = 15.sp,
                                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                                         color = colors.onSurface
@@ -238,7 +239,7 @@ fun SettingsScreen(
                         NavigationRow(
                             title = stringResource(Res.string.settings_default_sound),
                             description = stringResource(Res.string.settings_default_sound_description),
-                            value = defaultSound.displayName,
+                            value = defaultSound.displayName(),
                             onClick = onOpenSoundPicker
                         )
                         SwitchRow(
@@ -373,13 +374,13 @@ fun SettingsScreen(
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
-                                            text = effect.displayName,
+                                            text = effect.displayName(),
                                             fontSize = 14.sp,
                                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                                             color = colors.onSurface
                                         )
                                         Text(
-                                            text = effect.description,
+                                            text = effect.description(),
                                             fontSize = 11.sp,
                                             color = colors.onSurfaceVariant
                                         )

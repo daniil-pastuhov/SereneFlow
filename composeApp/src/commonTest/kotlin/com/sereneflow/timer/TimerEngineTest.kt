@@ -84,7 +84,7 @@ class TimerEngineTest {
     @Test
     fun testTimerEngineInitialState() = runTest {
         val audio = FakeAudioController()
-        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio, scope = this)
+        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio, phrases = EnglishPhrases, scope = this)
         val state = engine.timerState.value
 
         assertEquals(0, state.currentStepIndex)
@@ -98,7 +98,7 @@ class TimerEngineTest {
     @Test
     fun testTimerEngineSkipAndPrevious() = runTest {
         val audio = FakeAudioController()
-        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio, scope = this)
+        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio, phrases = EnglishPhrases, scope = this)
 
         engine.skipStep()
         var state = engine.timerState.value
@@ -119,6 +119,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             scope = this,
             clock = { testScheduler.currentTime }
         )
@@ -141,6 +142,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(50),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -165,6 +167,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(50),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -188,6 +191,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(50),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -210,6 +214,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(75, 50, 25),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -234,6 +239,7 @@ class TimerEngineTest {
             routine = shortRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(50),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -252,6 +258,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(50),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -281,6 +288,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             scope = this,
             clock = { now }
         )
@@ -304,17 +312,6 @@ class TimerEngineTest {
     }
 
     @Test
-    fun testDurationsAreSpokenInWords() {
-        fun spoken(seconds: Int) = RoutineStep("s", "Step", seconds).spokenDuration
-        assertEquals("2 minutes", spoken(120))
-        assertEquals("1 minute", spoken(60))
-        assertEquals("1 minute 30 seconds", spoken(90))
-        assertEquals("2 minutes 1 second", spoken(121))
-        assertEquals("45 seconds", spoken(45))
-        assertEquals("1 second", spoken(1))
-    }
-
-    @Test
     fun testFastForwardMovesThroughSteps() = runTest {
         val audio = FakeAudioController()
         val now = 0L
@@ -322,6 +319,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             scope = this,
             clock = { now }
         )
@@ -349,6 +347,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             scope = this,
             clock = { now }
         )
@@ -376,6 +375,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             scope = this,
             clock = { now }
         )
@@ -411,6 +411,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = RoutineCues(VisualEffectType.WATER, CueSound.NONE, voice = true),
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(50),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -435,6 +436,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = RoutineCues(VisualEffectType.WATER, CueSound.KALIMBA, voice = false),
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(50),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -456,6 +458,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = RoutineCues(VisualEffectType.WATER, CueSound.NONE, voice = false),
             audioController = audio,
+            phrases = EnglishPhrases,
             reminderThresholds = setOf(50),
             scope = this,
             clock = { testScheduler.currentTime }
@@ -478,6 +481,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             haptics = true,
             scope = this,
             clock = { testScheduler.currentTime }
@@ -503,6 +507,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             scope = this,
             clock = { testScheduler.currentTime }
         )
@@ -531,6 +536,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             scope = this,
             clock = { testScheduler.currentTime }
         )
@@ -554,6 +560,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = FakeAudioController(),
+            phrases = EnglishPhrases,
             scope = this,
             clock = { testScheduler.currentTime }
         )
@@ -573,6 +580,7 @@ class TimerEngineTest {
             routine = testRoutine,
             cues = bowlAndVoice,
             audioController = audio,
+            phrases = EnglishPhrases,
             scope = this,
             clock = { testScheduler.currentTime }
         )

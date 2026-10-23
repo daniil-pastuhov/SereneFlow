@@ -15,14 +15,14 @@ class RoundsTest {
     @Test
     fun oneRoundIsTheRoutineItself() {
         val routine = Routine(id = "r", title = "R", steps = steps)
-        assertSame(routine, routine.expandedForRounds())
+        assertSame(routine, routine.expandedForRounds("Rest"))
         assertEquals(60, routine.totalDurationSeconds)
     }
 
     @Test
     fun roundsRepeatTheStepsWithARestBetweenButNotAfter() {
         val routine = Routine(id = "r", title = "R", steps = steps, rounds = 3, restBetweenRoundsSeconds = 30)
-        val expanded = routine.expandedForRounds()
+        val expanded = routine.expandedForRounds("Rest")
         assertEquals(
             listOf("Work", "Breathe", "Rest", "Work", "Breathe", "Rest", "Work", "Breathe"),
             expanded.steps.map { it.title }
@@ -38,7 +38,7 @@ class RoundsTest {
     @Test
     fun roundsWithoutRestHaveNoRestSteps() {
         val routine = Routine(id = "r", title = "R", steps = steps, rounds = 2)
-        assertEquals(listOf("a_r1", "b_r1", "a_r2", "b_r2"), routine.expandedForRounds().steps.map { it.id })
+        assertEquals(listOf("a_r1", "b_r1", "a_r2", "b_r2"), routine.expandedForRounds("Rest").steps.map { it.id })
     }
 
     @Test

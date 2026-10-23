@@ -18,8 +18,9 @@ struct RoutineEntity: AppEntity {
 
 struct RoutineQuery: EntityStringQuery {
     @MainActor
-    private func all() -> [RoutineEntity] {
-        QuickStart_iosKt.allRoutineSummaries().map {
+    private func all() async -> [RoutineEntity] {
+        let summaries = (try? await QuickStart_iosKt.allRoutineSummaries()) ?? []
+        return summaries.map {
             RoutineEntity(id: $0.routineId, title: $0.title, subtitle: $0.subtitle)
         }
     }

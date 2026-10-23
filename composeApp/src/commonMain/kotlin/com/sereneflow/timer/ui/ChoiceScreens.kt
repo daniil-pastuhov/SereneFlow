@@ -43,7 +43,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sereneflow.timer.audio.PreviewStep
+import com.sereneflow.timer.audio.previewStep
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.sereneflow.timer.audio.VoiceOption
 import com.sereneflow.timer.audio.playStepCue
 import com.sereneflow.timer.model.CueSound
@@ -52,6 +54,7 @@ import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.ui.platform.PlatformIcons
 import com.sereneflow.timer.resources.*
+import com.sereneflow.timer.text.*
 import org.jetbrains.compose.resources.stringResource
 
 /** One option of a [ChoiceScreen]. */
@@ -219,7 +222,7 @@ fun SoundPickerScreen(preferencesRepository: PreferencesRepository, onBack: () -
     ChoiceScreen(
         title = stringResource(Res.string.settings_default_sound),
         note = stringResource(Res.string.sound_picker_note),
-        choices = CueSound.entries.map { Choice(it, it.displayName, it.description) },
+        choices = CueSound.entries.map { Choice(it, it.displayName(), it.description()) },
         selected = preferences.defaultSound,
         onSelect = { sound ->
             preferencesRepository.setDefaultSound(sound)
@@ -241,6 +244,8 @@ fun VoicePickerScreen(preferencesRepository: PreferencesRepository, onBack: () -
     val list = voices
     // A saved voice that was since removed from the device falls back to the default.
     val selectedId = preferences.voiceId?.takeIf { id -> list?.any { it.id == id } != false }
+    val sample = previewStep()
+    val scope = rememberCoroutineScope()
     val defaultChoice = Choice<String?>(
         null,
         stringResource(Res.string.value_default),
@@ -257,10 +262,12 @@ fun VoicePickerScreen(preferencesRepository: PreferencesRepository, onBack: () -
         onSelect = { id ->
             preferencesRepository.setVoice(id)
             // A sample in the new voice, as a step start says it, even while voice guidance is off.
-            TimerSession.audioController.apply {
-                setVoice(id)
-                stop()
-                playStepCue(preferences.defaultSound, voice = true, PreviewStep, stepIndex = 0)
+            scope.launch {
+                TimerSession.audioController.apply {
+                    setVoice(id)
+                    stop()
+                    playStepCue(preferences.defaultSound, voice = true, sample, stepIndex = 0)
+                }
             }
         },
         onBack = onBack,

@@ -27,7 +27,7 @@ class RoutineRepositoryTest {
     private fun TestScope.persistenceScope() =
         CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
 
-    private fun TestScope.routineRepo(storage: FileStorage) = RoutineRepository(storage, persistenceScope())
+    private fun TestScope.routineRepo(storage: FileStorage) = RoutineRepository(storage, persistenceScope(), TestSeedRoutines)
 
     private fun TestScope.prefsRepo(storage: FileStorage) = PreferencesRepository(storage, persistenceScope())
 
@@ -108,8 +108,8 @@ class RoutineRepositoryTest {
 
         repo.saveRoutine(routine("a"))
         repo.saveRoutine(routine("b"))
-        val copy = repo.duplicateRoutine("a")!!
-        val template = repo.addFromTemplate(StarterTemplates.all.first())
+        val copy = repo.duplicateRoutine(repo.getRoutine("a")!!, "a (Copy)")
+        val template = repo.addFromTemplate(StarterTemplates.all.first().toRoutine { it.key })
         val imported = repo.import(RoutineTransfer.encode(listOf(routine("c")))).single()
 
         val expected = listOf(seed.id, "a", "b", copy.id, template.id, imported.id)
@@ -146,8 +146,8 @@ class RoutineRepositoryTest {
         listOf("a", "b", "c").forEach { from.saveRoutine(routine(it)) }
         val shared = from.routines.value.filter { it.id in setOf("c", "a") }
         val file = RoutineTransfer.encode(shared)
-        assertEquals(RoutineTransfer.SHARED_FILE_NAME, RoutineTransfer.fileNameFor(shared))
-        assertEquals("a.sereneflow", RoutineTransfer.fileNameFor(shared.take(1)))
+        assertEquals("SereneFlow Routines.sereneflow", RoutineTransfer.fileNameFor(shared, "Routine", "SereneFlow Routines"))
+        assertEquals("a.sereneflow", RoutineTransfer.fileNameFor(shared.take(1), "Routine", "SereneFlow Routines"))
 
         val to = routineRepo(FakeFileStorage())
         val imported = to.import(file)

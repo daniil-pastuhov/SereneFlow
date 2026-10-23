@@ -26,6 +26,7 @@ import com.sereneflow.timer.repository.Repositories
 import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
 import com.sereneflow.timer.platform.publishQuickStart
+import com.sereneflow.timer.platform.QuickStartItem
 import com.sereneflow.timer.platform.quickStartItems
 import com.sereneflow.timer.transfer.RoutineTransfer
 import com.sereneflow.timer.transfer.shareFile
@@ -40,6 +41,7 @@ import com.sereneflow.timer.ui.SoundPickerScreen
 import com.sereneflow.timer.ui.VoicePickerScreen
 import com.sereneflow.timer.ui.rememberPredictiveBackTransition
 import com.sereneflow.timer.resources.*
+import com.sereneflow.timer.text.*
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -73,6 +75,8 @@ fun App(demoLaunch: DemoLaunch? = null) {
         }
     }
     val currentScreen = backStack.last()
+    val backupFileName = stringResource(Res.string.file_backup)
+    val restTitle = stringResource(Res.string.rest_step_title)
 
     // The voice applies to every spoken cue, so it is set on the shared controller.
     LaunchedEffect(preferences.voiceId) {
@@ -83,7 +87,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
     LaunchedEffect(Unit) {
         if (demoLaunch !is DemoLaunch.Timer) return@LaunchedEffect
         val routine = routineRepository.getRoutine(demoLaunch.routineId) ?: return@LaunchedEffect
-        TimerSession.start(routine, preferences, backgroundMode = demoLaunch.backgroundMode)
+        TimerSession.start(routine, preferences, backgroundMode = demoLaunch.backgroundMode, restTitle = restTitle)
             .engine.fastForward(demoLaunch.elapsedSeconds * 1000L)
     }
 
@@ -93,10 +97,14 @@ fun App(demoLaunch: DemoLaunch? = null) {
 
     // Launcher shortcuts, iOS quick actions and the widget offer the last-started routines.
     val routines by routineRepository.routines.collectAsState()
-    val quickStart = remember(routines, preferences.lastRoutineId) {
-        quickStartItems(routines, preferences.lastRoutineId)
+    // Published only when the offer changes, not on every edit to the list.
+    var publishedQuickStart by remember { mutableStateOf<List<QuickStartItem>?>(null) }
+    LaunchedEffect(routines, preferences.lastRoutineId) {
+        val items = quickStartItems(routines, preferences.lastRoutineId)
+        if (items == publishedQuickStart) return@LaunchedEffect
+        publishedQuickStart = items
+        publishQuickStart(items)
     }
-    LaunchedEffect(quickStart) { publishQuickStart(quickStart) }
 
     // A routine started from outside the app (shortcut, widget, link). The session effect below
     // then shows its timer. A routine already running is left alone rather than ended.
@@ -112,7 +120,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
         }
         val routine = id?.let { findRoutine(routines, it) }?.takeIf { it.steps.isNotEmpty() } ?: return@LaunchedEffect
         // Shown over whatever screen is open (an editor keeps its unsaved edits underneath).
-        TimerSession.start(routine, preferences, preferences.backgroundMode)
+        TimerSession.start(routine, preferences, preferences.backgroundMode, restTitle)
         preferencesRepository.setLastRoutine(routine.id)
     }
 
@@ -196,8 +204,8 @@ fun App(demoLaunch: DemoLaunch? = null) {
                     message = if (offered.size == 1) {
                         stringResource(
                             Res.string.import_one_message,
-                            offered.single().stepCountText,
-                            offered.single().formattedTotalDuration
+                            stepCountText(offered.single()),
+                            totalDuration(offered.single().totalDurationSeconds)
                         )
                     } else {
                         offered.take(5).joinToString("\n") { it.title } +
@@ -239,7 +247,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         routineRepository = routineRepository,
                         defaultVisualEffect = preferences.defaultVisualEffect,
                         onStartRoutine = { routine ->
-                            TimerSession.start(routine, preferences, preferences.backgroundMode)
+                            TimerSession.start(routine, preferences, preferences.backgroundMode, restTitle)
                             preferencesRepository.setLastRoutine(routine.id)
                             push(AppScreen.Timer(routine))
                         },
@@ -267,7 +275,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
                             if (!preferences.backgroundModeAsked) showBackgroundPrompt = true
                         },
                         onDuplicateRoutine = { toDuplicate ->
-                            revealRoutineId = routineRepository.duplicateRoutine(toDuplicate).id
+                            revealRoutineId = routineRepository.duplicateRoutine(toDuplicate, toDuplicate.title).id
                             pop()
                         },
                         onBack = ::pop
@@ -293,7 +301,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         routineCount = routines.size,
                         onExportRoutines = {
                             shareFile(
-                                RoutineTransfer.BACKUP_FILE_NAME,
+                                RoutineTransfer.fileName(backupFileName),
                                 RoutineTransfer.MIME_TYPE,
                                 RoutineTransfer.encode(routineRepository.routines.value)
                             )

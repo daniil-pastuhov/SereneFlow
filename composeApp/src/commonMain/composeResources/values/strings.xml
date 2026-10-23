@@ -48,6 +48,124 @@
     <string name="duration_short_min_sec">%1$dm %2$ds</string>
     <string name="duration_short_min">%1$dm</string>
     <string name="duration_short_sec">%1$ds</string>
+    <!-- A routine's total, when it is whole minutes or under a minute: "15 min", "45 sec" -->
+    <string name="duration_total_min">%1$d min</string>
+    <string name="duration_total_sec">%1$d sec</string>
+    <!-- Durations in words, for speech and screen readers: "1 minute 30 seconds" -->
+    <plurals name="duration_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="duration_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <!-- %1$s: the minutes; %2$s: the seconds -->
+    <string name="duration_minutes_seconds">%1$s %2$s</string>
+    <!-- %1$s: step count, e.g. "3 steps"; %2$d: rounds -->
+    <string name="step_count_rounds">%1$s × %2$d</string>
+    <!-- Shortcuts and the widget. %1$s: step count; %2$s: total duration -->
+    <string name="routine_summary">%1$s · %2$s</string>
+    <!-- A duplicated routine's name -->
+    <string name="routine_copy_title">%1$s (Copy)</string>
+    <!-- Shared files' names, before the .sereneflow extension -->
+    <string name="file_routine_fallback">Routine</string>
+    <string name="file_shared_routines">SereneFlow Routines</string>
+    <string name="file_backup">SereneFlow Backup</string>
+
+    <!-- Visual effects -->
+    <string name="effect_water">Serene Water</string>
+    <string name="effect_water_description">Fluid liquid simulation with gentle waves and buoyant rising bubbles</string>
+    <string name="effect_bonsai">Living Bonsai</string>
+    <string name="effect_bonsai_description">Procedural branching tree swaying in the wind with blooming sakura petals</string>
+    <string name="effect_orbit">Celestial Orbit</string>
+    <string name="effect_orbit_description">Gravitational planetary rings and drifting stardust particles</string>
+    <string name="effect_lotus">Breathing Lotus</string>
+    <string name="effect_lotus_description">Sacred geometric petals expanding to a meditative 4-4-6-2 rhythm</string>
+    <string name="effect_hourglass">Zen Hourglass</string>
+    <string name="effect_hourglass_description">Streaming cascade of glowing sand particles and accumulating mound</string>
+
+    <!-- Step sounds -->
+    <string name="sound_tibetan_bowl">Tibetan Bowl</string>
+    <string name="sound_tibetan_bowl_description">Resonant singing bowl with a slow shimmer</string>
+    <string name="sound_zen_chime">Zen Chime</string>
+    <string name="sound_zen_chime_description">Soft, bright chime tone</string>
+    <string name="sound_crystal_bowl">Crystal Bowl</string>
+    <string name="sound_crystal_bowl_description">Pure, long-ringing quartz bowl</string>
+    <string name="sound_temple_gong">Temple Gong</string>
+    <string name="sound_temple_gong_description">Deep, low gong that fades slowly</string>
+    <string name="sound_kalimba">Kalimba</string>
+    <string name="sound_kalimba_description">Gentle plucked thumb-piano note</string>
+    <string name="sound_wood_block">Wood Block</string>
+    <string name="sound_wood_block_description">Short, warm wooden knock</string>
+    <string name="sound_koshi_chimes">Koshi Chimes</string>
+    <string name="sound_koshi_chimes_description">A small cascade of wind-chime notes</string>
+    <string name="sound_none">No Sound</string>
+    <string name="sound_none_description">No tone; only the voice, if it is on</string>
+
+    <!-- Themes -->
+    <string name="theme_zen_sage">Zen Sage</string>
+    <string name="theme_ocean_mist">Ocean Mist</string>
+    <string name="theme_sunset_clay">Sunset Clay</string>
+    <string name="theme_midnight_starlight">Midnight Starlight</string>
+
+    <!-- Routine accent colours, read by screen readers -->
+    <string name="accent_sage">Sage</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_ocean">Ocean</string>
+    <string name="accent_lavender">Lavender</string>
+    <string name="accent_rose">Rose</string>
+    <string name="accent_clay">Clay</string>
+    <string name="accent_amber">Amber</string>
+    <string name="accent_slate">Slate</string>
+
+    <!-- The routine a first launch starts with -->
+    <string name="seed_title">Morning Awakening</string>
+    <string name="seed_description">Awaken your body and mind with mindful hydration, gentle flow, and breathwork</string>
+    <string name="seed_step_1">Warm Lemon Water &amp; Presence</string>
+    <string name="seed_step_1_description">Hydrate and savor the morning warmth</string>
+    <string name="seed_step_2">Cat-Cow &amp; Spine Awakening</string>
+    <string name="seed_step_2_description">Gentle spinal wave stretches</string>
+    <string name="seed_step_3">Box Breathing (4-4-4-4)</string>
+    <string name="seed_step_3_description">Center your nervous system</string>
+    <string name="seed_step_4">Morning Intention Journaling</string>
+    <string name="seed_step_4_description">Set your positive focus for today</string>
+
+    <!-- Starter templates (New routine menu) -->
+    <string name="template_pomodoro">Pomodoro</string>
+    <string name="template_pomodoro_description">Four focused work blocks with short breaks, then a long rest</string>
+    <string name="template_pomodoro_focus">Focus</string>
+    <string name="template_pomodoro_short_break">Short break</string>
+    <string name="template_pomodoro_long_break">Long break</string>
+    <string name="template_box_breathing">Box Breathing</string>
+    <string name="template_box_breathing_description">Settle, breathe in a steady 4-4-4-4 square, then let the breath go</string>
+    <string name="template_box_breathing_settle">Settle in</string>
+    <string name="template_box_breathing_box">Box breathing (4-4-4-4)</string>
+    <string name="template_box_breathing_natural">Natural breath</string>
+    <string name="template_morning_stretch">Morning Stretch</string>
+    <string name="template_morning_stretch_description">A gentle head-to-toe stretch to wake the body</string>
+    <string name="template_morning_stretch_neck">Neck rolls</string>
+    <string name="template_morning_stretch_shoulders">Shoulder circles</string>
+    <string name="template_morning_stretch_cat_cow">Cat-cow</string>
+    <string name="template_morning_stretch_side">Side stretch</string>
+    <string name="template_morning_stretch_fold">Forward fold</string>
+    <string name="template_morning_stretch_child">Child's pose</string>
+    <string name="template_hiit">HIIT</string>
+    <string name="template_hiit_description">Four high-intensity moves with short rests, warmed up and cooled down</string>
+    <string name="template_hiit_warm_up">Warm-up</string>
+    <string name="template_hiit_jumping_jacks">Jumping jacks</string>
+    <string name="template_hiit_rest">Rest</string>
+    <string name="template_hiit_squats">Squats</string>
+    <string name="template_hiit_push_ups">Push-ups</string>
+    <string name="template_hiit_mountain_climbers">Mountain climbers</string>
+    <string name="template_hiit_cool_down">Cool-down</string>
+    <string name="template_wind_down">Wind-down</string>
+    <string name="template_wind_down_description">Slow the evening down before sleep</string>
+    <string name="template_wind_down_lights">Dim the lights</string>
+    <string name="template_wind_down_stretch">Gentle stretch</string>
+    <string name="template_wind_down_body_scan">Body scan</string>
+    <string name="template_wind_down_gratitude">Gratitude</string>
+    <string name="template_wind_down_478">4-7-8 breathing</string>
 
     <!-- Routine list -->
     <string name="list_brand">SERENEFLOW</string>
@@ -252,7 +370,18 @@
     <string name="settings_import">Import routines</string>
     <string name="settings_import_description">From a .sereneflow file</string>
 
+    <!-- Spoken by the timer -->
+    <!-- %1$s: step name; %2$s: its duration in words -->
+    <string name="speech_step">%1$s, %2$s</string>
+    <!-- Said when no tone marks the step. %1$d: step number; %2$s: step name; %3$s: duration in words -->
+    <string name="speech_step_numbered">Step %1$d: %2$s, %3$s</string>
+    <!-- %1$s: step name; %2$d: percent of the step left -->
+    <string name="speech_reminder">%1$s, %2$d percent left</string>
+    <string name="speech_routine_complete">Routine complete. Well done.</string>
+
     <!-- Sound and voice pickers -->
+    <!-- The step announced when a sound or voice is previewed -->
+    <string name="preview_step_title">Morning stretch</string>
     <string name="sound_picker_note">Plays at each step in routines whose sound is Default; each routine can pick its own. Tap a sound to hear it.</string>
     <string name="voice_picker_note">Speaks the step announcements in every routine that uses voice. Tap a voice to hear it.</string>
     <string name="voice_picker_default_detail">The device's standard English voice</string>

@@ -35,7 +35,7 @@ class RepositoryPersistenceTest {
     private fun TestScope.persistenceScope() =
         CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
 
-    private fun TestScope.routineRepo(storage: FileStorage) = RoutineRepository(storage, persistenceScope())
+    private fun TestScope.routineRepo(storage: FileStorage) = RoutineRepository(storage, persistenceScope(), TestSeedRoutines)
 
     private fun TestScope.prefsRepo(storage: FileStorage) = PreferencesRepository(storage, persistenceScope())
 
@@ -75,7 +75,7 @@ class RepositoryPersistenceTest {
         val repo = routineRepo(storage)
         val original = repo.routines.value.single()
 
-        val copy = repo.duplicateRoutine(original.copy(title = "Edited"))
+        val copy = repo.duplicateRoutine(original.copy(title = "Edited"), "Edited (Copy)")
         assertEquals("Edited (Copy)", copy.title)
         assertEquals(original.steps.size, copy.steps.size)
 

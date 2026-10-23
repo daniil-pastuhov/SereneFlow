@@ -61,19 +61,21 @@ object RoutineTransfer {
         }
     }
 
-    /** A file name for sharing [routine]: its title, kept to safe characters. */
-    fun fileNameFor(routine: Routine): String {
+    /** [base] (e.g. "SereneFlow Backup", from resources) with the routine file extension. */
+    fun fileName(base: String): String = "$base.$FILE_EXTENSION"
+
+    /** A file name for sharing [routine]: its title, kept to safe characters, or [fallback]. */
+    fun fileNameFor(routine: Routine, fallback: String): String {
         val base = routine.title.filter { it.isLetterOrDigit() || it == ' ' || it == '-' }.trim().take(40)
-        return "${base.ifEmpty { "Routine" }}.$FILE_EXTENSION"
+        return fileName(base.ifEmpty { fallback })
     }
 
-    /** A file name for sharing [routines]: the routine's own for one, a general one for several. */
-    fun fileNameFor(routines: List<Routine>): String =
-        routines.singleOrNull()?.let(::fileNameFor) ?: SHARED_FILE_NAME
-
-    const val SHARED_FILE_NAME = "SereneFlow Routines.$FILE_EXTENSION"
-
-    const val BACKUP_FILE_NAME = "SereneFlow Backup.$FILE_EXTENSION"
+    /**
+     * A file name for sharing [routines]: the routine's own for one ([fallback] when its title has
+     * nothing usable), [severalName] for several.
+     */
+    fun fileNameFor(routines: List<Routine>, fallback: String, severalName: String): String =
+        routines.singleOrNull()?.let { fileNameFor(it, fallback) } ?: fileName(severalName)
 
     private const val MAX_STEP_SECONDS = 24 * 60 * 60
 }

@@ -82,7 +82,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sereneflow.timer.audio.PreviewStep
+import com.sereneflow.timer.audio.previewStep
 import com.sereneflow.timer.audio.playStepCue
 import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.CueSound
@@ -110,6 +110,7 @@ import com.sereneflow.timer.ui.platform.DurationPicker
 import com.sereneflow.timer.ui.platform.PlatformIcons
 import kotlinx.coroutines.launch
 import com.sereneflow.timer.resources.*
+import com.sereneflow.timer.text.*
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -120,6 +121,7 @@ fun RoutineEditorScreen(
     /** For what the Default choices currently mean. */
     preferences: AppPreferences,
     onSaveRoutine: (Routine) -> Unit,
+    /** Saves a copy of the routine as edited, already named as a copy. */
     onDuplicateRoutine: (Routine) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -282,8 +284,9 @@ fun RoutineEditorScreen(
                     },
                     actions = {
                         if (routine != null) {
+                            val copyTitle = stringResource(Res.string.routine_copy_title, title.ifBlank { untitled })
                             IconButton(
-                                onClick = { onDuplicateRoutine(buildRoutine()) }
+                                onClick = { onDuplicateRoutine(buildRoutine().copy(title = copyTitle)) }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,
@@ -376,14 +379,14 @@ fun RoutineEditorScreen(
                         ) {
                             NavigationRow(
                                 title = stringResource(Res.string.editor_visual_effect),
-                                description = stringResource(Res.string.editor_default_is, preferences.defaultVisualEffect.displayName),
-                                value = selectedVisualEffect?.displayName ?: stringResource(Res.string.value_default),
+                                description = stringResource(Res.string.editor_default_is, preferences.defaultVisualEffect.displayName()),
+                                value = selectedVisualEffect?.displayName() ?: stringResource(Res.string.value_default),
                                 onClick = { openPicker = EditorPicker.VisualEffect }
                             )
                             NavigationRow(
                                 title = stringResource(Res.string.editor_sound),
-                                description = stringResource(Res.string.editor_default_is, preferences.defaultSound.displayName),
-                                value = selectedSound?.displayName ?: stringResource(Res.string.value_default),
+                                description = stringResource(Res.string.editor_default_is, preferences.defaultSound.displayName()),
+                                value = selectedSound?.displayName() ?: stringResource(Res.string.value_default),
                                 onClick = { openPicker = EditorPicker.Sound }
                             )
                         }
@@ -398,6 +401,7 @@ fun RoutineEditorScreen(
                                 modifier = Modifier.selectableGroup(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                val sample = previewStep()
                                 VoiceGuidance.entries.forEach { voice ->
                                     OptionChip(
                                         label = if (voice == VoiceGuidance.DEFAULT) {
@@ -405,16 +409,18 @@ fun RoutineEditorScreen(
                                                 Res.string.editor_voice_default,
                                                 stringResource(if (preferences.defaultVoice) Res.string.value_on else Res.string.value_off)
                                             )
-                                        } else voice.displayName,
+                                        } else voice.displayName(),
                                         isSelected = voice == selectedVoice,
                                         onClick = {
                                             selectedVoice = voice
                                             val speaks = voice == VoiceGuidance.ON ||
                                                 (voice == VoiceGuidance.DEFAULT && preferences.defaultVoice)
                                             if (speaks) {
-                                                TimerSession.audioController.apply {
-                                                    stop()
-                                                    playStepCue(CueSound.NONE, voice = true, PreviewStep, stepIndex = 0)
+                                                coroutineScope.launch {
+                                                    TimerSession.audioController.apply {
+                                                        stop()
+                                                        playStepCue(CueSound.NONE, voice = true, sample, stepIndex = 0)
+                                                    }
                                                 }
                                             }
                                         }
@@ -592,7 +598,7 @@ fun RoutineEditorScreen(
                                 ) {
                                     RestOptions.forEach { seconds ->
                                         OptionChip(
-                                            label = if (seconds == 0) stringResource(Res.string.editor_rest_none) else RoutineStep("", "", seconds).formattedDuration,
+                                            label = if (seconds == 0) stringResource(Res.string.editor_rest_none) else shortDuration(seconds),
                                             isSelected = seconds == restBetweenRounds,
                                             onClick = { restBetweenRounds = seconds }
                                         )
@@ -622,11 +628,11 @@ fun RoutineEditorScreen(
                             stringResource(Res.string.value_default),
                             stringResource(
                                 Res.string.editor_default_now,
-                                "${preferences.defaultVisualEffect.emoji} ${preferences.defaultVisualEffect.displayName}"
+                                "${preferences.defaultVisualEffect.emoji} ${preferences.defaultVisualEffect.displayName()}"
                             )
                         )
                     ) + VisualEffectType.entries.map {
-                        Choice<VisualEffectType?>(it, "${it.emoji} ${it.displayName}", it.description)
+                        Choice<VisualEffectType?>(it, "${it.emoji} ${it.displayName()}", it.description())
                     },
                     selected = selectedVisualEffect,
                     onSelect = { selectedVisualEffect = it },
@@ -639,9 +645,9 @@ fun RoutineEditorScreen(
                         Choice<CueSound?>(
                             null,
                             stringResource(Res.string.value_default),
-                            stringResource(Res.string.editor_default_now, preferences.defaultSound.displayName)
+                            stringResource(Res.string.editor_default_now, preferences.defaultSound.displayName())
                         )
-                    ) + CueSound.entries.map { Choice<CueSound?>(it, it.displayName, it.description) },
+                    ) + CueSound.entries.map { Choice<CueSound?>(it, it.displayName(), it.description()) },
                     selected = selectedSound,
                     onSelect = { sound ->
                         selectedSound = sound
@@ -674,7 +680,7 @@ private const val FIRST_STEP_ITEM = 5
 private fun AccentSwatches(selected: Long?, onSelect: (Long?) -> Unit) {
     val colors = LocalSereneColors.current
     val options = listOf<Pair<Long?, String>>(null to stringResource(Res.string.editor_theme_colour)) +
-        RoutineAccent.entries.map { it.argb to it.displayName }
+        RoutineAccent.entries.map { it.argb to it.displayName() }
     FlowRow(modifier = Modifier.fillMaxWidth().selectableGroup()) {
         options.forEach { (argb, name) ->
             val isSelected = argb == selected
@@ -821,7 +827,7 @@ private fun StepEditorItem(
                     itemVerticalAlignment = Alignment.CenterVertically
                 ) {
                     // Opens the platform's minutes and seconds wheels.
-                    val durationDescription = stringResource(Res.string.editor_step_duration_description, index + 1, step.spokenDuration)
+                    val durationDescription = stringResource(Res.string.editor_step_duration_description, index + 1, spokenDuration(step.durationSeconds))
                     SmallTarget(
                         onClick = { showDurationPicker = true },
                         onClickLabel = stringResource(Res.string.editor_change_duration),
@@ -845,7 +851,7 @@ private fun StepEditorItem(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = step.formattedDuration,
+                                text = shortDuration(step.durationSeconds),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.primary

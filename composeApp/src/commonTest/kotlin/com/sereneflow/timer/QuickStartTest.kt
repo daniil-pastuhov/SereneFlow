@@ -3,7 +3,7 @@ package com.sereneflow.timer
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.platform.MAX_QUICK_START_ITEMS
-import com.sereneflow.timer.platform.quickStartItems
+import com.sereneflow.timer.platform.quickStartRoutines
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -46,9 +46,9 @@ class QuickStartTest {
     fun lastStartedRoutineComesFirstAndListIsCapped() {
         val routines = (1..6).map { Routine(id = "r$it", title = "R$it", steps = listOf(RoutineStep("s", "S", 60))) } +
             Routine(id = "empty", title = "Empty")
-        val items = quickStartItems(routines, lastRoutineId = "r5")
-        assertEquals(listOf("r5", "r1", "r2", "r3"), items.map { it.routineId })
+        val items = quickStartRoutines(routines, lastRoutineId = "r5")
+        assertEquals(listOf("r5", "r1", "r2", "r3"), items.map { it.id })
         assertEquals(MAX_QUICK_START_ITEMS, items.size)
-        assertEquals(listOf("r1", "r2"), quickStartItems(routines.take(2) + routines.last(), null).map { it.routineId })
+        assertEquals(listOf("r1", "r2"), quickStartRoutines(routines.take(2) + routines.last(), null).map { it.id })
     }
 }

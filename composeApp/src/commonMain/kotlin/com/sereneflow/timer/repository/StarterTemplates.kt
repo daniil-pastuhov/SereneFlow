@@ -5,64 +5,104 @@ import com.sereneflow.timer.model.RoutineAccent
 import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.model.newStepId
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.StringResource
 import kotlin.random.Random
 
-/** Ready-made routines offered by "New from template"; each use gets fresh ids ([instantiate]). */
+/**
+ * A ready-made routine offered by "New from template". Its words are string resources, looked up
+ * in the user's language when it is shown or added ([toRoutine]).
+ */
+class StarterTemplate(
+    val id: String,
+    val title: StringResource,
+    val description: StringResource,
+    val accent: RoutineAccent,
+    val effect: VisualEffectType,
+    val steps: List<Pair<StringResource, Int>>
+) {
+    /** This template as a routine, its words looked up by [text] (stringResource, getString). */
+    inline fun toRoutine(text: (StringResource) -> String): Routine = Routine(
+        id = id,
+        title = text(title),
+        description = text(description),
+        visualEffect = effect,
+        accentColorHex = accent.argb,
+        steps = steps.mapIndexed { index, (name, seconds) -> RoutineStep("t$index", text(name), seconds) }
+    )
+}
+
+/** The starter templates; each use gets fresh ids ([instantiate]). */
 object StarterTemplates {
-    val all: List<Routine> = listOf(
-        template(
-            "Pomodoro",
-            "Four focused work blocks with short breaks, then a long rest",
+    val all: List<StarterTemplate> = listOf(
+        StarterTemplate(
+            "template_pomodoro",
+            Res.string.template_pomodoro,
+            Res.string.template_pomodoro_description,
             RoutineAccent.CLAY,
             VisualEffectType.HOURGLASS,
-            "Focus" to 25 * 60, "Short break" to 5 * 60,
-            "Focus" to 25 * 60, "Short break" to 5 * 60,
-            "Focus" to 25 * 60, "Short break" to 5 * 60,
-            "Focus" to 25 * 60, "Long break" to 15 * 60
+            listOf(
+                Res.string.template_pomodoro_focus to 25 * 60, Res.string.template_pomodoro_short_break to 5 * 60,
+                Res.string.template_pomodoro_focus to 25 * 60, Res.string.template_pomodoro_short_break to 5 * 60,
+                Res.string.template_pomodoro_focus to 25 * 60, Res.string.template_pomodoro_short_break to 5 * 60,
+                Res.string.template_pomodoro_focus to 25 * 60, Res.string.template_pomodoro_long_break to 15 * 60
+            )
         ),
-        template(
-            "Box Breathing",
-            "Settle, breathe in a steady 4-4-4-4 square, then let the breath go",
+        StarterTemplate(
+            "template_box_breathing",
+            Res.string.template_box_breathing,
+            Res.string.template_box_breathing_description,
             RoutineAccent.OCEAN,
             VisualEffectType.BREATHING_LOTUS,
-            "Settle in" to 60,
-            "Box breathing (4-4-4-4)" to 4 * 60,
-            "Natural breath" to 60
+            listOf(
+                Res.string.template_box_breathing_settle to 60,
+                Res.string.template_box_breathing_box to 4 * 60,
+                Res.string.template_box_breathing_natural to 60
+            )
         ),
-        template(
-            "Morning Stretch",
-            "A gentle head-to-toe stretch to wake the body",
+        StarterTemplate(
+            "template_morning_stretch",
+            Res.string.template_morning_stretch,
+            Res.string.template_morning_stretch_description,
             RoutineAccent.AMBER,
             VisualEffectType.BONSAI_TREE,
-            "Neck rolls" to 60,
-            "Shoulder circles" to 60,
-            "Cat-cow" to 90,
-            "Side stretch" to 60,
-            "Forward fold" to 60,
-            "Child's pose" to 90
+            listOf(
+                Res.string.template_morning_stretch_neck to 60,
+                Res.string.template_morning_stretch_shoulders to 60,
+                Res.string.template_morning_stretch_cat_cow to 90,
+                Res.string.template_morning_stretch_side to 60,
+                Res.string.template_morning_stretch_fold to 60,
+                Res.string.template_morning_stretch_child to 90
+            )
         ),
-        template(
-            "HIIT",
-            "Four high-intensity moves with short rests, warmed up and cooled down",
+        StarterTemplate(
+            "template_hiit",
+            Res.string.template_hiit,
+            Res.string.template_hiit_description,
             RoutineAccent.ROSE,
             VisualEffectType.COSMIC_ORBIT,
-            "Warm-up" to 3 * 60,
-            "Jumping jacks" to 40, "Rest" to 20,
-            "Squats" to 40, "Rest" to 20,
-            "Push-ups" to 40, "Rest" to 20,
-            "Mountain climbers" to 40, "Rest" to 20,
-            "Cool-down" to 3 * 60
+            listOf(
+                Res.string.template_hiit_warm_up to 3 * 60,
+                Res.string.template_hiit_jumping_jacks to 40, Res.string.template_hiit_rest to 20,
+                Res.string.template_hiit_squats to 40, Res.string.template_hiit_rest to 20,
+                Res.string.template_hiit_push_ups to 40, Res.string.template_hiit_rest to 20,
+                Res.string.template_hiit_mountain_climbers to 40, Res.string.template_hiit_rest to 20,
+                Res.string.template_hiit_cool_down to 3 * 60
+            )
         ),
-        template(
-            "Wind-down",
-            "Slow the evening down before sleep",
+        StarterTemplate(
+            "template_wind-down",
+            Res.string.template_wind_down,
+            Res.string.template_wind_down_description,
             RoutineAccent.LAVENDER,
             VisualEffectType.WATER,
-            "Dim the lights" to 2 * 60,
-            "Gentle stretch" to 5 * 60,
-            "Body scan" to 5 * 60,
-            "Gratitude" to 3 * 60,
-            "4-7-8 breathing" to 2 * 60
+            listOf(
+                Res.string.template_wind_down_lights to 2 * 60,
+                Res.string.template_wind_down_stretch to 5 * 60,
+                Res.string.template_wind_down_body_scan to 5 * 60,
+                Res.string.template_wind_down_gratitude to 3 * 60,
+                Res.string.template_wind_down_478 to 2 * 60
+            )
         )
     )
 
@@ -70,20 +110,5 @@ object StarterTemplates {
     fun instantiate(template: Routine): Routine = template.copy(
         id = "routine_${Random.nextLong(Long.MAX_VALUE)}",
         steps = template.steps.map { it.copy(id = newStepId()) }
-    )
-
-    private fun template(
-        title: String,
-        description: String,
-        accent: RoutineAccent,
-        effect: VisualEffectType,
-        vararg steps: Pair<String, Int>
-    ) = Routine(
-        id = "template_${title.lowercase().replace(' ', '_')}",
-        title = title,
-        description = description,
-        visualEffect = effect,
-        accentColorHex = accent.argb,
-        steps = steps.mapIndexed { index, (name, seconds) -> RoutineStep("t$index", name, seconds) }
     )
 }

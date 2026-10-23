@@ -1,20 +1,33 @@
 package com.sereneflow.timer.audio
 
+import androidx.compose.runtime.Composable
 import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.RoutineStep
+import com.sereneflow.timer.resources.Res
+import com.sereneflow.timer.resources.preview_step_title
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * What a step's start sounds like with [sound] and [voice]: the timer plays it on every step
- * change, and the pickers play it as a preview, so the two never differ.
+ * change, and the pickers play it as a preview, so the two never differ. The tone plays at once;
+ * the voice once its words are read.
  */
-fun AudioController.playStepCue(sound: CueSound, voice: Boolean, step: RoutineStep, stepIndex: Int) {
+suspend fun AudioController.playStepCue(
+    sound: CueSound,
+    voice: Boolean,
+    step: RoutineStep,
+    stepIndex: Int,
+    phrases: SpokenPhrases = ResourcePhrases
+) {
     playSound(sound)
     if (voice) {
         // Without a tone to mark the change, the step number does.
-        val prefix = if (sound == CueSound.NONE) "Step ${stepIndex + 1}: " else ""
-        speak("$prefix${step.title}, ${step.spokenDuration}")
+        val number = if (sound == CueSound.NONE) stepIndex + 1 else null
+        speak(phrases.stepStart(step.title, step.durationSeconds, number))
     }
 }
 
 /** The step the pickers announce when previewing a sound or voice. */
-val PreviewStep = RoutineStep(id = "preview", title = "Morning stretch", durationSeconds = 120)
+@Composable
+fun previewStep(): RoutineStep =
+    RoutineStep(id = "preview", title = stringResource(Res.string.preview_step_title), durationSeconds = 120)

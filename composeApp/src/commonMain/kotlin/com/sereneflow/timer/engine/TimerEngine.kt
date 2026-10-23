@@ -2,6 +2,8 @@ package com.sereneflow.timer.engine
 
 import com.sereneflow.timer.audio.AudioController
 import com.sereneflow.timer.audio.HapticKind
+import com.sereneflow.timer.audio.ResourcePhrases
+import com.sereneflow.timer.audio.SpokenPhrases
 import com.sereneflow.timer.audio.playStepCue
 import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.Routine
@@ -9,6 +11,7 @@ import com.sereneflow.timer.model.RoutineCues
 import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.TimerState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -38,6 +41,8 @@ class TimerEngine(
     reminderThresholds: Set<Int> = emptySet(),
     /** Vibrate on step start, the 3-2-1 countdown and completion (mute leaves these on). */
     private val haptics: Boolean = false,
+    /** The words spoken for steps, reminders and completion. */
+    private val phrases: SpokenPhrases = ResourcePhrases,
     /** Main by default, the thread the UI and notification controls call in on, so state has one writer. */
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate),
     private val clock: () -> Long = ::nowEpochMs
@@ -283,14 +288,22 @@ class TimerEngine(
         if (haptics) audioController.haptic(HapticKind.ROUTINE_COMPLETE)
         if (_timerState.value.isMuted) return
         if (cues.sound != CueSound.NONE) audioController.playRoutineComplete()
-        if (cues.voice) audioController.speak("Routine complete. Well done.")
+        if (cues.voice) sound { audioController.speak(phrases.routineComplete()) }
     }
 
     private fun announceStepStart(stepIndex: Int) {
         val step = routine.steps.getOrNull(stepIndex) ?: return
         if (haptics) audioController.haptic(HapticKind.STEP_START)
         if (_timerState.value.isMuted) return
-        audioController.playStepCue(cues.sound, cues.voice, step, stepIndex)
+        sound { audioController.playStepCue(cues.sound, cues.voice, step, stepIndex, phrases) }
+    }
+
+    /**
+     * Runs [cue] at once, up to the point it waits for words from resources (normally cached, so
+     * not at all): tones play on time, and speech follows as soon as its phrase is read.
+     */
+    private fun sound(cue: suspend () -> Unit) {
+        scope.launch(start = CoroutineStart.UNDISPATCHED) { cue() }
     }
 
     /**
@@ -313,7 +326,7 @@ class TimerEngine(
     private fun announceReminder(stepTitle: String, percentLeft: Int) {
         if (isSilent) return
         if (cues.sound != CueSound.NONE) audioController.playZenChime()
-        if (cues.voice) audioController.speak("$stepTitle, $percentLeft percent left")
+        if (cues.voice) sound { audioController.speak(phrases.reminder(stepTitle, percentLeft)) }
     }
 
     private val RoutineStep.durationMs: Long

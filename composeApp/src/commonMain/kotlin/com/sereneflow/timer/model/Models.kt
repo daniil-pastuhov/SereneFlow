@@ -6,34 +6,36 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
+// The names people see for these choices are string resources (text/ModelText.kt).
+
 @Serializable
-enum class VisualEffectType(val displayName: String, val description: String, val emoji: String) {
-    WATER("Serene Water", "Fluid liquid simulation with gentle waves and buoyant rising bubbles", "🌊"),
-    BONSAI_TREE("Living Bonsai", "Procedural branching tree swaying in the wind with blooming sakura petals", "🌳"),
-    COSMIC_ORBIT("Celestial Orbit", "Gravitational planetary rings and drifting stardust particles", "✨"),
-    BREATHING_LOTUS("Breathing Lotus", "Sacred geometric petals expanding to a meditative 4-4-6-2 rhythm", "🌸"),
-    HOURGLASS("Zen Hourglass", "Streaming cascade of glowing sand particles and accumulating mound", "⏳")
+enum class VisualEffectType(val emoji: String) {
+    WATER("🌊"),
+    BONSAI_TREE("🌳"),
+    COSMIC_ORBIT("✨"),
+    BREATHING_LOTUS("🌸"),
+    HOURGLASS("⏳")
 }
 
 /** The tone played when a step starts; spoken guidance is chosen separately ([VoiceGuidance]). */
 @Serializable
-enum class CueSound(val displayName: String, val description: String) {
-    TIBETAN_BOWL("Tibetan Bowl", "Resonant singing bowl with a slow shimmer"),
-    ZEN_CHIME("Zen Chime", "Soft, bright chime tone"),
-    CRYSTAL_BOWL("Crystal Bowl", "Pure, long-ringing quartz bowl"),
-    TEMPLE_GONG("Temple Gong", "Deep, low gong that fades slowly"),
-    KALIMBA("Kalimba", "Gentle plucked thumb-piano note"),
-    WOOD_BLOCK("Wood Block", "Short, warm wooden knock"),
-    KOSHI_CHIMES("Koshi Chimes", "A small cascade of wind-chime notes"),
-    NONE("No Sound", "No tone; only the voice, if it is on")
+enum class CueSound {
+    TIBETAN_BOWL,
+    ZEN_CHIME,
+    CRYSTAL_BOWL,
+    TEMPLE_GONG,
+    KALIMBA,
+    WOOD_BLOCK,
+    KOSHI_CHIMES,
+    NONE
 }
 
 /** Whether a routine speaks its steps: as Settings says, or always / never. */
 @Serializable
-enum class VoiceGuidance(val displayName: String) {
-    DEFAULT("Default"),
-    ON("On"),
-    OFF("Off")
+enum class VoiceGuidance {
+    DEFAULT,
+    ON,
+    OFF
 }
 
 /**
@@ -60,11 +62,11 @@ data class RoutineCues(
 }
 
 @Serializable
-enum class AppThemeMode(val displayName: String) {
-    ZEN_SAGE("Zen Sage"),
-    OCEAN_MIST("Ocean Mist"),
-    SUNSET_CLAY("Sunset Clay"),
-    MIDNIGHT_STARLIGHT("Midnight Starlight")
+enum class AppThemeMode {
+    ZEN_SAGE,
+    OCEAN_MIST,
+    SUNSET_CLAY,
+    MIDNIGHT_STARLIGHT
 }
 
 @Serializable
@@ -73,53 +75,21 @@ data class RoutineStep(
     val title: String,
     val durationSeconds: Int,
     val description: String = ""
-) {
-    val formattedDuration: String
-        get() {
-            val minutes = durationSeconds / 60
-            val seconds = durationSeconds % 60
-            return if (minutes > 0 && seconds > 0) {
-                "${minutes}m ${seconds}s"
-            } else if (minutes > 0) {
-                "${minutes}m"
-            } else {
-                "${seconds}s"
-            }
-        }
-
-    /** The duration as the voice says it, e.g. "1 minute 30 seconds"; "2m" can be read as meters. */
-    val spokenDuration: String
-        get() = spokenDuration(durationSeconds)
-}
-
-/**
- * [totalSeconds] as words, e.g. "1 minute 30 seconds", for speech and screen readers, which would
- * read "2m" as meters and "01:30" as a time of day.
- */
-fun spokenDuration(totalSeconds: Int): String {
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    fun unit(count: Int, name: String) = if (count == 1) "1 $name" else "$count ${name}s"
-    return when {
-        minutes > 0 && seconds > 0 -> "${unit(minutes, "minute")} ${unit(seconds, "second")}"
-        minutes > 0 -> unit(minutes, "minute")
-        else -> unit(seconds, "second")
-    }
-}
+)
 
 /**
  * The colours a routine can be tinted with. Mid-tones, so they read on every theme, light or dark.
  * Stored as ARGB in [Routine.accentColorHex].
  */
-enum class RoutineAccent(val displayName: String, val argb: Long) {
-    SAGE("Sage", 0xFF6FA287L),
-    TEAL("Teal", 0xFF3FA7A0L),
-    OCEAN("Ocean", 0xFF4F8FBFL),
-    LAVENDER("Lavender", 0xFF8E7CC3L),
-    ROSE("Rose", 0xFFD27D8EL),
-    CLAY("Clay", 0xFFC98458L),
-    AMBER("Amber", 0xFFD4A84BL),
-    SLATE("Slate", 0xFF7A8794L);
+enum class RoutineAccent(val argb: Long) {
+    SAGE(0xFF6FA287L),
+    TEAL(0xFF3FA7A0L),
+    OCEAN(0xFF4F8FBFL),
+    LAVENDER(0xFF8E7CC3L),
+    ROSE(0xFFD27D8EL),
+    CLAY(0xFFC98458L),
+    AMBER(0xFFD4A84BL),
+    SLATE(0xFF7A8794L);
 
     companion object {
         fun of(argb: Long?): RoutineAccent? = entries.firstOrNull { it.argb == argb }
@@ -200,15 +170,15 @@ data class Routine(
 
     /**
      * This routine as the flat list of steps the timer runs: the steps [roundCount] times, with a
-     * "Rest" step of [restBetweenRoundsSeconds] between rounds (not after the last). Step ids get
-     * a round suffix so they stay unique. The timer engine knows nothing of rounds.
+     * [restTitle] step of [restBetweenRoundsSeconds] between rounds (not after the last). Step ids
+     * get a round suffix so they stay unique. The timer engine knows nothing of rounds.
      */
-    fun expandedForRounds(): Routine {
+    fun expandedForRounds(restTitle: String): Routine {
         if (!hasRounds) return this
         val flat = buildList {
             for (round in 1..roundCount) {
                 steps.forEach { add(it.copy(id = "${it.id}_r$round")) }
-                if (round < roundCount && restSeconds > 0) add(RoutineStep("rest_r$round", "Rest", restSeconds))
+                if (round < roundCount && restSeconds > 0) add(RoutineStep("rest_r$round", restTitle, restSeconds))
             }
         }
         return copy(steps = flat, rounds = 1, restBetweenRoundsSeconds = 0)
@@ -228,25 +198,6 @@ data class Routine(
 
     val totalDurationSeconds: Int
         get() = steps.sumOf { it.durationSeconds } * roundCount + restSeconds * (roundCount - 1)
-
-    val formattedTotalDuration: String
-        get() {
-            val totalMins = totalDurationSeconds / 60
-            val secs = totalDurationSeconds % 60
-            return if (totalMins > 0 && secs > 0) {
-                "${totalMins}m ${secs}s"
-            } else if (totalMins > 0) {
-                "${totalMins} min"
-            } else {
-                "${secs} sec"
-            }
-        }
-
-    val stepCountText: String
-        get() {
-            val stepText = if (steps.size == 1) "1 step" else "${steps.size} steps"
-            return if (hasRounds) "$stepText × $roundCount" else stepText
-        }
 
     companion object {
         const val MAX_ROUNDS = 99
