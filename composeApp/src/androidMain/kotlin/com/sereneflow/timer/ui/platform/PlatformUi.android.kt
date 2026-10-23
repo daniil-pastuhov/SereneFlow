@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -106,10 +107,10 @@ actual fun DurationPicker(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                NumberWheel(value = minutes, max = MAX_PICKER_MINUTES, onChange = { minutes = it })
-                Text("min")
-                NumberWheel(value = seconds, max = 59, onChange = { seconds = it })
-                Text("sec")
+                NumberWheel(value = minutes, max = MAX_PICKER_MINUTES, description = "Minutes", onChange = { minutes = it })
+                Text("min", modifier = Modifier.clearAndSetSemantics {})
+                NumberWheel(value = seconds, max = 59, description = "Seconds", onChange = { seconds = it })
+                Text("sec", modifier = Modifier.clearAndSetSemantics {})
             }
         },
         confirmButton = {
@@ -121,9 +122,9 @@ actual fun DurationPicker(
     )
 }
 
-/** The platform's own scrolling number wheel. */
+/** The platform's own scrolling number wheel; [description] names it for TalkBack. */
 @Composable
-private fun NumberWheel(value: Int, max: Int, onChange: (Int) -> Unit) {
+private fun NumberWheel(value: Int, max: Int, description: String, onChange: (Int) -> Unit) {
     // The wheel follows the activity's theme, not the app's; match the dialog's text instead.
     val textColor = LocalContentColor.current.toArgb()
     AndroidView(
@@ -132,6 +133,7 @@ private fun NumberWheel(value: Int, max: Int, onChange: (Int) -> Unit) {
                 minValue = 0
                 maxValue = max
                 this.value = value
+                contentDescription = description
                 setFormatter { "%02d".format(it) }
                 setOnValueChangedListener { _, _, new -> onChange(new) }
             }
