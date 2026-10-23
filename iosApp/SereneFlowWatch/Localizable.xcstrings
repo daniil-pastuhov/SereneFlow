@@ -13,8 +13,8 @@
       "comment": "Round 2 of 4, then \"Step 3 of 5\""
     },
     "Routine complete": {},
-    "Start one on your iPhone, with Follow routine with screen off turned on.": {
-      "comment": "\"Follow routine with screen off\" is the iPhone app's setting"
+    "Start one on your iPhone to follow it here.": {
+      "comment": "Under \"No routine running\": the watch shows the routine the iPhone runs"
     },
     "Step %lld of %lld": {},
     "Step progress": {

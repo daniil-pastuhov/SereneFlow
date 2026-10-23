@@ -8,7 +8,8 @@ package com.sereneflow.timer
 sealed class DemoLaunch {
     /**
      * Runs [routineId], [elapsedSeconds] into its first step. [backgroundMode] also mirrors it
-     * outside the app (notification, Live Activity, watch), for checking those in a simulator;
+     * outside the app (notification, Live Activity; the watch app follows either way), for checking
+     * those in a simulator;
      * screenshots leave it off.
      */
     data class Timer(val routineId: String, val elapsedSeconds: Int, val backgroundMode: Boolean = false) : DemoLaunch()

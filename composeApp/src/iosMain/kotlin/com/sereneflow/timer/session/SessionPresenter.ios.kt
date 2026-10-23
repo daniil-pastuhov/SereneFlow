@@ -80,7 +80,8 @@ object WatchRegistry {
 
 /**
  * Mirrors the session to the Live Activity (Lock Screen + Dynamic Island) and, while the app is in
- * the background, posts a notification banner on each step change and on completion.
+ * the background, posts a notification banner on each step change and on completion; and, for every
+ * session, to the Apple Watch app ([showOnCompanion]).
  */
 private class IosSessionPresenter : SessionPresenter {
     private var lastStepIndex = -1
@@ -102,23 +103,6 @@ private class IosSessionPresenter : SessionPresenter {
             isPaused = snapshot.isPaused,
             isCompleted = snapshot.isCompleted,
             accentArgb = snapshot.accentArgb ?: 0L,
-            round = snapshot.round,
-            rounds = snapshot.rounds
-        )
-
-        // The third path, beside the Live Activity (which also reaches the watch's Smart Stack):
-        // the watch app's own screen.
-        WatchRegistry.bridge?.update(
-            routineTitle = snapshot.routineTitle,
-            stepTitle = snapshot.stepTitle,
-            stepIndex = snapshot.stepIndex,
-            stepCount = snapshot.stepCount,
-            nextStepTitle = snapshot.nextStepTitle,
-            stepDurationSeconds = snapshot.stepDurationMs / 1000.0,
-            stepEndEpochSeconds = (snapshot.stepEndEpochMs ?: 0L) / 1000.0,
-            remainingSeconds = snapshot.stepRemainingMs / 1000.0,
-            isPaused = snapshot.isPaused,
-            isCompleted = snapshot.isCompleted,
             round = snapshot.round,
             rounds = snapshot.rounds
         )
@@ -152,6 +136,27 @@ private class IosSessionPresenter : SessionPresenter {
                 )
             }
         }
+    }
+
+    /**
+     * The watch app's own screen, a path apart from the Live Activity (which also reaches the
+     * watch's Smart Stack, so that one only shows with background mode on).
+     */
+    override fun showOnCompanion(snapshot: SessionSnapshot) = onMain {
+        WatchRegistry.bridge?.update(
+            routineTitle = snapshot.routineTitle,
+            stepTitle = snapshot.stepTitle,
+            stepIndex = snapshot.stepIndex,
+            stepCount = snapshot.stepCount,
+            nextStepTitle = snapshot.nextStepTitle,
+            stepDurationSeconds = snapshot.stepDurationMs / 1000.0,
+            stepEndEpochSeconds = (snapshot.stepEndEpochMs ?: 0L) / 1000.0,
+            remainingSeconds = snapshot.stepRemainingMs / 1000.0,
+            isPaused = snapshot.isPaused,
+            isCompleted = snapshot.isCompleted,
+            round = snapshot.round,
+            rounds = snapshot.rounds
+        )
     }
 
     override fun end() = onMain {

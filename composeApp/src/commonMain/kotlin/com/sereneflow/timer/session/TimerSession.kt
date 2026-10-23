@@ -43,7 +43,8 @@ object TimerSession {
     /**
      * @param backgroundMode mirror the session to the notification / Live Activity and keep it
      * alive with the screen off. When false the timer still keeps correct time (it is
-     * wall-clock based) but nothing is shown or played outside the app.
+     * wall-clock based) but nothing is shown or played outside the app, except on a companion
+     * device (the Apple Watch app), which follows every session.
      * @param restTitle what the step between rounds is called ("Rest", from resources).
      */
     fun start(routine: Routine, preferences: AppPreferences, backgroundMode: Boolean, restTitle: String): ActiveSession {
@@ -68,9 +69,12 @@ object TimerSession {
             }
             .onEach { state ->
                 // A late emission from a session that was stopped must not resurrect its notification.
-                if (_active.value !== session || !backgroundMode) return@onEach
+                if (_active.value !== session) return@onEach
+                val snapshot = state.toSnapshot(routine)
+                presenter.showOnCompanion(snapshot)
+                if (!backgroundMode) return@onEach
                 audioController.setSessionActive(state.isRunning && !state.isPaused)
-                presenter.show(state.toSnapshot(routine))
+                presenter.show(snapshot)
             }
             .launchIn(scope)
 
@@ -154,7 +158,16 @@ private fun TimerState.toSnapshot(original: Routine): SessionSnapshot {
 
 /** Shows the running session outside the app UI: notification, Live Activity, Dynamic Island. */
 interface SessionPresenter {
+    /** The notification / Live Activity; only for sessions started with background mode on. */
     fun show(snapshot: SessionSnapshot)
+
+    /**
+     * A companion device's own screen (the Apple Watch app), for every session whatever the
+     * background mode: it shows what the phone app is doing rather than keeping it alive.
+     */
+    fun showOnCompanion(snapshot: SessionSnapshot) {}
+
+    /** Clears everything [show] and [showOnCompanion] put up. */
     fun end()
 }
 

@@ -27,7 +27,7 @@ private struct EmptyStateView: View {
                 .accessibilityHidden(true)
             Text("No routine running")
                 .font(.headline)
-            Text("Start one on your iPhone, with Follow routine with screen off turned on.")
+            Text("Start one on your iPhone to follow it here.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
