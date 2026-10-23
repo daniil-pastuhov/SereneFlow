@@ -573,13 +573,17 @@ private const val REMINDER_BANNER_MS = 4_000L
 /** The smallest touch target either platform's guidelines allow. */
 private val MinTouchTarget = 48.dp
 
-/** Segmented progress rail: one segment per step, filled up to the current one. */
+/**
+ * Segmented progress rail: one segment per step, filled up to the current one, which is taller so
+ * it doesn't depend on colour alone. Hidden from screen readers: the title says "Step N of M".
+ */
 @Composable
 private fun StepRail(stepCount: Int, currentIndex: Int) {
     val colors = LocalSereneColors.current
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(stepCount) { idx ->
             val segmentColor = when {
@@ -590,7 +594,7 @@ private fun StepRail(stepCount: Int, currentIndex: Int) {
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(5.dp)
+                    .height(if (idx == currentIndex) 9.dp else 5.dp)
                     .clip(RoundedCornerShape(3.dp))
                     .background(segmentColor)
             )

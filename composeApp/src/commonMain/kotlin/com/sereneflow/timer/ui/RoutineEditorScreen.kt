@@ -330,7 +330,7 @@ fun RoutineEditorScreen(
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = colors.primary,
-                                    unfocusedBorderColor = colors.divider
+                                    unfocusedBorderColor = colors.fieldBorder
                                 )
                             )
 
@@ -342,7 +342,7 @@ fun RoutineEditorScreen(
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = colors.primary,
-                                    unfocusedBorderColor = colors.divider
+                                    unfocusedBorderColor = colors.fieldBorder
                                 )
                             )
                         }
@@ -630,6 +630,10 @@ fun RoutineEditorScreen(
     }
 }
 
+/** A field's resting outline: `divider` was about 1.2:1 against the card, too faint to find. */
+private val com.sereneflow.timer.theme.SerenePalette.fieldBorder: Color
+    get() = onSurfaceVariant.copy(alpha = 0.5f)
+
 /** [UntouchedDefaults] key of the routine name; steps use their ids. */
 private const val TITLE_FIELD = "title"
 
@@ -777,7 +781,7 @@ private fun StepEditorItem(
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = colors.primary,
-                        unfocusedBorderColor = colors.divider
+                        unfocusedBorderColor = colors.fieldBorder
                     )
                 )
 
