@@ -368,6 +368,46 @@ class TimerEngineTest {
     }
 
     @Test
+    fun testPauseAndResumeAreIdempotent() = runTest {
+        val audio = FakeAudioController()
+        var now = 0L
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = audio,
+            phrases = EnglishPhrases,
+            scope = this,
+            clock = { now }
+        )
+
+        engine.start()
+        // Resuming a running routine changes nothing.
+        now = 2_000
+        engine.resume()
+        assertFalse(engine.timerState.value.isPaused)
+        assertEquals(10_000, engine.timerState.value.stepEndEpochMs)
+
+        // A second pause (e.g. a repeated watch tap) keeps it paused with the same time left.
+        engine.pause()
+        now = 5_000
+        engine.pause()
+        var state = engine.timerState.value
+        assertTrue(state.isPaused)
+        assertEquals(8_000, state.pausedRemainingMs)
+
+        // Likewise a second resume keeps it running from the first resume's end time.
+        now = 6_000
+        engine.resume()
+        now = 7_000
+        engine.resume()
+        state = engine.timerState.value
+        assertFalse(state.isPaused)
+        assertTrue(state.isRunning)
+        assertEquals(14_000, state.stepEndEpochMs)
+        engine.stop()
+    }
+
+    @Test
     fun testPauseAtStepBoundary() = runTest {
         val audio = FakeAudioController()
         var now = 0L

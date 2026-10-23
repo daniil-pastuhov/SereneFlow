@@ -96,6 +96,19 @@ object TimerSession {
         _active.value?.engine?.togglePlayPause()
     }
 
+    /**
+     * Pauses the running routine; does nothing if it is already paused. For a remote control (the
+     * Apple Watch) whose view may lag, so a repeated tap can't flip the state back.
+     */
+    fun pause() {
+        _active.value?.engine?.pause()
+    }
+
+    /** Resumes the paused routine; does nothing if it is running. See [pause]. */
+    fun resume() {
+        _active.value?.engine?.resume()
+    }
+
     fun skipStep() {
         _active.value?.engine?.skipStep()
     }
