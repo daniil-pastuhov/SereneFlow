@@ -85,9 +85,12 @@ final class LiveActivityManager: NSObject, LiveActivityBridge {
         // Ends the running one and any lingering "complete" card.
         let current = activity as? Activity<TimerActivityAttributes>
         activity = nil
+        // Listed now, not inside the Task: a routine restarted right after this may request its new
+        // activity before the Task runs, and that one must survive.
+        let others = Activity<TimerActivityAttributes>.activities.filter { $0.id != current?.id }
         Task {
             await current?.end(nil, dismissalPolicy: .immediate)
-            for other in Activity<TimerActivityAttributes>.activities {
+            for other in others {
                 await other.end(nil, dismissalPolicy: .immediate)
             }
         }
