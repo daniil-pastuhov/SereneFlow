@@ -40,6 +40,9 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -120,6 +123,8 @@ fun RoutineEditorScreen(
     var selectedVoice by remember { mutableStateOf(routine?.voice ?: VoiceGuidance.DEFAULT) }
     // null: the theme's colour.
     var selectedAccent by remember { mutableStateOf(routine?.accentColorHex) }
+    var rounds by remember { mutableStateOf(routine?.roundCount ?: 1) }
+    var restBetweenRounds by remember { mutableStateOf(routine?.restBetweenRoundsSeconds ?: 0) }
 
     var steps by remember {
         mutableStateOf(
@@ -148,6 +153,9 @@ fun RoutineEditorScreen(
         sound = selectedSound,
         voice = selectedVoice,
         accentColorHex = selectedAccent,
+        rounds = rounds,
+        // A rest only means something between rounds.
+        restBetweenRoundsSeconds = if (rounds > 1) restBetweenRounds else 0,
         steps = steps
     )
 
@@ -220,7 +228,7 @@ fun RoutineEditorScreen(
         keyboard?.hide()
     }
 
-    val totalDurationSecs = steps.sumOf { it.durationSeconds }
+    val totalDurationSecs = buildRoutine().totalDurationSeconds
     val totalMins = totalDurationSecs / 60
     val totalSecs = totalDurationSecs % 60
     val formattedTotal = if (totalMins > 0) "${totalMins}m ${totalSecs}s" else "${totalSecs}s"
@@ -502,6 +510,59 @@ fun RoutineEditorScreen(
                                 )
                             }
                         }
+                    }
+
+                    // Rounds: the steps above, repeated, with an optional rest in between
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(colors.cardBackground)
+                                .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                                .padding(horizontal = 18.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    SectionLabel("ROUNDS")
+                                    Text(
+                                        text = if (rounds > 1) "All steps run $rounds times" else "The steps run once",
+                                        fontSize = 13.sp,
+                                        color = colors.onSurfaceVariant
+                                    )
+                                }
+                                IconButton(onClick = { rounds-- }, enabled = rounds > 1) {
+                                    Icon(Icons.Default.Remove, contentDescription = "Fewer rounds", tint = colors.primary)
+                                }
+                                Text(
+                                    text = "$rounds",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.onSurface,
+                                    modifier = Modifier.widthIn(min = 28.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                                IconButton(onClick = { rounds++ }, enabled = rounds < Routine.MAX_ROUNDS) {
+                                    Icon(Icons.Default.Add, contentDescription = "More rounds", tint = colors.primary)
+                                }
+                            }
+                            if (rounds > 1) {
+                                Text("Rest between rounds", fontSize = 13.sp, color = colors.onSurfaceVariant)
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    RestOptions.forEach { seconds ->
+                                        OptionChip(
+                                            label = if (seconds == 0) "None" else RoutineStep("", "", seconds).formattedDuration,
+                                            isSelected = seconds == restBetweenRounds,
+                                            onClick = { restBetweenRounds = seconds }
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         Spacer(modifier = Modifier.height(30.dp))
                     }
                 }
@@ -601,6 +662,9 @@ private fun AccentSwatches(selected: Long?, onSelect: (Long?) -> Unit) {
         }
     }
 }
+
+/** Rest lengths offered between rounds, in seconds. */
+private val RestOptions = listOf(0, 15, 30, 60, 120)
 
 /** The lists the editor opens over itself. */
 private enum class EditorPicker { VisualEffect, Sound }

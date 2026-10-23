@@ -29,7 +29,10 @@ interface LiveActivityBridge {
         isPaused: Boolean,
         isCompleted: Boolean,
         /** The routine's accent colour as ARGB, or 0 for the app's own. */
-        accentArgb: Long
+        accentArgb: Long,
+        /** The current round of [rounds]; both 1 without rounds. */
+        round: Int,
+        rounds: Int
     )
 
     fun end()
@@ -59,7 +62,9 @@ private class IosSessionPresenter : SessionPresenter {
             remainingSeconds = snapshot.stepRemainingMs / 1000.0,
             isPaused = snapshot.isPaused,
             isCompleted = snapshot.isCompleted,
-            accentArgb = snapshot.accentArgb ?: 0L
+            accentArgb = snapshot.accentArgb ?: 0L,
+            round = snapshot.round,
+            rounds = snapshot.rounds
         )
 
         val stepChanged = lastStepIndex != -1 && snapshot.stepIndex != lastStepIndex
@@ -73,7 +78,11 @@ private class IosSessionPresenter : SessionPresenter {
             justCompleted -> postBanner("Routine complete", "You finished \"${snapshot.routineTitle}\".")
             stepChanged -> postBanner(
                 snapshot.stepTitle,
-                "Step ${snapshot.stepIndex + 1} of ${snapshot.stepCount} · ${snapshot.routineTitle}"
+                listOfNotNull(
+                    snapshot.roundLabel,
+                    "Step ${snapshot.stepIndex + 1} of ${snapshot.stepCount}",
+                    snapshot.routineTitle
+                ).joinToString(" · ")
             )
         }
     }

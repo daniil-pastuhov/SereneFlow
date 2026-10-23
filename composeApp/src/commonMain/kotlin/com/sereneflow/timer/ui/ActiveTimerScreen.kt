@@ -95,6 +95,9 @@ fun ActiveTimerScreen(
     val routine = session.routine
     val engine = session.engine
     val state by engine.timerState.collectAsState()
+    // The engine runs the rounds as one flat list; the rail and labels show the current round.
+    val roundPosition = routine.roundPositionAt(state.currentStepIndex)
+    val railIndex = if (routine.hasRounds) roundPosition.stepInRound ?: routine.steps.size else state.currentStepIndex
     // The routine's own colour leads the visual effect; the theme's otherwise.
     val canvasAccent = routine.accentColor ?: colors.primary
 
@@ -254,7 +257,12 @@ fun ActiveTimerScreen(
                         color = colors.onBackground
                     )
                     Text(
-                        text = "Step ${state.currentStepIndex + 1} of ${routine.steps.size}",
+                        text = if (routine.hasRounds) {
+                            val step = roundPosition.stepInRound?.let { "Step ${it + 1} of ${routine.steps.size}" } ?: "Rest"
+                            "Round ${roundPosition.round} of ${roundPosition.rounds} · $step"
+                        } else {
+                            "Step ${state.currentStepIndex + 1} of ${routine.steps.size}"
+                        },
                         fontSize = 12.sp,
                         color = colors.onSurfaceVariant
                     )
@@ -290,7 +298,7 @@ fun ActiveTimerScreen(
                         title(Alignment.Start)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    StepRail(stepCount = routine.steps.size, currentIndex = state.currentStepIndex)
+                    StepRail(stepCount = routine.steps.size, currentIndex = railIndex)
                 }
                 Column(
                     modifier = Modifier.align(Alignment.CenterEnd),
@@ -316,7 +324,7 @@ fun ActiveTimerScreen(
                         muteButton?.invoke() ?: Spacer(modifier = Modifier.size(42.dp))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    StepRail(stepCount = routine.steps.size, currentIndex = state.currentStepIndex)
+                    StepRail(stepCount = routine.steps.size, currentIndex = railIndex)
                 }
                 Row(
                     modifier = Modifier

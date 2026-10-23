@@ -15,8 +15,13 @@ struct TimerActivityAttributes: ActivityAttributes {
         /// Remaining time of the step while paused; nil while running.
         var pausedRemaining: TimeInterval?
         var isCompleted: Bool
+        /// The current round of `rounds`; both 1 for a routine without rounds.
+        var round: Int = 1
+        var rounds: Int = 1
 
         var stepStart: Date { stepEnd.addingTimeInterval(-stepDuration) }
+        /// "Round 2 of 4", or nil without rounds.
+        var roundLabel: String? { rounds > 1 ? "Round \(round) of \(rounds)" : nil }
         var isPaused: Bool { pausedRemaining != nil }
     }
 

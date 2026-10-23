@@ -87,7 +87,8 @@ internal object TimerNotifications {
             .apply { snapshot.accentArgb?.let { setColor(it.toInt()) } }
 
     private fun statusLine(snapshot: SessionSnapshot): String {
-        val step = "Step ${snapshot.stepIndex + 1} of ${snapshot.stepCount}"
+        val step = listOfNotNull(snapshot.roundLabel, "Step ${snapshot.stepIndex + 1} of ${snapshot.stepCount}")
+            .joinToString(" · ")
         return when {
             snapshot.isPaused -> "Paused · ${formatRemaining(snapshot.stepRemainingMs)} left · $step"
             snapshot.nextStepTitle != null -> "$step · Up next: ${snapshot.nextStepTitle}"

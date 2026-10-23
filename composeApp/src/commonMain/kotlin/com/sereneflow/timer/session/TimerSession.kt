@@ -48,8 +48,9 @@ object TimerSession {
     fun start(routine: Routine, preferences: AppPreferences, backgroundMode: Boolean): ActiveSession {
         stop()
         val cues = routine.resolve(preferences)
+        // Rounds become a flat list of steps, so the engine runs them like any routine.
         val engine = TimerEngine(
-            routine, cues, audioController, preferences.reminderThresholds,
+            routine.expandedForRounds(), cues, audioController, preferences.reminderThresholds,
             haptics = preferences.hapticsEnabled
         )
         val session = ActiveSession(routine, cues, engine)
@@ -68,7 +69,7 @@ object TimerSession {
                 // A late emission from a session that was stopped must not resurrect its notification.
                 if (_active.value !== session || !backgroundMode) return@onEach
                 audioController.setSessionActive(state.isRunning && !state.isPaused)
-                presenter.show(state.toSnapshot())
+                presenter.show(state.toSnapshot(routine))
             }
             .launchIn(scope)
 
@@ -115,12 +116,20 @@ data class SessionSnapshot(
     val isPaused: Boolean,
     val isCompleted: Boolean,
     /** The routine's accent colour (ARGB); null = the app's own. */
-    val accentArgb: Long? = null
+    val accentArgb: Long? = null,
+    /** The current round, of [rounds]; both 1 for a routine without rounds. */
+    val round: Int = 1,
+    val rounds: Int = 1
 ) {
     val totalDurationMs: Long get() = stepDurationsSeconds.sumOf { it * 1000L }
+
+    /** "Round 2 of 4", or null without rounds. */
+    val roundLabel: String? get() = if (rounds > 1) "Round $round of $rounds" else null
 }
 
-private fun TimerState.toSnapshot(): SessionSnapshot {
+/** [original] is the routine as saved, before [Routine.expandedForRounds] made the engine's steps. */
+private fun TimerState.toSnapshot(original: Routine): SessionSnapshot {
+    val position = original.roundPositionAt(currentStepIndex)
     val step = currentStep
     // The current step's segment includes any time added to it.
     val durations = routine.steps.mapIndexed { index, it ->
@@ -139,7 +148,9 @@ private fun TimerState.toSnapshot(): SessionSnapshot {
         elapsedBeforeStepMs = durations.take(currentStepIndex).sumOf { it * 1000L },
         isPaused = isPaused || !isRunning,
         isCompleted = isCompleted,
-        accentArgb = routine.accentColorHex
+        accentArgb = routine.accentColorHex,
+        round = position.round,
+        rounds = position.rounds
     )
 }
 

@@ -148,6 +148,10 @@ data class Routine(
     val steps: List<RoutineStep> = emptyList(),
     /** ARGB colour from [RoutineAccent] tinting the routine's card and timer; null = the theme's. */
     val accentColorHex: Long? = null,
+    /** How many times the steps run, one after another (see [expandedForRounds]). */
+    val rounds: Int = 1,
+    /** A rest between rounds, in seconds; 0 = none. */
+    val restBetweenRoundsSeconds: Int = 0,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @SerialName("soundMode") val legacySoundMode: LegacySoundMode? = null
@@ -178,8 +182,46 @@ data class Routine(
         }
     )
 
+    /** [rounds] kept in range. */
+    val roundCount: Int
+        get() = rounds.coerceIn(1, MAX_ROUNDS)
+
+    val hasRounds: Boolean
+        get() = roundCount > 1
+
+    private val restSeconds: Int
+        get() = if (hasRounds) restBetweenRoundsSeconds.coerceAtLeast(0) else 0
+
+    /**
+     * This routine as the flat list of steps the timer runs: the steps [roundCount] times, with a
+     * "Rest" step of [restBetweenRoundsSeconds] between rounds (not after the last). Step ids get
+     * a round suffix so they stay unique. The timer engine knows nothing of rounds.
+     */
+    fun expandedForRounds(): Routine {
+        if (!hasRounds) return this
+        val flat = buildList {
+            for (round in 1..roundCount) {
+                steps.forEach { add(it.copy(id = "${it.id}_r$round")) }
+                if (round < roundCount && restSeconds > 0) add(RoutineStep("rest_r$round", "Rest", restSeconds))
+            }
+        }
+        return copy(steps = flat, rounds = 1, restBetweenRoundsSeconds = 0)
+    }
+
+    /** Where step [expandedIndex] of [expandedForRounds] falls in this routine's rounds. */
+    fun roundPositionAt(expandedIndex: Int): RoundPosition {
+        if (!hasRounds || steps.isEmpty()) return RoundPosition(1, 1, expandedIndex)
+        val period = steps.size + if (restSeconds > 0) 1 else 0
+        val position = expandedIndex % period
+        return RoundPosition(
+            round = (expandedIndex / period + 1).coerceAtMost(roundCount),
+            rounds = roundCount,
+            stepInRound = position.takeIf { it < steps.size }
+        )
+    }
+
     val totalDurationSeconds: Int
-        get() = steps.sumOf { it.durationSeconds }
+        get() = steps.sumOf { it.durationSeconds } * roundCount + restSeconds * (roundCount - 1)
 
     val formattedTotalDuration: String
         get() {
@@ -195,10 +237,22 @@ data class Routine(
         }
 
     val stepCountText: String
-        get() = when (steps.size) {
-            1 -> "1 step"
-            else -> "${steps.size} steps"
+        get() {
+            val stepText = if (steps.size == 1) "1 step" else "${steps.size} steps"
+            return if (hasRounds) "$stepText × $roundCount" else stepText
         }
+
+    companion object {
+        const val MAX_ROUNDS = 99
+    }
+}
+
+/**
+ * A step's place in a routine with rounds: [round] of [rounds], and its index among the routine's
+ * own steps, or null for the rest between rounds.
+ */
+data class RoundPosition(val round: Int, val rounds: Int, val stepInRound: Int?) {
+    val isRest: Boolean get() = stepInRound == null
 }
 
 @Serializable

@@ -165,10 +165,16 @@ private struct WatchSmallView: View {
                     .font(.title3.weight(.light).monospacedDigit())
                     .foregroundStyle(accent)
                 if !state.isCompleted {
-                    Text("Step \(state.stepIndex + 1)/\(state.stepCount)")
+                    Text(state.rounds > 1
+                         ? "Round \(state.round)/\(state.rounds) · \(state.stepIndex + 1)/\(state.stepCount)"
+                         : "Step \(state.stepIndex + 1)/\(state.stepCount)")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                        .accessibilityLabel("Step \(state.stepIndex + 1) of \(state.stepCount)")
+                        .lineLimit(1)
+                        .accessibilityLabel(
+                            [state.roundLabel, "Step \(state.stepIndex + 1) of \(state.stepCount)"]
+                                .compactMap { $0 }.joined(separator: ", ")
+                        )
                 }
             }
             Spacer(minLength: 0)
@@ -200,7 +206,11 @@ private struct LockScreenView: View {
                         .font(.headline)
                         .foregroundStyle(.white)
                         .lineLimit(1)
-                    Text(state.isCompleted ? "Well done." : "Step \(state.stepIndex + 1) of \(state.stepCount) · \(subtitle(for: state))")
+                    Text(state.isCompleted ? "Well done." : [
+                        state.roundLabel,
+                        "Step \(state.stepIndex + 1) of \(state.stepCount)",
+                        subtitle(for: state)
+                    ].compactMap { $0 }.joined(separator: " · "))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.7))
                         .lineLimit(1)

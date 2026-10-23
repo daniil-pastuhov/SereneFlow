@@ -30,7 +30,9 @@ final class LiveActivityManager: NSObject, LiveActivityBridge {
         remainingSeconds: Double,
         isPaused: Bool,
         isCompleted: Bool,
-        accentArgb: Int64
+        accentArgb: Int64,
+        round: Int32,
+        rounds: Int32
     ) {
         guard #available(iOS 16.2, *) else { return }
         let state = TimerActivityAttributes.ContentState(
@@ -43,7 +45,9 @@ final class LiveActivityManager: NSObject, LiveActivityBridge {
                 ? Date().addingTimeInterval(remainingSeconds)
                 : Date(timeIntervalSince1970: stepEndEpochSeconds),
             pausedRemaining: isPaused && !isCompleted ? remainingSeconds : nil,
-            isCompleted: isCompleted
+            isCompleted: isCompleted,
+            round: Int(round),
+            rounds: Int(rounds)
         )
         // The shared code also sends periodic refreshes for Android's progress bar; the Live
         // Activity animates its own countdown, so only real changes are forwarded.
@@ -106,6 +110,7 @@ private extension TimerActivityAttributes.ContentState {
     func sameDisplay(as other: Self) -> Bool {
         stepTitle == other.stepTitle && stepIndex == other.stepIndex && stepCount == other.stepCount
             && nextStepTitle == other.nextStepTitle && isCompleted == other.isCompleted
+            && round == other.round && rounds == other.rounds
             && isPaused == other.isPaused
             && (isPaused || abs(stepEnd.timeIntervalSince(other.stepEnd)) < 1)
             && (!isPaused || pausedRemaining == other.pausedRemaining)
