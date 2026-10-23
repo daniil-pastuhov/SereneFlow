@@ -8,6 +8,7 @@ import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.storage.FileStorage
 import com.sereneflow.timer.storage.StorageJson
+import com.sereneflow.timer.storage.load
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,14 +34,10 @@ class RoutineRepository(
             .launchIn(scope)
     }
 
-    private fun loadRoutines(): List<Routine> {
-        val json = storage.read(FILE_NAME) ?: return createDefaultRoutines()
-        return try {
+    private fun loadRoutines(): List<Routine> =
+        storage.load(FILE_NAME, ::createDefaultRoutines) { json ->
             StorageJson.decodeFromString<List<Routine>>(json).map { it.migrated() }
-        } catch (_: Exception) {
-            createDefaultRoutines()
         }
-    }
 
     fun getRoutine(id: String): Routine? {
         return _routines.value.find { it.id == id }
@@ -113,14 +110,10 @@ class PreferencesRepository(
             .launchIn(scope)
     }
 
-    private fun loadPreferences(): AppPreferences {
-        val json = storage.read(FILE_NAME) ?: return AppPreferences()
-        return try {
+    private fun loadPreferences(): AppPreferences =
+        storage.load(FILE_NAME, ::AppPreferences) { json ->
             StorageJson.decodeFromString<AppPreferences>(json).migrated()
-        } catch (_: Exception) {
-            AppPreferences()
         }
-    }
 
     fun setThemeMode(mode: AppThemeMode) {
         _preferences.update { it.copy(themeMode = mode) }

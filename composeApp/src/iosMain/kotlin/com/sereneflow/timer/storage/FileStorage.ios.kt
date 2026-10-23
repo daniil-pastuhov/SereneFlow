@@ -13,8 +13,13 @@ import platform.Foundation.writeToFile
 
 @OptIn(ExperimentalForeignApi::class)
 private class IosFileStorage(private val dirPath: String) : FileStorage {
-    override fun read(name: String): String? =
-        NSString.stringWithContentsOfFile("$dirPath/$name", NSUTF8StringEncoding, null)
+    override fun read(name: String): String? {
+        val path = "$dirPath/$name"
+        if (!NSFileManager.defaultManager.fileExistsAtPath(path)) return null
+        // An existing file that fails to read throws, so it isn't mistaken for a first launch.
+        return NSString.stringWithContentsOfFile(path, NSUTF8StringEncoding, null)
+            ?: throw IllegalStateException("Couldn't read $name")
+    }
 
     @Suppress("CAST_NEVER_SUCCEEDS")
     override fun write(name: String, content: String) {

@@ -6,21 +6,17 @@ import java.io.File
 private class AndroidFileStorage(private val dir: File) : FileStorage {
     override fun read(name: String): String? {
         val file = File(dir, name)
-        return try {
-            if (file.exists()) file.readText() else null
-        } catch (_: Exception) {
-            null
-        }
+        // An existing file that fails to read throws, so it isn't mistaken for a first launch.
+        return if (file.exists()) file.readText() else null
     }
 
     override fun write(name: String, content: String) {
         try {
+            // Write a temp file and rename it over the old one, so a crash mid-write can't leave a
+            // truncated file behind. If the rename fails, keep the old file rather than rewrite it in place.
             val tmp = File(dir, "$name.tmp")
             tmp.writeText(content)
-            if (!tmp.renameTo(File(dir, name))) {
-                File(dir, name).writeText(content)
-                tmp.delete()
-            }
+            if (!tmp.renameTo(File(dir, name))) tmp.delete()
         } catch (_: Exception) {}
     }
 }
