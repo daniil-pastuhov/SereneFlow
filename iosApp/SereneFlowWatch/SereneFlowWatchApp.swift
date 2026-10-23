@@ -32,6 +32,18 @@ struct WatchSnapshot: Equatable {
     var round: Int
     var rounds: Int
 
+    /// How long past its step's end a running snapshot is still believed. The phone refreshes at
+    /// least every 5 s while a step runs and sends a new one on each step change, so a snapshot this
+    /// old means the phone app was killed or suspended without saying so.
+    static let staleAfter: TimeInterval = 30
+
+    /// A running step whose end passed `staleAfter` ago with no word from the phone. Paused and
+    /// completed snapshots are never stale: a pause can rightly last a long time.
+    func isStale(at date: Date) -> Bool {
+        guard !isPaused, !isCompleted, let stepEnd else { return false }
+        return date > stepEnd.addingTimeInterval(Self.staleAfter)
+    }
+
     init?(_ context: [String: Any]) {
         guard context["active"] as? Bool == true,
               let routineTitle = context["routineTitle"] as? String,

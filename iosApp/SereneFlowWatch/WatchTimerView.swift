@@ -7,23 +7,32 @@ struct WatchTimerView: View {
     @ObservedObject var model: WatchSessionModel
 
     var body: some View {
-        if let snapshot = model.snapshot {
-            RunningView(snapshot: snapshot)
-        } else {
-            VStack(spacing: 8) {
-                Image(systemName: "leaf.fill")
-                    .font(.title2)
-                    .foregroundStyle(accent)
-                    .accessibilityHidden(true)
-                Text("No routine running")
-                    .font(.headline)
-                Text("Start one on your iPhone, with Follow routine with screen off turned on.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+        // Re-checked on a timer, so a stale snapshot clears without a new message from the phone.
+        TimelineView(.periodic(from: .now, by: 5)) { context in
+            if let snapshot = model.snapshot, !snapshot.isStale(at: context.date) {
+                RunningView(snapshot: snapshot)
+            } else {
+                EmptyStateView()
             }
-            .padding()
         }
+    }
+}
+
+private struct EmptyStateView: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "leaf.fill")
+                .font(.title2)
+                .foregroundStyle(accent)
+                .accessibilityHidden(true)
+            Text("No routine running")
+                .font(.headline)
+            Text("Start one on your iPhone, with Follow routine with screen off turned on.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
     }
 }
 
