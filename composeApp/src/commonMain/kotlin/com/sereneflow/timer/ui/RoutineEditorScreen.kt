@@ -1,5 +1,6 @@
 package com.sereneflow.timer.ui
 
+import androidx.compose.ui.semantics.heading
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -250,6 +251,7 @@ fun RoutineEditorScreen(
                     title = {
                         Text(
                             text = if (routine == null) "Create Routine" else "Edit Routine",
+                            modifier = Modifier.semantics { heading() },
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium,
                             color = colors.onBackground
@@ -903,6 +905,7 @@ private fun StepActionButton(
 private fun SectionLabel(text: String) {
     Text(
         text = text,
+        modifier = Modifier.semantics { heading() },
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.2.sp,

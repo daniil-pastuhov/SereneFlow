@@ -1,5 +1,6 @@
 package com.sereneflow.timer.ui
 
+import androidx.compose.ui.semantics.heading
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -297,6 +298,7 @@ fun ActiveTimerScreen(
                 Column(horizontalAlignment = alignment) {
                     Text(
                         text = routine.title,
+                        modifier = Modifier.semantics { heading() },
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.onBackground
@@ -693,7 +695,10 @@ private fun CelebrationOverlay(
 
             Text(
                 text = "Routine Complete",
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                modifier = Modifier.semantics {
+                    heading()
+                    liveRegion = LiveRegionMode.Polite
+                },
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
                 color = colors.onSurface

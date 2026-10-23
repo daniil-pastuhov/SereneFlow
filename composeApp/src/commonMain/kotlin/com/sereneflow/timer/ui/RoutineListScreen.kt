@@ -1,5 +1,6 @@
 package com.sereneflow.timer.ui
 
+import androidx.compose.ui.semantics.heading
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -184,7 +185,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "No routines yet", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.onBackground)
+        Text(text = "No routines yet", modifier = Modifier.semantics { heading() }, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.onBackground)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Tap New Routine to create your first mindful flow.",
@@ -218,6 +219,7 @@ private fun HeaderSection(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Breathe & Begin",
+                modifier = Modifier.semantics { heading() },
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Light,
                 color = colors.onBackground
@@ -298,6 +300,7 @@ private fun RoutineCard(
                 Column(modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
                     Text(
                         text = routine.title,
+                        modifier = Modifier.semantics { heading() },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.onSurface

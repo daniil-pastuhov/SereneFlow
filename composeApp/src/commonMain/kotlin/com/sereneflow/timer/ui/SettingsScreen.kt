@@ -1,5 +1,7 @@
 package com.sereneflow.timer.ui
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -116,6 +118,7 @@ fun SettingsScreen(
                 title = {
                     Text(
                         text = "Preferences",
+                        modifier = Modifier.semantics { heading() },
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.onBackground
@@ -491,6 +494,7 @@ private fun SectionHeader(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = title,
+            modifier = Modifier.semantics { heading() },
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.2.sp,

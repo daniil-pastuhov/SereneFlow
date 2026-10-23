@@ -1,5 +1,7 @@
 package com.sereneflow.timer.ui
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -77,7 +79,13 @@ fun <T> ChoiceScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.onBackground)
+                    Text(
+                        text = title,
+                        modifier = Modifier.semantics { heading() },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.onBackground
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
