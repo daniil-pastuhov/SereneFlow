@@ -40,7 +40,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
@@ -178,6 +180,7 @@ fun ActiveTimerScreen(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
+            .semantics { isTraversalGroup = true }
     ) {
         // Laid out from the space the screen has, never the device or orientation: folding an
         // iPhone Duo or resizing a window changes it mid-session. Wide windows (landscape, an
@@ -338,7 +341,7 @@ fun ActiveTimerScreen(
             }
 
             if (sideLayout) {
-                Column(modifier = Modifier.align(Alignment.TopStart).width(240.dp)) {
+                Column(modifier = Modifier.align(Alignment.TopStart).width(240.dp).then(TopBarFirst)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         closeButton()
                         Spacer(modifier = Modifier.width(12.dp))
@@ -357,7 +360,7 @@ fun ActiveTimerScreen(
                 }
             } else {
                 Column(
-                    modifier = Modifier.align(Alignment.TopCenter).widthIn(max = 640.dp).fillMaxWidth(),
+                    modifier = Modifier.align(Alignment.TopCenter).widthIn(max = 640.dp).fillMaxWidth().then(TopBarFirst),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(
@@ -571,6 +574,15 @@ private const val EXTEND_STEP_SECONDS = 30
 
 /** How long a "% left" reminder stays on screen. */
 private const val REMINDER_BANNER_MS = 4_000L
+
+/**
+ * Screen readers start at the title and Close, before the dial that is drawn first and the
+ * controls, whatever the layout.
+ */
+private val TopBarFirst = Modifier.semantics {
+    isTraversalGroup = true
+    traversalIndex = -1f
+}
 
 /** The smallest touch target either platform's guidelines allow. */
 private val MinTouchTarget = 48.dp
