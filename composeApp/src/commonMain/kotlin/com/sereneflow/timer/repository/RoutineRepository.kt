@@ -54,6 +54,13 @@ class RoutineRepository(
         _routines.value = current
     }
 
+    /** Adds a new routine made from one of [StarterTemplates], at the top of the list. */
+    fun addFromTemplate(template: Routine): Routine {
+        val routine = StarterTemplates.instantiate(template)
+        saveRoutine(routine)
+        return routine
+    }
+
     fun deleteRoutine(id: String) {
         _routines.value = _routines.value.filter { it.id != id }
     }

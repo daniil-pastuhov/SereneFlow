@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.RoutineRepository
+import com.sereneflow.timer.repository.StarterTemplates
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.theme.accentColor
 import com.sereneflow.timer.ui.platform.ActionMenu
@@ -90,26 +91,39 @@ fun RoutineListScreen(
         containerColor = colors.background,
         contentWindowInsets = WindowInsets.safeDrawing,
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateNewRoutine,
-                containerColor = colors.primary,
-                contentColor = colors.onPrimary,
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier
-                    .padding(bottom = 12.dp)
-                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp), spotColor = colors.primary)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            // Blank, or one of the starter templates, which is added straight to the list.
+            var showNewMenu by remember { mutableStateOf(false) }
+            Box {
+                ActionMenu(
+                    expanded = showNewMenu,
+                    title = "New routine",
+                    actions = listOf(MenuAction("Blank routine", Icons.Default.Add, onClick = onCreateNewRoutine)) +
+                        StarterTemplates.all.map { template ->
+                            MenuAction("From template: ${template.title}") { routineRepository.addFromTemplate(template) }
+                        },
+                    onDismiss = { showNewMenu = false }
+                )
+                FloatingActionButton(
+                    onClick = { showNewMenu = true },
+                    containerColor = colors.primary,
+                    contentColor = colors.onPrimary,
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier
+                        .padding(bottom = 12.dp)
+                        .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp), spotColor = colors.primary)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "New Routine")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "New Routine",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "New Routine")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "New Routine",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
+                    }
                 }
             }
         }
