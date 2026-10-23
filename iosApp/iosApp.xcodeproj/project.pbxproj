@@ -348,7 +348,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Xcode starts with a bare environment; CI sets JAVA_HOME itself.\nif [ -z \"$JAVA_HOME\" ]; then\n  if [ -d \"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home\" ]; then\n    export JAVA_HOME=\"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home\"\n  elif [ -d \"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ]; then\n    export JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\n  fi\nfi\nexport PATH=\"$JAVA_HOME/bin:$PATH\"\ncd \"$SRCROOT/..\"\n./gradlew --no-daemon :composeApp:embedAndSignAppleFrameworkForXcode\n";
+			shellScript = "# Android Studio's iOS run configuration builds the framework itself, through the Gradle\n# Tooling API, from the ./gradlew line below, then runs xcodebuild with this set. The\n# Tooling API rejects CLI-only flags such as --no-daemon, so keep that line to the task.\nif [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping the Gradle build: Android Studio built the Kotlin framework already\"\n  exit 0\nfi\n# Xcode starts with a bare environment; CI sets JAVA_HOME itself.\nif [ -z \"$JAVA_HOME\" ]; then\n  if [ -d \"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home\" ]; then\n    export JAVA_HOME=\"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home\"\n  elif [ -d \"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ]; then\n    export JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\n  fi\nfi\nexport PATH=\"$JAVA_HOME/bin:$PATH\"\ncd \"$SRCROOT/..\"\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

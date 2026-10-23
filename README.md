@@ -103,9 +103,13 @@ signed and work without it.
    ```
 2. Build with Xcode or command line:
    ```bash
-   xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator -destination "generic/platform=iOS Simulator" build
+   xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -destination "generic/platform=iOS Simulator" build
    ```
+   Leave out `-sdk iphonesimulator`: it would build the Apple Watch app against the iOS SDK too,
+   which fails. `-destination` picks the right SDK for each target.
 3. Or open `iosApp/iosApp.xcodeproj` in Xcode and hit **Run** on any iPhone simulator!
+4. Or, in Android Studio (with the Kotlin Multiplatform plugin), run an Xcode Application
+   configuration with project and scheme `iosApp`, configuration Debug, on an iPhone simulator.
 
 ### Running Unit Tests
 ```bash

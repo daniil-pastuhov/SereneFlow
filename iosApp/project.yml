@@ -33,6 +33,13 @@ targets:
     preBuildScripts:
       - name: "Compile Kotlin/Native Framework"
         script: |
+          # Android Studio's iOS run configuration builds the framework itself, through the Gradle
+          # Tooling API, from the ./gradlew line below, then runs xcodebuild with this set. The
+          # Tooling API rejects CLI-only flags such as --no-daemon, so keep that line to the task.
+          if [ "YES" = "$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED" ]; then
+            echo "Skipping the Gradle build: Android Studio built the Kotlin framework already"
+            exit 0
+          fi
           # Xcode starts with a bare environment; CI sets JAVA_HOME itself.
           if [ -z "$JAVA_HOME" ]; then
             if [ -d "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home" ]; then
@@ -43,7 +50,7 @@ targets:
           fi
           export PATH="$JAVA_HOME/bin:$PATH"
           cd "$SRCROOT/.."
-          ./gradlew --no-daemon :composeApp:embedAndSignAppleFrameworkForXcode
+          ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
     settings:
       base:
         ARCHS: "arm64"

@@ -18,7 +18,7 @@ Requires JDK 17/21 in `JAVA_HOME`.
 ./gradlew :composeApp:compileKotlinIosSimulatorArm64  # Type-check/compile shared code for iOS
 
 # iOS app (the Xcode pre-build script runs :composeApp:embedAndSignAppleFrameworkForXcode itself)
-xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator \
+xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
   -destination "generic/platform=iOS Simulator" build
 
 swift tools/generate_icons.swift   # Regenerate all app icons (iOS asset catalog + Android mipmaps/adaptive + Play icon)
@@ -37,6 +37,10 @@ builds don't need the file; device builds and `scripts/ios_release.sh` do. Relea
 README.md ("Releasing") and `store-listing/*/README.md`.
 
 Run the Android app from Android Studio with the shared `androidApp` configuration (`.run/androidApp.run.xml`), which starts `SereneFlowActivity` directly. "Default Activity" starts the `.MainActivity` launcher alias, which is disabled once another theme's icon is chosen, and fails with "Activity class ... does not exist". To reset a device: `adb shell pm enable com.sereneflow.timer/com.sereneflow.timer.MainActivity`.
+
+Don't pass `-sdk iphonesimulator` to xcodebuild: it forces the iOS SDK on every target, including the `SereneFlowWatch` watchOS app, which then fails ("AppIcon did not have any applicable content"). `-destination` alone picks each target's SDK, as Xcode and Android Studio do. A watch app built for iOS can't be embedded either: the simulator refuses to install it, so there is no workaround in project.yml.
+
+Android Studio's iOS run configuration (Xcode Application, scheme `iosApp`) runs the pre-build script's `./gradlew` line itself through the Gradle Tooling API, then calls xcodebuild with `OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED=YES`, which the script checks to skip Gradle. Keep that `./gradlew` line free of CLI-only flags such as `--no-daemon`: the Tooling API rejects them and the run fails before xcodebuild starts. Its empty "Development team" field is fine; the team comes from `Secrets.xcconfig`.
 
 Don't pass `CODE_SIGNING_ALLOWED=NO`: simulator builds are ad-hoc signed via `project.yml`, and an unsigned `SereneFlowWidget` extension never launches, so the Live Activity silently shows nothing.
 
