@@ -1,6 +1,7 @@
 package com.sereneflow.timer.engine
 
 import com.sereneflow.timer.audio.AudioController
+import com.sereneflow.timer.audio.HapticKind
 import com.sereneflow.timer.audio.playStepCue
 import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.Routine
@@ -32,6 +33,8 @@ class TimerEngine(
     private val cues: RoutineCues,
     private val audioController: AudioController,
     reminderThresholds: Set<Int> = emptySet(),
+    /** Vibrate on step start, the 3-2-1 countdown and completion (mute leaves these on). */
+    private val haptics: Boolean = false,
     /** Main by default, the thread the UI and notification controls call in on, so state has one writer. */
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate),
     private val clock: () -> Long = ::nowEpochMs
@@ -195,8 +198,11 @@ class TimerEngine(
 
         // 3, 2, 1 countdown chime, only when the second was reached live (not after a long gap).
         val liveTick = previousSeconds - remainingSeconds == 1
-        if (liveTick && remainingSeconds in 1..3 && !isSilent) {
-            audioController.playZenChime(frequencyHz = 520.0 + (3 - remainingSeconds) * 60, durationMs = 300)
+        if (liveTick && remainingSeconds in 1..3) {
+            if (!isSilent) {
+                audioController.playZenChime(frequencyHz = 520.0 + (3 - remainingSeconds) * 60, durationMs = 300)
+            }
+            if (haptics) audioController.haptic(HapticKind.COUNTDOWN_TICK)
         }
     }
 
@@ -242,6 +248,7 @@ class TimerEngine(
             )
         }
 
+        if (haptics) audioController.haptic(HapticKind.ROUTINE_COMPLETE)
         if (_timerState.value.isMuted) return
         if (cues.sound != CueSound.NONE) audioController.playRoutineComplete()
         if (cues.voice) audioController.speak("Routine complete. Well done.")
@@ -249,6 +256,7 @@ class TimerEngine(
 
     private fun announceStepStart(stepIndex: Int) {
         val step = routine.steps.getOrNull(stepIndex) ?: return
+        if (haptics) audioController.haptic(HapticKind.STEP_START)
         if (_timerState.value.isMuted) return
         audioController.playStepCue(cues.sound, cues.voice, step, stepIndex)
     }

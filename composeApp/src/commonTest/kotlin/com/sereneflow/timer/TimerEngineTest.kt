@@ -1,6 +1,7 @@
 package com.sereneflow.timer
 
 import com.sereneflow.timer.audio.AudioController
+import com.sereneflow.timer.audio.HapticKind
 import com.sereneflow.timer.engine.TimerEngine
 import com.sereneflow.timer.model.CueSound
 import com.sereneflow.timer.model.Routine
@@ -51,6 +52,12 @@ class FakeAudioController : AudioController {
 
     override fun stop() {
         stopCalls++
+    }
+
+    val haptics = mutableListOf<HapticKind>()
+
+    override fun haptic(kind: HapticKind) {
+        haptics.add(kind)
     }
 }
 
@@ -434,6 +441,47 @@ class TimerEngineTest {
         assertTrue(audio.spokenList.isEmpty())
         assertEquals(0, audio.chimesPlayed)
         assertEquals(0, audio.bowlsPlayed)
+        engine.stop()
+    }
+
+    @Test
+    fun testHapticsMarkStepsCountdownAndCompletionEvenWhenMuted() = runTest {
+        val audio = FakeAudioController()
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = audio,
+            haptics = true,
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+
+        engine.setMuted(true)
+        engine.start()
+        advanceTimeBy(31_000)
+        assertTrue(engine.timerState.value.isCompleted)
+        val tick = HapticKind.COUNTDOWN_TICK
+        assertEquals(
+            listOf(HapticKind.STEP_START, tick, tick, tick, HapticKind.STEP_START, tick, tick, tick, HapticKind.ROUTINE_COMPLETE),
+            audio.haptics
+        )
+        assertTrue(audio.spokenList.isEmpty(), "Muted: no voice")
+        engine.stop()
+    }
+
+    @Test
+    fun testNoHapticsWhenOff() = runTest {
+        val audio = FakeAudioController()
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = audio,
+            scope = this,
+            clock = { testScheduler.currentTime }
+        )
+        engine.start()
+        advanceTimeBy(31_000)
+        assertTrue(audio.haptics.isEmpty())
         engine.stop()
     }
 }

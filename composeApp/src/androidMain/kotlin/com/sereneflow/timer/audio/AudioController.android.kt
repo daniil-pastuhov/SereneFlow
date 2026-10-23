@@ -1,6 +1,11 @@
 package com.sereneflow.timer.audio
 
+import android.content.Context
 import android.media.AudioAttributes
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.speech.tts.TextToSpeech
@@ -144,6 +149,43 @@ class AndroidAudioController : AudioController {
         } catch (_: Exception) {}
     }
 
+    private val vibrator: Vibrator? by lazy {
+        val context = AndroidAppContext.appContext ?: return@lazy null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            context.getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+    }
+
+    override fun haptic(kind: HapticKind) {
+        val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
+        try {
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> vibrator.vibrate(
+                    when (kind) {
+                        HapticKind.STEP_START -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+                        HapticKind.COUNTDOWN_TICK -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+                        HapticKind.ROUTINE_COMPLETE -> VibrationEffect.createWaveform(COMPLETE_PATTERN, -1)
+                    }
+                )
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> vibrator.vibrate(
+                    when (kind) {
+                        HapticKind.STEP_START -> VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE)
+                        HapticKind.COUNTDOWN_TICK -> VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE)
+                        HapticKind.ROUTINE_COMPLETE -> VibrationEffect.createWaveform(COMPLETE_PATTERN, -1)
+                    }
+                )
+                else -> @Suppress("DEPRECATION") when (kind) {
+                    HapticKind.STEP_START -> vibrator.vibrate(60)
+                    HapticKind.COUNTDOWN_TICK -> vibrator.vibrate(20)
+                    HapticKind.ROUTINE_COMPLETE -> vibrator.vibrate(COMPLETE_PATTERN, -1)
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
     private suspend fun play(samples: FloatArray, durationMs: Long) {
         val buffer = ShortArray(samples.size) { (samples[it] * 32767).toInt().toShort() }
         val audioTrack = try {
@@ -182,6 +224,9 @@ class AndroidAudioController : AudioController {
 actual fun createAudioController(): AudioController = AndroidAudioController()
 
 private const val NOT_APPLIED = "\u0000not applied"
+
+/** Off/on durations (ms) of the completion buzz: three gentle pulses. */
+private val COMPLETE_PATTERN = longArrayOf(0, 80, 120, 80, 120, 160)
 
 /**
  * Synthesised on the device, without the engine's servers. The app has no INTERNET permission, but

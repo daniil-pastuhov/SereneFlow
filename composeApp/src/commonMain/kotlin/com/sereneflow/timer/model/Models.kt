@@ -192,6 +192,8 @@ data class AppPreferences(
     val backgroundModeAsked: Boolean = false,
     /** The text-to-speech voice for spoken cues (AudioController.englishVoices); null = default. */
     val voiceId: String? = null,
+    /** Vibrate on step changes, the 3-2-1 countdown and completion; independent of mute. */
+    val hapticsEnabled: Boolean = true,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @SerialName("defaultSoundMode") val legacyDefaultSoundMode: LegacySoundMode? = null

@@ -48,7 +48,10 @@ object TimerSession {
     fun start(routine: Routine, preferences: AppPreferences, backgroundMode: Boolean): ActiveSession {
         stop()
         val cues = routine.resolve(preferences)
-        val engine = TimerEngine(routine, cues, audioController, preferences.reminderThresholds)
+        val engine = TimerEngine(
+            routine, cues, audioController, preferences.reminderThresholds,
+            haptics = preferences.hapticsEnabled
+        )
         val session = ActiveSession(routine, cues, engine)
         _active.value = session
         engine.start()

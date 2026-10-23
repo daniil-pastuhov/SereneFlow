@@ -139,6 +139,10 @@ class PreferencesRepository(
         _preferences.update { it.copy(keepScreenOn = enabled) }
     }
 
+    fun setHapticsEnabled(enabled: Boolean) {
+        _preferences.update { it.copy(hapticsEnabled = enabled) }
+    }
+
     fun setBackgroundMode(enabled: Boolean) {
         _preferences.update { it.copy(backgroundMode = enabled, backgroundModeAsked = true) }
     }

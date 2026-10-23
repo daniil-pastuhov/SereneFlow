@@ -230,6 +230,13 @@ fun SettingsScreen(
                                 onClick = onOpenVoicePicker
                             )
                         }
+                        SwitchRow(
+                            title = "Vibration",
+                            description = "A tap as each step starts, on the 3-2-1 countdown and at the end, " +
+                                "even when the routine is muted.",
+                            checked = preferences.hapticsEnabled,
+                            onCheckedChange = preferencesRepository::setHapticsEnabled
+                        )
                     }
                 }
 

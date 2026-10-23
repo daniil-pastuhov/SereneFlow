@@ -30,6 +30,21 @@ interface AudioController {
 
     /** The voice [speak] uses from now on: an id from [englishVoices], or null for the default. */
     fun setVoice(id: String?) {}
+
+    /** A short vibration, felt with the sound off or the phone in a pocket; nothing where unsupported. */
+    fun haptic(kind: HapticKind) {}
+}
+
+/** The moments the timer marks with a vibration. */
+enum class HapticKind {
+    /** A step begins. */
+    STEP_START,
+
+    /** Each second of the 3-2-1 countdown at the end of a step. */
+    COUNTDOWN_TICK,
+
+    /** The routine is finished. */
+    ROUTINE_COMPLETE
 }
 
 expect fun createAudioController(): AudioController

@@ -30,6 +30,10 @@ import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSNumber
 import platform.Foundation.NSOperationQueue
+import platform.UIKit.UIImpactFeedbackGenerator
+import platform.UIKit.UIImpactFeedbackStyle
+import platform.UIKit.UINotificationFeedbackGenerator
+import platform.UIKit.UINotificationFeedbackType
 import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.dispatch_after
 import platform.darwin.dispatch_time
@@ -211,6 +215,18 @@ class IOSAudioController : AudioController {
 
     override fun stop() = onMain {
         speechSynthesizer.stopSpeakingAtBoundary(AVSpeechBoundary.AVSpeechBoundaryImmediate)
+    }
+
+    // Feedback generators only work while the app is in the foreground, which is when they matter.
+    override fun haptic(kind: HapticKind) = onMain {
+        when (kind) {
+            HapticKind.STEP_START ->
+                UIImpactFeedbackGenerator(style = UIImpactFeedbackStyle.UIImpactFeedbackStyleMedium).impactOccurred()
+            HapticKind.COUNTDOWN_TICK ->
+                UIImpactFeedbackGenerator(style = UIImpactFeedbackStyle.UIImpactFeedbackStyleLight).impactOccurred()
+            HapticKind.ROUTINE_COMPLETE ->
+                UINotificationFeedbackGenerator().notificationOccurred(UINotificationFeedbackType.UINotificationFeedbackTypeSuccess)
+        }
     }
 
     /**
