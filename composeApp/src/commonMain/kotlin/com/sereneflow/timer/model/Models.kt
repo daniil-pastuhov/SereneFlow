@@ -4,6 +4,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.random.Random
 
 @Serializable
 enum class VisualEffectType(val displayName: String, val description: String, val emoji: String) {
@@ -98,6 +99,18 @@ data class RoutineStep(
                 else -> unit(seconds, "second")
             }
         }
+}
+
+/** A fresh, unique id for a step the editor creates. */
+fun newStepId(): String = "step_${Random.nextLong(Long.MAX_VALUE)}"
+
+/**
+ * These steps with a copy of the one at [index] inserted right after it, under [newId]. Unchanged
+ * when [index] is out of range.
+ */
+fun List<RoutineStep>.withDuplicatedStep(index: Int, newId: String = newStepId()): List<RoutineStep> {
+    val source = getOrNull(index) ?: return this
+    return toMutableList().apply { add(index + 1, source.copy(id = newId)) }
 }
 
 @Serializable

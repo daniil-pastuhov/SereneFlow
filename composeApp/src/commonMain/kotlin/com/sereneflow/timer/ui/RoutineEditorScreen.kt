@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -64,6 +66,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -78,6 +81,8 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.model.VoiceGuidance
+import com.sereneflow.timer.model.newStepId
+import com.sereneflow.timer.model.withDuplicatedStep
 import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.ui.platform.ConfirmDialog
@@ -423,6 +428,12 @@ fun RoutineEditorScreen(
                                     steps = list
                                 }
                             },
+                            onDuplicate = {
+                                val copyId = newStepId()
+                                steps = steps.withDuplicatedStep(index, copyId)
+                                // A copy of a placeholder is a placeholder too.
+                                if (step.id in untouchedDefaults) untouchedDefaults.add(copyId)
+                            },
                             onDelete = {
                                 if (steps.size > 1) {
                                     steps = steps.filterIndexed { i, _ -> i != index }
@@ -444,9 +455,8 @@ fun RoutineEditorScreen(
                                     shape = RoundedCornerShape(18.dp)
                                 )
                                 .clickable {
-                                    val randId = kotlin.random.Random.nextLong().let { if (it < 0) -it else it }
                                     val newStep = RoutineStep(
-                                        id = "step_$randId",
+                                        id = newStepId(),
                                         title = "New Step ${steps.size + 1}",
                                         durationSeconds = 120
                                     )
@@ -547,6 +557,7 @@ private fun StepEditorItem(
     onUpdateStep: (RoutineStep) -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
+    onDuplicate: () -> Unit,
     onDelete: () -> Unit
 ) {
     val colors = LocalSereneColors.current
@@ -564,13 +575,13 @@ private fun StepEditorItem(
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         verticalAlignment = Alignment.Top
     ) {
         // Timeline Column (Node + Vertical line)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(36.dp)
+            modifier = Modifier.width(36.dp).fillMaxHeight()
         ) {
             Box(
                 modifier = Modifier
@@ -592,7 +603,7 @@ private fun StepEditorItem(
                 Box(
                     modifier = Modifier
                         .width(2.dp)
-                        .height(80.dp)
+                        .weight(1f)
                         .background(colors.primary.copy(alpha = 0.35f))
                 )
             }
@@ -610,59 +621,23 @@ private fun StepEditorItem(
                 .padding(14.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                // Top row: Step Title + Actions
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    SelectAllOnFocusField(
-                        value = step.title,
-                        onValueChange = { onUpdateStep(step.copy(title = it)) },
-                        selectAllOnFocus = selectTitleOnFocus,
-                        modifier = Modifier.weight(1f).focusRequester(titleFocusRequester),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = if (isLast) ImeAction.Done else ImeAction.Next),
-                        keyboardActions = KeyboardActions(
-                            onNext = { onTitleImeAction() },
-                            onDone = { onTitleImeAction() }
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = colors.primary,
-                            unfocusedBorderColor = colors.divider
-                        )
+                SelectAllOnFocusField(
+                    value = step.title,
+                    onValueChange = { onUpdateStep(step.copy(title = it)) },
+                    selectAllOnFocus = selectTitleOnFocus,
+                    modifier = Modifier.fillMaxWidth().focusRequester(titleFocusRequester),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = if (isLast) ImeAction.Done else ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = { onTitleImeAction() },
+                        onDone = { onTitleImeAction() }
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colors.primary,
+                        unfocusedBorderColor = colors.divider
                     )
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Row {
-                        IconButton(onClick = onMoveUp, enabled = !isFirst, modifier = Modifier.size(32.dp)) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowUpward,
-                                contentDescription = "Move Up",
-                                tint = if (!isFirst) colors.onSurfaceVariant else colors.divider,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        IconButton(onClick = onMoveDown, enabled = !isLast, modifier = Modifier.size(32.dp)) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDownward,
-                                contentDescription = "Move Down",
-                                tint = if (!isLast) colors.onSurfaceVariant else colors.divider,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete",
-                                tint = Color(0xFFE53935),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                }
+                )
 
                 // Duration Stepper Row
                 Row(
@@ -713,8 +688,58 @@ private fun StepEditorItem(
                         }
                     }
                 }
+
+                // Reorder, duplicate and delete, on a row of their own so the title keeps its width.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StepActionButton(
+                        icon = Icons.Default.ArrowUpward,
+                        description = "Move step ${index + 1} up",
+                        enabled = !isFirst,
+                        onClick = onMoveUp
+                    )
+                    StepActionButton(
+                        icon = Icons.Default.ArrowDownward,
+                        description = "Move step ${index + 1} down",
+                        enabled = !isLast,
+                        onClick = onMoveDown
+                    )
+                    StepActionButton(
+                        icon = Icons.Default.ContentCopy,
+                        description = "Duplicate step ${index + 1}",
+                        onClick = onDuplicate
+                    )
+                    StepActionButton(
+                        icon = Icons.Default.Delete,
+                        description = "Delete step ${index + 1}",
+                        tint = Color(0xFFE53935),
+                        onClick = onDelete
+                    )
+                }
             }
         }
+    }
+}
+
+/** A small step-card icon with a full-size (48dp) touch target. */
+@Composable
+private fun StepActionButton(
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    tint: Color = LocalSereneColors.current.onSurfaceVariant
+) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(48.dp)) {
+        Icon(
+            imageVector = icon,
+            contentDescription = description,
+            tint = if (enabled) tint else LocalSereneColors.current.divider,
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
 
