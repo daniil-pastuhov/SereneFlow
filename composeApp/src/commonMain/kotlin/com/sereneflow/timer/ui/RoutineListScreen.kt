@@ -72,7 +72,20 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.filled.Air
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -214,50 +227,22 @@ fun RoutineListScreen(
         )
     }
 
+    // The New Routine menu: blank, or one of the starter templates, added straight to the list.
+    var newMenuExpanded by remember { mutableStateOf(false) }
+    // Selecting takes the menu's place (the contextual bar holds that mode's actions).
+    LaunchedEffect(selecting) { if (selecting) newMenuExpanded = false }
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = newMenuExpanded,
+        onBackCompleted = { newMenuExpanded = false }
+    )
+
+    Box(modifier = modifier.fillMaxSize()) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        // While the menu is open, a screen reader stays in it (like a dialog).
+        modifier = Modifier.fillMaxSize().then(if (newMenuExpanded) Modifier.clearAndSetSemantics {} else Modifier),
         containerColor = colors.background,
         contentWindowInsets = WindowInsets.safeDrawing,
-        floatingActionButton = {
-            // Blank, or one of the starter templates, which is added straight to the list.
-            var showNewMenu by remember { mutableStateOf(false) }
-            // Out of the way while selecting, as the contextual bar holds that mode's actions.
-            AnimatedVisibility(visible = !selecting, enter = fadeIn() + scaleIn(), exit = fadeOut() + scaleOut()) {
-            Box {
-                ActionMenu(
-                    expanded = showNewMenu,
-                    title = "New routine",
-                    actions = listOf(MenuAction("Blank routine", Icons.Default.Add, onClick = onCreateNewRoutine)) +
-                        StarterTemplates.all.map { template ->
-                            MenuAction("From template: ${template.title}") { addedHere = routineRepository.addFromTemplate(template).id }
-                        },
-                    onDismiss = { showNewMenu = false }
-                )
-                FloatingActionButton(
-                    onClick = { showNewMenu = true },
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary,
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier
-                        .padding(bottom = 12.dp)
-                        .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp), spotColor = colors.primary)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = null) // the text says it
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "New Routine",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.sp
-                        )
-                    }
-                }
-            }
-            }
-        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -347,6 +332,111 @@ fun RoutineListScreen(
             }
         }
     }
+
+        // Dims the list behind the open menu; a tap outside the menu closes it.
+        AnimatedVisibility(visible = newMenuExpanded, enter = fadeIn(), exit = fadeOut()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.background.copy(alpha = 0.7f))
+                    .pointerInput(Unit) { detectTapGestures { newMenuExpanded = false } }
+            )
+        }
+
+        AnimatedVisibility(
+            visible = !selecting,
+            modifier = Modifier.align(Alignment.BottomEnd).windowInsetsPadding(WindowInsets.safeDrawing),
+            enter = fadeIn() + scaleIn(),
+            exit = fadeOut() + scaleOut()
+        ) {
+            NewRoutineMenu(
+                expanded = newMenuExpanded,
+                onExpandedChange = { newMenuExpanded = it },
+                onBlank = onCreateNewRoutine,
+                onTemplate = { template -> addedHere = routineRepository.addFromTemplate(template).id }
+            )
+        }
+    }
+}
+
+/**
+ * The Material 3 FAB menu for making a routine: a blank one (opens the editor) or one of the
+ * [StarterTemplates] (added to the list as is). The button turns into a close button while open.
+ */
+@Composable
+private fun NewRoutineMenu(
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onBlank: () -> Unit,
+    onTemplate: (Routine) -> Unit
+) {
+    val colors = LocalSereneColors.current
+    FloatingActionButtonMenu(
+        expanded = expanded,
+        button = {
+            ToggleFloatingActionButton(
+                checked = expanded,
+                onCheckedChange = onExpandedChange,
+                containerColor = ToggleFloatingActionButtonDefaults.containerColor(
+                    initialColor = colors.primary,
+                    finalColor = colors.primary
+                ),
+                modifier = Modifier.semantics {
+                    contentDescription = "New routine"
+                    stateDescription = if (expanded) "Menu open" else "Menu closed"
+                    if (expanded) collapse { onExpandedChange(false); true } else expand { onExpandedChange(true); true }
+                }
+            ) {
+                val icon by remember { derivedStateOf { if (checkedProgress > 0.5f) Icons.Default.Close else Icons.Default.Add } }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null, // the button says it
+                    modifier = Modifier.animateIcon(
+                        checkedProgress = { checkedProgress },
+                        color = ToggleFloatingActionButtonDefaults.iconColor(
+                            initialColor = colors.onPrimary,
+                            finalColor = colors.onPrimary
+                        )
+                    )
+                )
+            }
+        }
+    ) {
+        // Top to bottom; the blank routine, the usual choice, sits next to the button.
+        StarterTemplates.all.forEach { template ->
+            FloatingActionButtonMenuItem(
+                onClick = {
+                    onExpandedChange(false)
+                    onTemplate(template)
+                },
+                text = { Text(template.title) },
+                icon = { Icon(templateIcon(template), contentDescription = null) },
+                modifier = Modifier.semantics { contentDescription = "${template.title} template" },
+                containerColor = colors.primaryContainer,
+                contentColor = colors.onPrimaryContainer
+            )
+        }
+        FloatingActionButtonMenuItem(
+            onClick = {
+                onExpandedChange(false)
+                onBlank()
+            },
+            text = { Text("Blank routine") },
+            icon = { Icon(Icons.Default.Edit, contentDescription = null) },
+            containerColor = colors.primaryContainer,
+            contentColor = colors.onPrimaryContainer
+        )
+    }
+}
+
+/** An icon that hints at what each starter template is for. */
+private fun templateIcon(template: Routine): ImageVector = when (template.id) {
+    "template_pomodoro" -> Icons.Default.Timer
+    "template_box_breathing" -> Icons.Default.Air
+    "template_morning_stretch" -> Icons.Default.SelfImprovement
+    "template_hiit" -> Icons.Default.FitnessCenter
+    "template_wind-down" -> Icons.Default.Bedtime
+    else -> Icons.Default.Timer
 }
 
 /** The list's top bar while routines are selected: how many, and what can be done with them. */
@@ -412,7 +502,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         Text(text = "No routines yet", modifier = Modifier.semantics { heading() }, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.onBackground)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Tap New Routine to create your first mindful flow.",
+            text = "Tap + to create your first mindful flow, or start from a template.",
             fontSize = 14.sp,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center
