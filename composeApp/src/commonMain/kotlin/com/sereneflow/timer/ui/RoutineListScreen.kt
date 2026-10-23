@@ -284,63 +284,64 @@ fun RoutineListScreen(
 
             // Routine Cards List
             if (routines.isEmpty()) {
-                EmptyState(modifier = Modifier.weight(1f))
-            }
-
-            // One column on phones; two or more where cards would otherwise stretch (iPad, an
-            // unfolded iPhone Duo, landscape, tablets).
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 300.dp),
-                modifier = Modifier.fillMaxSize().onGloballyPositioned { reorder.gridCoordinates = it },
-                state = gridState,
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 96.dp, top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                itemsIndexed(shownRoutines, key = { _, it -> it.id }) { index, routine ->
-                    val moveUpLabel = stringResource(Res.string.list_move_up)
-                    val moveDownLabel = stringResource(Res.string.list_move_down)
-                    val copyTitle = stringResource(Res.string.routine_copy_title, routine.title)
-                    val dragging = reorder.draggingKey == routine.id
-                    val raised = reorder.isLifted(routine.id)
-                    RoutineCard(
-                        modifier = Modifier
-                            // The others slide out of the way; the dragged card follows the finger.
-                            .animateItem(placementSpec = if (raised) null else spring(stiffness = Spring.StiffnessMediumLow))
-                            .zIndex(if (raised) 1f else 0f)
-                            .graphicsLayer {
-                                val translation = reorder.translationOf(routine.id)
-                                translationX = translation.x
-                                translationY = translation.y
+                // Clear of the New Routine button, which the placeholder points to.
+                EmptyState(modifier = Modifier.weight(1f).padding(bottom = 96.dp))
+            } else {
+                // One column on phones; two or more where cards would otherwise stretch (iPad, an
+                // unfolded iPhone Duo, landscape, tablets).
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 300.dp),
+                    modifier = Modifier.fillMaxSize().onGloballyPositioned { reorder.gridCoordinates = it },
+                    state = gridState,
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 96.dp, top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    itemsIndexed(shownRoutines, key = { _, it -> it.id }) { index, routine ->
+                        val moveUpLabel = stringResource(Res.string.list_move_up)
+                        val moveDownLabel = stringResource(Res.string.list_move_down)
+                        val copyTitle = stringResource(Res.string.routine_copy_title, routine.title)
+                        val dragging = reorder.draggingKey == routine.id
+                        val raised = reorder.isLifted(routine.id)
+                        RoutineCard(
+                            modifier = Modifier
+                                // The others slide out of the way; the dragged card follows the finger.
+                                .animateItem(placementSpec = if (raised) null else spring(stiffness = Spring.StiffnessMediumLow))
+                                .zIndex(if (raised) 1f else 0f)
+                                .graphicsLayer {
+                                    val translation = reorder.translationOf(routine.id)
+                                    translationX = translation.x
+                                    translationY = translation.y
+                                },
+                            lifted = dragging,
+                            dragHandle = Modifier.reorderHandle(
+                                reorder,
+                                routine.id,
+                                onPickUp = { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                                onDrop = { haptics.performHapticFeedback(HapticFeedbackType.GestureEnd) }
+                            ),
+                            // Reordering without dragging, for screen readers.
+                            moveActions = listOfNotNull(
+                                if (index > 0) CustomAccessibilityAction(moveUpLabel) { moveBy(routine, -1); true } else null,
+                                if (index < shownRoutines.lastIndex) CustomAccessibilityAction(moveDownLabel) { moveBy(routine, 1); true } else null
+                            ),
+                            routine = routine,
+                            visualEffect = routine.visualEffect ?: defaultVisualEffect,
+                            onPlay = { onStartRoutine(routine) },
+                            onEdit = { onEditRoutine(routine) },
+                            onDuplicate = { addedHere = routineRepository.duplicateRoutine(routine, copyTitle).id },
+                            onDelete = { onDeleteRoutines(setOf(routine.id)) },
+                            selecting = selecting,
+                            selected = routine.id in selectedIds,
+                            onToggleSelected = {
+                                selection = if (routine.id in selectedIds) selectedIds - routine.id else selectedIds + routine.id
                             },
-                        lifted = dragging,
-                        dragHandle = Modifier.reorderHandle(
-                            reorder,
-                            routine.id,
-                            onPickUp = { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
-                            onDrop = { haptics.performHapticFeedback(HapticFeedbackType.GestureEnd) }
-                        ),
-                        // Reordering without dragging, for screen readers.
-                        moveActions = listOfNotNull(
-                            if (index > 0) CustomAccessibilityAction(moveUpLabel) { moveBy(routine, -1); true } else null,
-                            if (index < shownRoutines.lastIndex) CustomAccessibilityAction(moveDownLabel) { moveBy(routine, 1); true } else null
-                        ),
-                        routine = routine,
-                        visualEffect = routine.visualEffect ?: defaultVisualEffect,
-                        onPlay = { onStartRoutine(routine) },
-                        onEdit = { onEditRoutine(routine) },
-                        onDuplicate = { addedHere = routineRepository.duplicateRoutine(routine, copyTitle).id },
-                        onDelete = { onDeleteRoutines(setOf(routine.id)) },
-                        selecting = selecting,
-                        selected = routine.id in selectedIds,
-                        onToggleSelected = {
-                            selection = if (routine.id in selectedIds) selectedIds - routine.id else selectedIds + routine.id
-                        },
-                        onStartSelecting = {
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            selection = setOf(routine.id)
-                        }
-                    )
+                            onStartSelecting = {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                selection = setOf(routine.id)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -517,6 +518,13 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Box(
+            modifier = Modifier.size(88.dp).clip(CircleShape).background(colors.primary.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.SelfImprovement, contentDescription = null, tint = colors.primary, modifier = Modifier.size(44.dp))
+        }
+        Spacer(modifier = Modifier.height(20.dp))
         Text(text = stringResource(Res.string.list_empty_title), modifier = Modifier.semantics { heading() }, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.onBackground)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
