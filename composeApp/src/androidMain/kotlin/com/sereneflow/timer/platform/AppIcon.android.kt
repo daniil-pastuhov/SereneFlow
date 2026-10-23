@@ -5,15 +5,16 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.PowerManager
 import com.sereneflow.timer.model.AppThemeMode
+import com.sereneflow.timer.resources.Res
+import com.sereneflow.timer.resources.settings_icon_note_android
+import org.jetbrains.compose.resources.StringResource
 import com.sereneflow.timer.session.TimerSession
 
 actual object AppIconSwitcher {
     actual val isSupported: Boolean = true
 
     // Launchers drop a home-screen shortcut whose component is disabled.
-    actual val changeNote: String? =
-        "The new icon appears when you leave SereneFlow. Some home screens remove the old " +
-            "shortcut; add SereneFlow again from the app list if it disappears."
+    actual val changeNote: StringResource? = Res.string.settings_icon_note_android
 
     /**
      * Chosen but not applied yet. Disabling the launcher alias the app was started through closes

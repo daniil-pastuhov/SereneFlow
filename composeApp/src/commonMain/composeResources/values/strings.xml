@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Every user-visible string of the shared app, and everything screen readers or the voice say.
+  Compose resources format only positional %1$s / %1$d arguments; a lone % is shown as is (no %%),
+  and apostrophes and quotes need no escaping. A translation is a values-<language>/strings.xml
+  with the same names.
+-->
+<resources>
+    <!-- Common actions and values -->
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_done">Done</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_end">End</string>
+    <string name="action_import">Import</string>
+    <string name="action_ok">OK</string>
+    <string name="action_save">Save</string>
+    <string name="action_select">Select</string>
+    <string name="action_share">Share</string>
+    <string name="value_default">Default</string>
+    <string name="value_on">On</string>
+    <string name="value_off">Off</string>
+    <string name="loading">Loading…</string>
+
+    <!-- Background mode prompt, after the first routine is saved -->
+    <string name="background_prompt_title">Follow your routine with the screen off?</string>
+    <string name="background_prompt_message">SereneFlow can keep guiding you when the screen is off or you switch apps, with a notification showing the current step and time left. You can change this anytime in Settings.</string>
+    <string name="background_prompt_confirm">Yes, keep me posted</string>
+    <string name="background_prompt_dismiss">Not now</string>
+
+    <!-- Importing a routine file -->
+    <string name="import_failed_title">Can't import this file</string>
+    <string name="import_failed_message">It isn't a SereneFlow routine file, or it is damaged.</string>
+    <string name="import_one_title">Import "%1$s"?</string>
+    <!-- %1$s: step count, e.g. "4 steps"; %2$s: total duration, e.g. "15 min" -->
+    <string name="import_one_message">%1$s · %2$s. It is added to your routines; nothing is replaced.</string>
+    <plurals name="import_many_title">
+        <item quantity="one">Import %1$d routine?</item>
+        <item quantity="other">Import %1$d routines?</item>
+    </plurals>
+    <string name="import_many_note">They are added to your routines; nothing is replaced.</string>
+
+    <!-- Durations, short: "1m 30s", "2m", "45s" -->
+    <string name="duration_short_min_sec">%1$dm %2$ds</string>
+    <string name="duration_short_min">%1$dm</string>
+    <string name="duration_short_sec">%1$ds</string>
+
+    <!-- Routine list -->
+    <string name="list_brand">SERENEFLOW</string>
+    <string name="list_title">Breathe &amp; Begin</string>
+    <string name="list_settings">Settings</string>
+    <string name="list_empty_title">No routines yet</string>
+    <string name="list_empty_message">Tap + to create your first mindful flow, or start from a template.</string>
+    <string name="list_delete_one_title">Delete "%1$s"?</string>
+    <plurals name="list_delete_many_title">
+        <item quantity="one">Delete %1$d routine?</item>
+        <item quantity="other">Delete %1$d routines?</item>
+    </plurals>
+    <plurals name="list_delete_message">
+        <item quantity="one">This routine will be removed permanently.</item>
+        <item quantity="other">These routines will be removed permanently.</item>
+    </plurals>
+    <string name="list_move_up">Move up</string>
+    <string name="list_move_down">Move down</string>
+    <string name="list_new_routine">New routine</string>
+    <string name="list_menu_open">Menu open</string>
+    <string name="list_menu_closed">Menu closed</string>
+    <!-- %1$s: the template's name, e.g. "Pomodoro" -->
+    <string name="list_template_description">%1$s template</string>
+    <string name="list_blank_routine">Blank routine</string>
+    <string name="list_cancel_selection">Cancel selection</string>
+    <plurals name="list_selected_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="list_select_all">Select all</string>
+    <string name="list_selected">Selected</string>
+    <string name="list_not_selected">Not selected</string>
+    <string name="list_options">Options</string>
+    <!-- %1$s: the duration in words, e.g. "15 minutes" -->
+    <string name="list_total_description">Total %1$s</string>
+    <!-- %1$s: step count, e.g. "3 steps"; %2$s: round count, e.g. "4 rounds" -->
+    <string name="list_steps_and_rounds_description">%1$s, %2$s</string>
+    <!-- Visual effects' short names, on routine cards -->
+    <string name="effect_water_short">Water</string>
+    <string name="effect_bonsai_short">Bonsai</string>
+    <string name="effect_orbit_short">Orbit</string>
+    <string name="effect_lotus_short">Lotus</string>
+    <string name="effect_hourglass_short">Hourglass</string>
+    <!-- %1$s: the effect's short name, e.g. "Water" -->
+    <string name="list_effect_description">%1$s effect</string>
+    <string name="list_start_routine_description">Start %1$s</string>
+    <string name="list_begin_routine">Begin Routine</string>
+    <!-- %1$s: step name; %2$s: its duration in words -->
+    <string name="list_step_description">%1$s, %2$s</string>
+    <plurals name="list_more_steps">
+        <item quantity="one">+ %1$d more step</item>
+        <item quantity="other">+ %1$d more steps</item>
+    </plurals>
+
+    <!-- Running timer -->
+    <string name="timer_end_title">End routine?</string>
+    <string name="timer_end_message">Your progress in "%1$s" won't be kept.</string>
+    <string name="timer_step_fallback">Routine Step</string>
+    <string name="timer_complete_description">Routine complete</string>
+    <!-- %1$s: step name; %2$s: time left in words, e.g. "1 minute 30 seconds" -->
+    <string name="timer_time_left_description">%1$s, %2$s left</string>
+    <!-- %1$d: percent; %2$s: step name -->
+    <string name="timer_reminder">%1$d% of %2$s left</string>
+    <!-- %1$s: next step's name; %2$s: its duration, e.g. "2m" -->
+    <string name="timer_up_next">Up next: %1$s (%2$s)</string>
+    <!-- %1$s: next step's name; %2$s: its duration in words -->
+    <string name="timer_up_next_description">Up next: %1$s, %2$s</string>
+    <string name="timer_mute">Mute</string>
+    <string name="timer_unmute">Unmute</string>
+    <!-- The step between rounds -->
+    <string name="rest_step_title">Rest</string>
+    <string name="timer_step_position">Step %1$d of %2$d</string>
+    <!-- %1$d: round; %2$d: rounds; %3$s: "Step 2 of 5" or "Rest" -->
+    <string name="timer_round_position">Round %1$d of %2$d · %3$s</string>
+    <string name="timer_restart_step">Restart Step</string>
+    <string name="timer_previous_step">Previous Step</string>
+    <string name="timer_skip_step">Skip Step</string>
+    <string name="timer_paused">Paused</string>
+    <string name="timer_pause">Pause</string>
+    <string name="timer_play">Play</string>
+    <!-- The +30s button: %1$d is the number of seconds -->
+    <string name="timer_extend_label">+%1$ds</string>
+    <plurals name="timer_extend_action">
+        <item quantity="one">Add %1$d second to this step</item>
+        <item quantity="other">Add %1$d seconds to this step</item>
+    </plurals>
+    <plurals name="timer_extend_description">
+        <item quantity="one">Add %1$d second</item>
+        <item quantity="other">Add %1$d seconds</item>
+    </plurals>
+    <string name="timer_complete_title">Routine Complete</string>
+    <!-- %1$s: routine name; %2$s: its total duration, e.g. "15 min" -->
+    <string name="timer_complete_message">You accomplished "%1$s" (%2$s). Take a moment to feel centered and refreshed.</string>
+    <string name="timer_return">Return to Routines</string>
+
+    <!-- Routine editor -->
+    <string name="editor_new_title">New Mindful Routine</string>
+    <string name="editor_new_step_1">Centering &amp; Stillness</string>
+    <string name="editor_new_step_2">Deep Breathing</string>
+    <string name="editor_new_step_3">Gentle Reflection</string>
+    <string name="editor_untitled">Untitled Routine</string>
+    <string name="editor_discard_title">Discard changes?</string>
+    <string name="editor_discard_message">Your edits to this routine haven't been saved.</string>
+    <string name="editor_create">Create Routine</string>
+    <string name="editor_edit">Edit Routine</string>
+    <string name="editor_name_label">Routine Name</string>
+    <string name="editor_description_label">Mindful Description (Optional)</string>
+    <string name="editor_visual_effect">Visual effect</string>
+    <string name="editor_sound">Sound</string>
+    <!-- %1$s: what Default currently means, e.g. "Serene Water" -->
+    <string name="editor_default_is">Default: %1$s</string>
+    <string name="editor_voice_section">VOICE GUIDANCE</string>
+    <!-- %1$s: "On" or "Off" -->
+    <string name="editor_voice_default">Default · %1$s</string>
+    <string name="editor_accent_section">ACCENT COLOUR</string>
+    <string name="editor_theme_colour">Theme colour</string>
+    <string name="editor_steps_section">TIMELINE STEPS (%1$d)</string>
+    <string name="editor_total">Total: %1$s</string>
+    <string name="editor_new_step">New Step %1$d</string>
+    <string name="editor_add_step">Add Next Step</string>
+    <string name="editor_rounds_section">ROUNDS</string>
+    <string name="editor_rounds_once">The steps run once</string>
+    <plurals name="editor_rounds_many">
+        <item quantity="one">All steps run %1$d time</item>
+        <item quantity="other">All steps run %1$d times</item>
+    </plurals>
+    <string name="editor_fewer_rounds">Fewer rounds</string>
+    <string name="editor_more_rounds">More rounds</string>
+    <plurals name="step_count">
+        <item quantity="one">%1$d step</item>
+        <item quantity="other">%1$d steps</item>
+    </plurals>
+    <plurals name="rounds_count">
+        <item quantity="one">%1$d round</item>
+        <item quantity="other">%1$d rounds</item>
+    </plurals>
+    <string name="editor_rest_between_rounds">Rest between rounds</string>
+    <string name="editor_rest_none">None</string>
+    <string name="editor_visual_effect_note">The animation behind the countdown. Default follows Settings when the routine starts.</string>
+    <string name="editor_sound_note">Plays as each step starts. Default follows Settings when the routine starts. Tap a sound to hear it.</string>
+    <!-- %1$s: what Default currently means -->
+    <string name="editor_default_now">Now %1$s</string>
+    <string name="editor_step_name">Step %1$d name</string>
+    <string name="editor_change_duration">Change duration</string>
+    <!-- %1$d: step number; %2$s: duration in words -->
+    <string name="editor_step_duration_description">Step %1$d duration, %2$s</string>
+    <string name="editor_minus_minute">-1m</string>
+    <string name="editor_minus_minute_description">Decrease by 1 minute</string>
+    <string name="editor_minus_15s">-15s</string>
+    <string name="editor_minus_15s_description">Decrease by 15 seconds</string>
+    <string name="editor_plus_15s">+15s</string>
+    <string name="editor_plus_15s_description">Increase by 15 seconds</string>
+    <string name="editor_plus_minute">+1m</string>
+    <string name="editor_plus_minute_description">Increase by 1 minute</string>
+    <string name="editor_move_step_up">Move step %1$d up</string>
+    <string name="editor_move_step_down">Move step %1$d down</string>
+    <string name="editor_duplicate_step">Duplicate step %1$d</string>
+    <string name="editor_delete_step">Delete step %1$d</string>
+
+    <!-- Duration picker -->
+    <string name="picker_title">Duration</string>
+    <string name="picker_minutes">Minutes</string>
+    <string name="picker_seconds">Seconds</string>
+    <string name="picker_minutes_unit">min</string>
+    <string name="picker_seconds_unit">sec</string>
+    <!-- iOS wheel rows -->
+    <string name="picker_minutes_row">%1$d min</string>
+    <string name="picker_seconds_row">%1$d sec</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Preferences</string>
+    <string name="settings_themes">HARMONIZED THEMES</string>
+    <string name="settings_themes_note">The app icon changes with the theme.</string>
+    <string name="settings_icon_note_android">The new icon appears when you leave SereneFlow. Some home screens remove the old shortcut; add SereneFlow again from the app list if it disappears.</string>
+    <string name="settings_sound_voice">SOUND &amp; VOICE</string>
+    <string name="settings_default_sound">Default sound</string>
+    <string name="settings_default_sound_description">For routines set to Default</string>
+    <string name="settings_voice_guidance">Voice guidance</string>
+    <string name="settings_voice_guidance_description">Speak each step's name and length in routines set to Default.</string>
+    <string name="settings_voice">Voice</string>
+    <string name="settings_voice_description">For spoken step announcements</string>
+    <string name="settings_vibration">Vibration</string>
+    <string name="settings_vibration_description">A tap as each step starts, on the 3-2-1 countdown and at the end, even when the routine is muted.</string>
+    <string name="settings_screen_background">SCREEN &amp; BACKGROUND</string>
+    <string name="settings_keep_screen_on">Keep screen on</string>
+    <string name="settings_keep_screen_on_description">The display stays awake while a routine is on screen.</string>
+    <string name="settings_background">Follow routine with screen off</string>
+    <string name="settings_background_description">Keep guiding you in the background, with a notification showing the current step and time left.</string>
+    <string name="settings_reminders">REMINDERS</string>
+    <string name="settings_reminders_note">Announce when this much of each step is left. Steps under 10 seconds are skipped.</string>
+    <string name="settings_reminder_percent">%1$d%</string>
+    <string name="settings_default_effect">DEFAULT VISUAL EFFECT</string>
+    <string name="settings_default_effect_note">Used by routines whose visual effect is Default.</string>
+    <string name="settings_backup">BACKUP</string>
+    <string name="settings_backup_note">Save your routines to a file, or add routines from one. Importing never replaces a routine.</string>
+    <string name="settings_export">Export all routines</string>
+    <string name="settings_export_description">Share or save a backup file</string>
+    <plurals name="settings_routine_count">
+        <item quantity="one">%1$d routine</item>
+        <item quantity="other">%1$d routines</item>
+    </plurals>
+    <string name="settings_import">Import routines</string>
+    <string name="settings_import_description">From a .sereneflow file</string>
+
+    <!-- Sound and voice pickers -->
+    <string name="sound_picker_note">Plays at each step in routines whose sound is Default; each routine can pick its own. Tap a sound to hear it.</string>
+    <string name="voice_picker_note">Speaks the step announcements in every routine that uses voice. Tap a voice to hear it.</string>
+    <string name="voice_picker_default_detail">The device's standard English voice</string>
+    <string name="voice_picker_none_installed">No other English voices are installed. You can add some in the device's text-to-speech settings.</string>
+</resources>

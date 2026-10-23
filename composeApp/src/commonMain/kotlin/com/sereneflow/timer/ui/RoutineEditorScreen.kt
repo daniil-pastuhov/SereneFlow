@@ -109,6 +109,9 @@ import com.sereneflow.timer.ui.platform.ConfirmDialog
 import com.sereneflow.timer.ui.platform.DurationPicker
 import com.sereneflow.timer.ui.platform.PlatformIcons
 import kotlinx.coroutines.launch
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,8 +125,15 @@ fun RoutineEditorScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
+    val newTitle = stringResource(Res.string.editor_new_title)
+    val newSteps = listOf(
+        stringResource(Res.string.editor_new_step_1),
+        stringResource(Res.string.editor_new_step_2),
+        stringResource(Res.string.editor_new_step_3)
+    )
+    val untitled = stringResource(Res.string.editor_untitled)
 
-    var title by remember { mutableStateOf(routine?.title ?: "New Mindful Routine") }
+    var title by remember { mutableStateOf(routine?.title ?: newTitle) }
     var description by remember { mutableStateOf(routine?.description ?: "") }
     // null / DEFAULT: whatever Settings says when the routine starts.
     var selectedVisualEffect by remember { mutableStateOf(routine?.visualEffect) }
@@ -137,9 +147,9 @@ fun RoutineEditorScreen(
     var steps by remember {
         mutableStateOf(
             routine?.steps ?: listOf(
-                RoutineStep("s1", "Centering & Stillness", 120),
-                RoutineStep("s2", "Deep Breathing", 180),
-                RoutineStep("s3", "Gentle Reflection", 120)
+                RoutineStep("s1", newSteps[0], 120),
+                RoutineStep("s2", newSteps[1], 180),
+                RoutineStep("s3", newSteps[2], 120)
             )
         )
     }
@@ -155,7 +165,7 @@ fun RoutineEditorScreen(
 
     // Edits are applied on top of the original so fields the editor doesn't expose survive.
     fun buildRoutine(): Routine = (routine ?: Routine(id = newRoutineId, title = "")).copy(
-        title = title.ifBlank { "Untitled Routine" },
+        title = title.ifBlank { untitled },
         description = description,
         visualEffect = selectedVisualEffect,
         sound = selectedSound,
@@ -195,9 +205,9 @@ fun RoutineEditorScreen(
 
     if (showDiscardDialog) {
         ConfirmDialog(
-            title = "Discard changes?",
-            message = "Your edits to this routine haven't been saved.",
-            confirmLabel = "Discard",
+            title = stringResource(Res.string.editor_discard_title),
+            message = stringResource(Res.string.editor_discard_message),
+            confirmLabel = stringResource(Res.string.action_discard),
             destructive = true,
             onConfirm = {
                 showDiscardDialog = false
@@ -239,7 +249,11 @@ fun RoutineEditorScreen(
     val totalDurationSecs = buildRoutine().totalDurationSeconds
     val totalMins = totalDurationSecs / 60
     val totalSecs = totalDurationSecs % 60
-    val formattedTotal = if (totalMins > 0) "${totalMins}m ${totalSecs}s" else "${totalSecs}s"
+    val formattedTotal = if (totalMins > 0) {
+        stringResource(Res.string.duration_short_min_sec, totalMins, totalSecs)
+    } else {
+        stringResource(Res.string.duration_short_sec, totalSecs)
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
@@ -250,7 +264,7 @@ fun RoutineEditorScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = if (routine == null) "Create Routine" else "Edit Routine",
+                            text = stringResource(if (routine == null) Res.string.editor_create else Res.string.editor_edit),
                             modifier = Modifier.semantics { heading() },
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium,
@@ -261,7 +275,7 @@ fun RoutineEditorScreen(
                         IconButton(onClick = requestBack) {
                             Icon(
                                 imageVector = PlatformIcons.Back,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(Res.string.action_back),
                                 tint = colors.onBackground
                             )
                         }
@@ -273,7 +287,7 @@ fun RoutineEditorScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Duplicate",
+                                    contentDescription = stringResource(Res.string.action_duplicate),
                                     tint = colors.onSurfaceVariant
                                 )
                             }
@@ -290,7 +304,7 @@ fun RoutineEditorScreen(
                         ) {
                             Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Save", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(Res.string.action_save), fontWeight = FontWeight.SemiBold)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -324,7 +338,7 @@ fun RoutineEditorScreen(
                                     untouchedDefaults.edited(TITLE_FIELD)
                                 },
                                 selectAllOnFocus = TITLE_FIELD in untouchedDefaults,
-                                label = { Text("Routine Name") },
+                                label = { Text(stringResource(Res.string.editor_name_label)) },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                                 keyboardActions = KeyboardActions(onNext = { focusStepTitle(0) }),
@@ -339,7 +353,7 @@ fun RoutineEditorScreen(
                             OutlinedTextField(
                                 value = description,
                                 onValueChange = { description = it },
-                                label = { Text("Mindful Description (Optional)") },
+                                label = { Text(stringResource(Res.string.editor_description_label)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
@@ -361,15 +375,15 @@ fun RoutineEditorScreen(
                                 .padding(vertical = 6.dp)
                         ) {
                             NavigationRow(
-                                title = "Visual effect",
-                                description = "Default: ${preferences.defaultVisualEffect.displayName}",
-                                value = selectedVisualEffect?.displayName ?: "Default",
+                                title = stringResource(Res.string.editor_visual_effect),
+                                description = stringResource(Res.string.editor_default_is, preferences.defaultVisualEffect.displayName),
+                                value = selectedVisualEffect?.displayName ?: stringResource(Res.string.value_default),
                                 onClick = { openPicker = EditorPicker.VisualEffect }
                             )
                             NavigationRow(
-                                title = "Sound",
-                                description = "Default: ${preferences.defaultSound.displayName}",
-                                value = selectedSound?.displayName ?: "Default",
+                                title = stringResource(Res.string.editor_sound),
+                                description = stringResource(Res.string.editor_default_is, preferences.defaultSound.displayName),
+                                value = selectedSound?.displayName ?: stringResource(Res.string.value_default),
                                 onClick = { openPicker = EditorPicker.Sound }
                             )
                         }
@@ -378,7 +392,7 @@ fun RoutineEditorScreen(
                     // Spoken step names, on top of any sound
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            SectionLabel("VOICE GUIDANCE")
+                            SectionLabel(stringResource(Res.string.editor_voice_section))
 
                             Row(
                                 modifier = Modifier.selectableGroup(),
@@ -387,7 +401,10 @@ fun RoutineEditorScreen(
                                 VoiceGuidance.entries.forEach { voice ->
                                     OptionChip(
                                         label = if (voice == VoiceGuidance.DEFAULT) {
-                                            "Default · ${if (preferences.defaultVoice) "On" else "Off"}"
+                                            stringResource(
+                                                Res.string.editor_voice_default,
+                                                stringResource(if (preferences.defaultVoice) Res.string.value_on else Res.string.value_off)
+                                            )
                                         } else voice.displayName,
                                         isSelected = voice == selectedVoice,
                                         onClick = {
@@ -410,7 +427,7 @@ fun RoutineEditorScreen(
                     // Accent colour: tints the routine's card and its timer
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            SectionLabel("ACCENT COLOUR")
+                            SectionLabel(stringResource(Res.string.editor_accent_section))
                             AccentSwatches(selected = selectedAccent, onSelect = { selectedAccent = it })
                         }
                     }
@@ -422,9 +439,9 @@ fun RoutineEditorScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            SectionLabel("TIMELINE STEPS (${steps.size})")
+                            SectionLabel(stringResource(Res.string.editor_steps_section, steps.size))
                             Text(
-                                text = "Total: $formattedTotal",
+                                text = stringResource(Res.string.editor_total, formattedTotal),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.onSurfaceVariant
@@ -484,6 +501,7 @@ fun RoutineEditorScreen(
 
                     // Add Step Button
                     item {
+                        val newStepTitle = stringResource(Res.string.editor_new_step, steps.size + 1)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -497,7 +515,7 @@ fun RoutineEditorScreen(
                                 .clickable {
                                     val newStep = RoutineStep(
                                         id = newStepId(),
-                                        title = "New Step ${steps.size + 1}",
+                                        title = newStepTitle,
                                         durationSeconds = 120
                                     )
                                     steps = steps + newStep
@@ -515,7 +533,7 @@ fun RoutineEditorScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Add Next Step",
+                                    text = stringResource(Res.string.editor_add_step),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.primary
@@ -537,22 +555,24 @@ fun RoutineEditorScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    SectionLabel("ROUNDS")
+                                    SectionLabel(stringResource(Res.string.editor_rounds_section))
                                     Text(
-                                        text = if (rounds > 1) "All steps run $rounds times" else "The steps run once",
+                                        text = if (rounds > 1) pluralStringResource(Res.plurals.editor_rounds_many, rounds, rounds)
+                                            else stringResource(Res.string.editor_rounds_once),
                                         fontSize = 13.sp,
                                         color = colors.onSurfaceVariant
                                     )
                                 }
                                 IconButton(onClick = { rounds-- }, enabled = rounds > 1) {
-                                    Icon(Icons.Default.Remove, contentDescription = "Fewer rounds", tint = colors.primary)
+                                    Icon(Icons.Default.Remove, contentDescription = stringResource(Res.string.editor_fewer_rounds), tint = colors.primary)
                                 }
+                                val roundsDescription = pluralStringResource(Res.plurals.rounds_count, rounds, rounds)
                                 Text(
                                     text = "$rounds",
                                     modifier = Modifier
                                         .widthIn(min = 28.dp)
                                         .clearAndSetSemantics {
-                                            contentDescription = if (rounds == 1) "1 round" else "$rounds rounds"
+                                            contentDescription = roundsDescription
                                         },
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.SemiBold,
@@ -560,11 +580,11 @@ fun RoutineEditorScreen(
                                     textAlign = TextAlign.Center
                                 )
                                 IconButton(onClick = { rounds++ }, enabled = rounds < Routine.MAX_ROUNDS) {
-                                    Icon(Icons.Default.Add, contentDescription = "More rounds", tint = colors.primary)
+                                    Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.editor_more_rounds), tint = colors.primary)
                                 }
                             }
                             if (rounds > 1) {
-                                Text("Rest between rounds", fontSize = 13.sp, color = colors.onSurfaceVariant)
+                                Text(stringResource(Res.string.editor_rest_between_rounds), fontSize = 13.sp, color = colors.onSurfaceVariant)
                                 FlowRow(
                                     modifier = Modifier.selectableGroup(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -572,7 +592,7 @@ fun RoutineEditorScreen(
                                 ) {
                                     RestOptions.forEach { seconds ->
                                         OptionChip(
-                                            label = if (seconds == 0) "None" else RoutineStep("", "", seconds).formattedDuration,
+                                            label = if (seconds == 0) stringResource(Res.string.editor_rest_none) else RoutineStep("", "", seconds).formattedDuration,
                                             isSelected = seconds == restBetweenRounds,
                                             onClick = { restBetweenRounds = seconds }
                                         )
@@ -594,13 +614,16 @@ fun RoutineEditorScreen(
         ) { picker ->
             when (picker) {
                 EditorPicker.VisualEffect -> ChoiceScreen(
-                    title = "Visual effect",
-                    note = "The animation behind the countdown. Default follows Settings when the routine starts.",
+                    title = stringResource(Res.string.editor_visual_effect),
+                    note = stringResource(Res.string.editor_visual_effect_note),
                     choices = listOf(
                         Choice<VisualEffectType?>(
                             null,
-                            "Default",
-                            "Now ${preferences.defaultVisualEffect.emoji} ${preferences.defaultVisualEffect.displayName}"
+                            stringResource(Res.string.value_default),
+                            stringResource(
+                                Res.string.editor_default_now,
+                                "${preferences.defaultVisualEffect.emoji} ${preferences.defaultVisualEffect.displayName}"
+                            )
                         )
                     ) + VisualEffectType.entries.map {
                         Choice<VisualEffectType?>(it, "${it.emoji} ${it.displayName}", it.description)
@@ -610,11 +633,14 @@ fun RoutineEditorScreen(
                     onBack = { openPicker = null }
                 )
                 EditorPicker.Sound -> ChoiceScreen(
-                    title = "Sound",
-                    note = "Plays as each step starts. Default follows Settings when the routine starts. " +
-                        "Tap a sound to hear it.",
+                    title = stringResource(Res.string.editor_sound),
+                    note = stringResource(Res.string.editor_sound_note),
                     choices = listOf(
-                        Choice<CueSound?>(null, "Default", "Now ${preferences.defaultSound.displayName}")
+                        Choice<CueSound?>(
+                            null,
+                            stringResource(Res.string.value_default),
+                            stringResource(Res.string.editor_default_now, preferences.defaultSound.displayName)
+                        )
                     ) + CueSound.entries.map { Choice<CueSound?>(it, it.displayName, it.description) },
                     selected = selectedSound,
                     onSelect = { sound ->
@@ -647,7 +673,7 @@ private const val FIRST_STEP_ITEM = 5
 @Composable
 private fun AccentSwatches(selected: Long?, onSelect: (Long?) -> Unit) {
     val colors = LocalSereneColors.current
-    val options = listOf<Pair<Long?, String>>(null to "Theme colour") +
+    val options = listOf<Pair<Long?, String>>(null to stringResource(Res.string.editor_theme_colour)) +
         RoutineAccent.entries.map { it.argb to it.displayName }
     FlowRow(modifier = Modifier.fillMaxWidth().selectableGroup()) {
         options.forEach { (argb, name) ->
@@ -772,7 +798,7 @@ private fun StepEditorItem(
                     value = step.title,
                     onValueChange = { onUpdateStep(step.copy(title = it)) },
                     selectAllOnFocus = selectTitleOnFocus,
-                    label = { Text("Step ${index + 1} name") },
+                    label = { Text(stringResource(Res.string.editor_step_name, index + 1)) },
                     modifier = Modifier.fillMaxWidth().focusRequester(titleFocusRequester),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = if (isLast) ImeAction.Done else ImeAction.Next),
@@ -795,11 +821,12 @@ private fun StepEditorItem(
                     itemVerticalAlignment = Alignment.CenterVertically
                 ) {
                     // Opens the platform's minutes and seconds wheels.
+                    val durationDescription = stringResource(Res.string.editor_step_duration_description, index + 1, step.spokenDuration)
                     SmallTarget(
                         onClick = { showDurationPicker = true },
-                        onClickLabel = "Change duration",
+                        onClickLabel = stringResource(Res.string.editor_change_duration),
                         modifier = Modifier.semantics {
-                            contentDescription = "Step ${index + 1} duration, ${step.spokenDuration}"
+                            contentDescription = durationDescription
                         }
                     ) { indication ->
                         Row(
@@ -828,19 +855,31 @@ private fun StepEditorItem(
 
                     // No gaps: each pill's 48dp target already spaces them.
                     Row {
-                        DurationPill(label = "-1m", description = "Decrease by 1 minute") {
+                        DurationPill(
+                            label = stringResource(Res.string.editor_minus_minute),
+                            description = stringResource(Res.string.editor_minus_minute_description)
+                        ) {
                             val newDuration = (step.durationSeconds - 60).coerceAtLeast(10)
                             onUpdateStep(step.copy(durationSeconds = newDuration))
                         }
-                        DurationPill(label = "-15s", description = "Decrease by 15 seconds") {
+                        DurationPill(
+                            label = stringResource(Res.string.editor_minus_15s),
+                            description = stringResource(Res.string.editor_minus_15s_description)
+                        ) {
                             val newDuration = (step.durationSeconds - 15).coerceAtLeast(10)
                             onUpdateStep(step.copy(durationSeconds = newDuration))
                         }
-                        DurationPill(label = "+15s", description = "Increase by 15 seconds") {
+                        DurationPill(
+                            label = stringResource(Res.string.editor_plus_15s),
+                            description = stringResource(Res.string.editor_plus_15s_description)
+                        ) {
                             val newDuration = step.durationSeconds + 15
                             onUpdateStep(step.copy(durationSeconds = newDuration))
                         }
-                        DurationPill(label = "+1m", description = "Increase by 1 minute") {
+                        DurationPill(
+                            label = stringResource(Res.string.editor_plus_minute),
+                            description = stringResource(Res.string.editor_plus_minute_description)
+                        ) {
                             val newDuration = step.durationSeconds + 60
                             onUpdateStep(step.copy(durationSeconds = newDuration))
                         }
@@ -855,24 +894,24 @@ private fun StepEditorItem(
                 ) {
                     StepActionButton(
                         icon = Icons.Default.ArrowUpward,
-                        description = "Move step ${index + 1} up",
+                        description = stringResource(Res.string.editor_move_step_up, index + 1),
                         enabled = !isFirst,
                         onClick = onMoveUp
                     )
                     StepActionButton(
                         icon = Icons.Default.ArrowDownward,
-                        description = "Move step ${index + 1} down",
+                        description = stringResource(Res.string.editor_move_step_down, index + 1),
                         enabled = !isLast,
                         onClick = onMoveDown
                     )
                     StepActionButton(
                         icon = Icons.Default.ContentCopy,
-                        description = "Duplicate step ${index + 1}",
+                        description = stringResource(Res.string.editor_duplicate_step, index + 1),
                         onClick = onDuplicate
                     )
                     StepActionButton(
                         icon = Icons.Default.Delete,
-                        description = "Delete step ${index + 1}",
+                        description = stringResource(Res.string.editor_delete_step, index + 1),
                         tint = Color(0xFFE53935),
                         onClick = onDelete
                     )

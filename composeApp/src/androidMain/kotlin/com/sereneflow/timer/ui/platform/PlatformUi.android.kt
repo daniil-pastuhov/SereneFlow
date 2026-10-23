@@ -40,6 +40,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 private val DestructiveRed = Color(0xFFE53935)
 
@@ -100,24 +102,34 @@ actual fun DurationPicker(
     var seconds by remember { mutableIntStateOf(initialSeconds % 60) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Duration") },
+        title = { Text(stringResource(Res.string.picker_title)) },
         text = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                NumberWheel(value = minutes, max = MAX_PICKER_MINUTES, description = "Minutes", onChange = { minutes = it })
-                Text("min", modifier = Modifier.clearAndSetSemantics {})
-                NumberWheel(value = seconds, max = 59, description = "Seconds", onChange = { seconds = it })
-                Text("sec", modifier = Modifier.clearAndSetSemantics {})
+                NumberWheel(
+                    value = minutes,
+                    max = MAX_PICKER_MINUTES,
+                    description = stringResource(Res.string.picker_minutes),
+                    onChange = { minutes = it }
+                )
+                Text(stringResource(Res.string.picker_minutes_unit), modifier = Modifier.clearAndSetSemantics {})
+                NumberWheel(
+                    value = seconds,
+                    max = 59,
+                    description = stringResource(Res.string.picker_seconds),
+                    onChange = { seconds = it }
+                )
+                Text(stringResource(Res.string.picker_seconds_unit), modifier = Modifier.clearAndSetSemantics {})
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(pickedDuration(minutes, seconds)) }) { Text("Done") }
+            TextButton(onClick = { onConfirm(pickedDuration(minutes, seconds)) }) { Text(stringResource(Res.string.action_done)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
         }
     )
 }

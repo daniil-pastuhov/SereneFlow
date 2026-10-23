@@ -61,7 +61,9 @@ import com.sereneflow.timer.audio.VoiceOption
 import com.sereneflow.timer.platform.AppIconSwitcher
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.PreferencesRepository
-import com.sereneflow.timer.resources.Res
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import com.sereneflow.timer.resources.app_icon_midnight_starlight
 import com.sereneflow.timer.resources.app_icon_ocean_mist
 import com.sereneflow.timer.resources.app_icon_sunset_clay
@@ -99,10 +101,11 @@ fun SettingsScreen(
     val voices by produceState<List<VoiceOption>?>(initialValue = null) {
         value = TimerSession.audioController.englishVoices()
     }
+    val defaultLabel = stringResource(Res.string.value_default)
     val voiceName = when {
-        preferences.voiceId == null -> "Default"
+        preferences.voiceId == null -> defaultLabel
         voices == null -> "…" // still loading; don't flash "Default" for a chosen voice
-        else -> voices?.firstOrNull { it.id == preferences.voiceId }?.name ?: "Default"
+        else -> voices?.firstOrNull { it.id == preferences.voiceId }?.name ?: defaultLabel
     }
     val requestNotificationPermission = rememberNotificationPermissionRequest()
     val currentTheme = preferences.themeMode
@@ -117,7 +120,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Preferences",
+                        text = stringResource(Res.string.settings_title),
                         modifier = Modifier.semantics { heading() },
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
@@ -128,7 +131,7 @@ fun SettingsScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = PlatformIcons.Back,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.action_back),
                             tint = colors.onBackground
                         )
                     }
@@ -145,9 +148,14 @@ fun SettingsScreen(
             ) {
                 // Theme Section
                 item {
-                    SectionHeader(title = "HARMONIZED THEMES", icon = Icons.Default.Palette)
+                    SectionHeader(title = stringResource(Res.string.settings_themes), icon = Icons.Default.Palette)
                     if (AppIconSwitcher.isSupported) {
-                        SectionNote(listOfNotNull("The app icon changes with the theme.", AppIconSwitcher.changeNote).joinToString(" "))
+                        SectionNote(
+                            listOfNotNull(
+                                stringResource(Res.string.settings_themes_note),
+                                AppIconSwitcher.changeNote?.let { stringResource(it) }
+                            ).joinToString(" ")
+                        )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -217,7 +225,7 @@ fun SettingsScreen(
                 // Sound and voice: each opens a list of its own, which can grow without making
                 // this screen long.
                 item {
-                    SectionHeader(title = "SOUND & VOICE", icon = Icons.Default.GraphicEq)
+                    SectionHeader(title = stringResource(Res.string.settings_sound_voice), icon = Icons.Default.GraphicEq)
                     Spacer(modifier = Modifier.height(10.dp))
                     Column(
                         modifier = Modifier
@@ -228,14 +236,14 @@ fun SettingsScreen(
                             .padding(vertical = 6.dp)
                     ) {
                         NavigationRow(
-                            title = "Default sound",
-                            description = "For routines set to Default",
+                            title = stringResource(Res.string.settings_default_sound),
+                            description = stringResource(Res.string.settings_default_sound_description),
                             value = defaultSound.displayName,
                             onClick = onOpenSoundPicker
                         )
                         SwitchRow(
-                            title = "Voice guidance",
-                            description = "Speak each step's name and length in routines set to Default.",
+                            title = stringResource(Res.string.settings_voice_guidance),
+                            description = stringResource(Res.string.settings_voice_guidance_description),
                             checked = preferences.defaultVoice,
                             onCheckedChange = preferencesRepository::setDefaultVoice
                         )
@@ -243,16 +251,15 @@ fun SettingsScreen(
                         // to every routine that speaks and must stay visible to be changed back.
                         if (preferences.defaultVoice || preferences.voiceId != null) {
                             NavigationRow(
-                                title = "Voice",
-                                description = "For spoken step announcements",
+                                title = stringResource(Res.string.settings_voice),
+                                description = stringResource(Res.string.settings_voice_description),
                                 value = voiceName,
                                 onClick = onOpenVoicePicker
                             )
                         }
                         SwitchRow(
-                            title = "Vibration",
-                            description = "A tap as each step starts, on the 3-2-1 countdown and at the end, " +
-                                "even when the routine is muted.",
+                            title = stringResource(Res.string.settings_vibration),
+                            description = stringResource(Res.string.settings_vibration_description),
                             checked = preferences.hapticsEnabled,
                             onCheckedChange = preferencesRepository::setHapticsEnabled
                         )
@@ -261,7 +268,7 @@ fun SettingsScreen(
 
                 // Screen & background behaviour
                 item {
-                    SectionHeader(title = "SCREEN & BACKGROUND", icon = Icons.Default.PhoneAndroid)
+                    SectionHeader(title = stringResource(Res.string.settings_screen_background), icon = Icons.Default.PhoneAndroid)
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Column(
@@ -273,15 +280,14 @@ fun SettingsScreen(
                             .padding(vertical = 6.dp)
                     ) {
                         SwitchRow(
-                            title = "Keep screen on",
-                            description = "The display stays awake while a routine is on screen.",
+                            title = stringResource(Res.string.settings_keep_screen_on),
+                            description = stringResource(Res.string.settings_keep_screen_on_description),
                             checked = preferences.keepScreenOn,
                             onCheckedChange = preferencesRepository::setKeepScreenOn
                         )
                         SwitchRow(
-                            title = "Follow routine with screen off",
-                            description = "Keep guiding you in the background, with a notification " +
-                                "showing the current step and time left.",
+                            title = stringResource(Res.string.settings_background),
+                            description = stringResource(Res.string.settings_background_description),
                             checked = preferences.backgroundMode,
                             onCheckedChange = { enabled ->
                                 preferencesRepository.setBackgroundMode(enabled)
@@ -293,8 +299,8 @@ fun SettingsScreen(
 
                 // "% left" reminders
                 item {
-                    SectionHeader(title = "REMINDERS", icon = Icons.Default.NotificationsActive)
-                    SectionNote("Announce when this much of each step is left. Steps under 10 seconds are skipped.")
+                    SectionHeader(title = stringResource(Res.string.settings_reminders), icon = Icons.Default.NotificationsActive)
+                    SectionNote(stringResource(Res.string.settings_reminders_note))
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
@@ -313,7 +319,7 @@ fun SettingsScreen(
                                 onClick = { preferencesRepository.toggleReminderThreshold(percent) },
                                 label = {
                                     Text(
-                                        text = "$percent%",
+                                        text = stringResource(Res.string.settings_reminder_percent, percent),
                                         modifier = Modifier.fillMaxWidth(),
                                         textAlign = TextAlign.Center,
                                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
@@ -333,8 +339,8 @@ fun SettingsScreen(
 
                 // Default Visual Simulation
                 item {
-                    SectionHeader(title = "DEFAULT VISUAL EFFECT", icon = Icons.Default.Visibility)
-                    SectionNote("Used by routines whose visual effect is Default.")
+                    SectionHeader(title = stringResource(Res.string.settings_default_effect), icon = Icons.Default.Visibility)
+                    SectionNote(stringResource(Res.string.settings_default_effect_note))
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Column(
@@ -395,8 +401,8 @@ fun SettingsScreen(
 
                 // Backup: every routine to one .sereneflow file, and back
                 item {
-                    SectionHeader(title = "BACKUP", icon = Icons.Default.Backup)
-                    SectionNote("Save your routines to a file, or add routines from one. Importing never replaces a routine.")
+                    SectionHeader(title = stringResource(Res.string.settings_backup), icon = Icons.Default.Backup)
+                    SectionNote(stringResource(Res.string.settings_backup_note))
                     Spacer(modifier = Modifier.height(10.dp))
                     Column(
                         modifier = Modifier
@@ -408,15 +414,15 @@ fun SettingsScreen(
                     ) {
                         if (routineCount > 0) {
                             NavigationRow(
-                                title = "Export all routines",
-                                description = "Share or save a backup file",
-                                value = if (routineCount == 1) "1 routine" else "$routineCount routines",
+                                title = stringResource(Res.string.settings_export),
+                                description = stringResource(Res.string.settings_export_description),
+                                value = pluralStringResource(Res.plurals.settings_routine_count, routineCount, routineCount),
                                 onClick = onExportRoutines
                             )
                         }
                         NavigationRow(
-                            title = "Import routines",
-                            description = "From a .sereneflow file",
+                            title = stringResource(Res.string.settings_import),
+                            description = stringResource(Res.string.settings_import_description),
                             value = "",
                             onClick = pickRoutineFile
                         )

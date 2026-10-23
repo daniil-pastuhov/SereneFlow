@@ -129,6 +129,9 @@ import com.sereneflow.timer.ui.platform.ActionMenu
 import com.sereneflow.timer.ui.platform.ConfirmDialog
 import com.sereneflow.timer.ui.platform.MenuAction
 import com.sereneflow.timer.ui.platform.PlatformIcons
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RoutineListScreen(
@@ -213,10 +216,10 @@ fun RoutineListScreen(
     if (confirmDeleteSelected && selecting) {
         val doomed = routines.filter { it.id in selectedIds }
         ConfirmDialog(
-            title = doomed.singleOrNull()?.let { "Delete \"${it.title}\"?" } ?: "Delete ${doomed.size} routines?",
-            message = if (doomed.size == 1) "This routine will be removed permanently."
-                else "These routines will be removed permanently.",
-            confirmLabel = "Delete",
+            title = doomed.singleOrNull()?.let { stringResource(Res.string.list_delete_one_title, it.title) }
+                ?: pluralStringResource(Res.plurals.list_delete_many_title, doomed.size, doomed.size),
+            message = pluralStringResource(Res.plurals.list_delete_message, doomed.size),
+            confirmLabel = stringResource(Res.string.action_delete),
             destructive = true,
             onConfirm = {
                 confirmDeleteSelected = false
@@ -288,6 +291,8 @@ fun RoutineListScreen(
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 itemsIndexed(shownRoutines, key = { _, it -> it.id }) { index, routine ->
+                    val moveUpLabel = stringResource(Res.string.list_move_up)
+                    val moveDownLabel = stringResource(Res.string.list_move_down)
                     val dragging = reorder.draggingKey == routine.id
                     val raised = reorder.isLifted(routine.id)
                     RoutineCard(
@@ -309,8 +314,8 @@ fun RoutineListScreen(
                         ),
                         // Reordering without dragging, for screen readers.
                         moveActions = listOfNotNull(
-                            if (index > 0) CustomAccessibilityAction("Move up") { moveBy(routine, -1); true } else null,
-                            if (index < shownRoutines.lastIndex) CustomAccessibilityAction("Move down") { moveBy(routine, 1); true } else null
+                            if (index > 0) CustomAccessibilityAction(moveUpLabel) { moveBy(routine, -1); true } else null,
+                            if (index < shownRoutines.lastIndex) CustomAccessibilityAction(moveDownLabel) { moveBy(routine, 1); true } else null
                         ),
                         routine = routine,
                         visualEffect = routine.visualEffect ?: defaultVisualEffect,
@@ -371,6 +376,8 @@ private fun NewRoutineMenu(
     onTemplate: (Routine) -> Unit
 ) {
     val colors = LocalSereneColors.current
+    val newRoutineLabel = stringResource(Res.string.list_new_routine)
+    val menuState = stringResource(if (expanded) Res.string.list_menu_open else Res.string.list_menu_closed)
     FloatingActionButtonMenu(
         expanded = expanded,
         button = {
@@ -382,8 +389,8 @@ private fun NewRoutineMenu(
                     finalColor = colors.primary
                 ),
                 modifier = Modifier.semantics {
-                    contentDescription = "New routine"
-                    stateDescription = if (expanded) "Menu open" else "Menu closed"
+                    contentDescription = newRoutineLabel
+                    stateDescription = menuState
                     if (expanded) collapse { onExpandedChange(false); true } else expand { onExpandedChange(true); true }
                 }
             ) {
@@ -404,6 +411,7 @@ private fun NewRoutineMenu(
     ) {
         // Top to bottom; the blank routine, the usual choice, sits next to the button.
         StarterTemplates.all.forEach { template ->
+            val templateDescription = stringResource(Res.string.list_template_description, template.title)
             FloatingActionButtonMenuItem(
                 onClick = {
                     onExpandedChange(false)
@@ -411,7 +419,7 @@ private fun NewRoutineMenu(
                 },
                 text = { Text(template.title) },
                 icon = { Icon(templateIcon(template), contentDescription = null) },
-                modifier = Modifier.semantics { contentDescription = "${template.title} template" },
+                modifier = Modifier.semantics { contentDescription = templateDescription },
                 containerColor = colors.primaryContainer,
                 contentColor = colors.onPrimaryContainer
             )
@@ -421,7 +429,7 @@ private fun NewRoutineMenu(
                 onExpandedChange(false)
                 onBlank()
             },
-            text = { Text("Blank routine") },
+            text = { Text(stringResource(Res.string.list_blank_routine)) },
             icon = { Icon(Icons.Default.Edit, contentDescription = null) },
             containerColor = colors.primaryContainer,
             contentColor = colors.onPrimaryContainer
@@ -458,11 +466,11 @@ private fun SelectionBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
-            Icon(Icons.Default.Close, contentDescription = "Cancel selection", tint = colors.onSurfaceVariant)
+            Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.list_cancel_selection), tint = colors.onSurfaceVariant)
         }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "$count selected",
+            text = pluralStringResource(Res.plurals.list_selected_count, count, count),
             modifier = Modifier
                 .weight(1f)
                 .semantics {
@@ -476,15 +484,15 @@ private fun SelectionBar(
         IconButton(onClick = onSelectAll, enabled = !allSelected, modifier = Modifier.size(48.dp)) {
             Icon(
                 Icons.Default.SelectAll,
-                contentDescription = "Select all",
+                contentDescription = stringResource(Res.string.list_select_all),
                 tint = colors.onSurfaceVariant.copy(alpha = if (allSelected) 0.38f else 1f)
             )
         }
         IconButton(onClick = onShare, modifier = Modifier.size(48.dp)) {
-            Icon(Icons.Default.Share, contentDescription = "Share", tint = colors.onSurfaceVariant)
+            Icon(Icons.Default.Share, contentDescription = stringResource(Res.string.action_share), tint = colors.onSurfaceVariant)
         }
         IconButton(onClick = onDelete, modifier = Modifier.size(48.dp)) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = colors.onSurfaceVariant)
+            Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.action_delete), tint = colors.onSurfaceVariant)
         }
     }
 }
@@ -499,10 +507,10 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "No routines yet", modifier = Modifier.semantics { heading() }, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.onBackground)
+        Text(text = stringResource(Res.string.list_empty_title), modifier = Modifier.semantics { heading() }, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.onBackground)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Tap + to create your first mindful flow, or start from a template.",
+            text = stringResource(Res.string.list_empty_message),
             fontSize = 14.sp,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -524,7 +532,7 @@ private fun HeaderSection(
     ) {
         Column {
             Text(
-                text = "SERENEFLOW",
+                text = stringResource(Res.string.list_brand),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp,
@@ -532,7 +540,7 @@ private fun HeaderSection(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Breathe & Begin",
+                text = stringResource(Res.string.list_title),
                 modifier = Modifier.semantics { heading() },
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Light,
@@ -549,7 +557,7 @@ private fun HeaderSection(
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
+                contentDescription = stringResource(Res.string.list_settings),
                 tint = colors.onSurfaceVariant
             )
         }
@@ -582,12 +590,15 @@ private fun RoutineCard(
     val scale by animateFloatAsState(if (lifted) 1.03f else 1f, label = "CardScale")
     var confirmDelete by remember { mutableStateOf(false) }
     val accent = routine.accentColor
+    val selectionState = stringResource(if (selected) Res.string.list_selected else Res.string.list_not_selected)
+    val selectLabel = stringResource(Res.string.action_select)
+    val startDescription = stringResource(Res.string.list_start_routine_description, routine.title)
 
     if (confirmDelete) {
         ConfirmDialog(
-            title = "Delete \"${routine.title}\"?",
-            message = "This routine will be removed permanently.",
-            confirmLabel = "Delete",
+            title = stringResource(Res.string.list_delete_one_title, routine.title),
+            message = pluralStringResource(Res.plurals.list_delete_message, 1),
+            confirmLabel = stringResource(Res.string.action_delete),
             destructive = true,
             onConfirm = {
                 confirmDelete = false
@@ -628,7 +639,7 @@ private fun RoutineCard(
                     Modifier
                         .selectable(selected = selected, role = Role.Checkbox, onClick = onToggleSelected)
                         .semantics {
-                            stateDescription = if (selected) "Selected" else "Not selected"
+                            stateDescription = selectionState
                             customActions = moveActions
                         }
                 } else {
@@ -650,7 +661,7 @@ private fun RoutineCard(
                 Column(
                     modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {
                         if (!selecting) {
-                            onLongClick(label = "Select") { onStartSelecting(); true }
+                            onLongClick(label = selectLabel) { onStartSelecting(); true }
                             customActions = moveActions
                         }
                     }
@@ -705,7 +716,7 @@ private fun RoutineCard(
                     ) {
                         Icon(
                             imageVector = PlatformIcons.More,
-                            contentDescription = "Options",
+                            contentDescription = stringResource(Res.string.list_options),
                             tint = colors.onSurfaceVariant
                         )
                     }
@@ -714,16 +725,16 @@ private fun RoutineCard(
                         expanded = showMenu,
                         title = routine.title,
                         actions = listOf(
-                            MenuAction("Edit", Icons.Default.Edit, onClick = onEdit),
-                            MenuAction("Duplicate", Icons.Default.ContentCopy, onClick = onDuplicate),
-                            MenuAction("Share", Icons.Default.Share) {
+                            MenuAction(stringResource(Res.string.action_edit), Icons.Default.Edit, onClick = onEdit),
+                            MenuAction(stringResource(Res.string.action_duplicate), Icons.Default.ContentCopy, onClick = onDuplicate),
+                            MenuAction(stringResource(Res.string.action_share), Icons.Default.Share) {
                                 shareFile(
                                     RoutineTransfer.fileNameFor(routine),
                                     RoutineTransfer.MIME_TYPE,
                                     RoutineTransfer.encode(listOf(routine))
                                 )
                             },
-                            MenuAction("Delete", Icons.Default.Delete, destructive = true) { confirmDelete = true }
+                            MenuAction(stringResource(Res.string.action_delete), Icons.Default.Delete, destructive = true) { confirmDelete = true }
                         ),
                         onDismiss = { showMenu = false }
                     )
@@ -741,9 +752,10 @@ private fun RoutineCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Total duration tag
+                    val totalDescription = stringResource(Res.string.list_total_description, spokenDuration(routine.totalDurationSeconds))
                     Box(
                         modifier = Modifier
-                            .clearAndSetSemantics { contentDescription = "Total ${spokenDuration(routine.totalDurationSeconds)}" }
+                            .clearAndSetSemantics { contentDescription = totalDescription }
                             .clip(RoundedCornerShape(12.dp))
                             .background(colors.primaryContainer.copy(alpha = 0.5f))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
@@ -766,12 +778,17 @@ private fun RoutineCard(
                     }
 
                     // Steps count tag
+                    val stepsDescription = if (routine.hasRounds) {
+                        stringResource(
+                            Res.string.list_steps_and_rounds_description,
+                            pluralStringResource(Res.plurals.step_count, routine.steps.size, routine.steps.size),
+                            pluralStringResource(Res.plurals.rounds_count, routine.roundCount, routine.roundCount)
+                        )
+                    } else routine.stepCountText
                     Box(
                         modifier = Modifier
                             .clearAndSetSemantics {
-                                contentDescription = if (routine.hasRounds) {
-                                    "${routine.steps.size.plural("step")}, ${routine.roundCount} rounds"
-                                } else routine.stepCountText
+                                contentDescription = stepsDescription
                             }
                             .clip(RoundedCornerShape(12.dp))
                             .background(colors.surfaceVariant.copy(alpha = 0.7f))
@@ -786,17 +803,20 @@ private fun RoutineCard(
                     }
 
                     // Visual effect badge; the emoji is left out of what a screen reader says.
-                    val effectName = when (visualEffect) {
-                        VisualEffectType.WATER -> "Water"
-                        VisualEffectType.BONSAI_TREE -> "Bonsai"
-                        VisualEffectType.COSMIC_ORBIT -> "Orbit"
-                        VisualEffectType.BREATHING_LOTUS -> "Lotus"
-                        VisualEffectType.HOURGLASS -> "Hourglass"
-                    }
+                    val effectName = stringResource(
+                        when (visualEffect) {
+                            VisualEffectType.WATER -> Res.string.effect_water_short
+                            VisualEffectType.BONSAI_TREE -> Res.string.effect_bonsai_short
+                            VisualEffectType.COSMIC_ORBIT -> Res.string.effect_orbit_short
+                            VisualEffectType.BREATHING_LOTUS -> Res.string.effect_lotus_short
+                            VisualEffectType.HOURGLASS -> Res.string.effect_hourglass_short
+                        }
+                    )
+                    val effectDescription = stringResource(Res.string.list_effect_description, effectName)
                     val visualEmoji = "${visualEffect.emoji} $effectName"
                     Box(
                         modifier = Modifier
-                            .clearAndSetSemantics { contentDescription = "$effectName effect" }
+                            .clearAndSetSemantics { contentDescription = effectDescription }
                             .clip(RoundedCornerShape(12.dp))
                             .background(colors.surfaceVariant.copy(alpha = 0.7f))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
@@ -836,11 +856,11 @@ private fun RoutineCard(
                         enabled = !selecting,
                         role = Role.Button,
                         onLongClick = onStartSelecting,
-                        onLongClickLabel = "Select",
+                        onLongClickLabel = selectLabel,
                         onClick = onPlay
                     )
                     // Names the routine: every card has a button like this.
-                    .semantics { contentDescription = "Start ${routine.title}" }
+                    .semantics { contentDescription = startDescription }
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -853,7 +873,7 @@ private fun RoutineCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Begin Routine",
+                        text = stringResource(Res.string.list_begin_routine),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.onPrimary
@@ -871,10 +891,11 @@ private fun StepsPreviewBar(steps: List<com.sereneflow.timer.model.RoutineStep>)
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         steps.take(3).forEachIndexed { index, step ->
+            val stepDescription = stringResource(Res.string.list_step_description, step.title, step.spokenDuration)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clearAndSetSemantics { contentDescription = "${step.title}, ${step.spokenDuration}" },
+                    .clearAndSetSemantics { contentDescription = stepDescription },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -904,7 +925,7 @@ private fun StepsPreviewBar(steps: List<com.sereneflow.timer.model.RoutineStep>)
 
         if (steps.size > 3) {
             Text(
-                text = "+ ${(steps.size - 3).plural("more step")}",
+                text = pluralStringResource(Res.plurals.list_more_steps, steps.size - 3, steps.size - 3),
                 fontSize = 11.sp,
                 color = colors.primary,
                 fontWeight = FontWeight.Medium,
@@ -913,6 +934,3 @@ private fun StepsPreviewBar(steps: List<com.sereneflow.timer.model.RoutineStep>)
         }
     }
 }
-
-/** "1 step", "3 steps". */
-private fun Int.plural(noun: String): String = if (this == 1) "1 $noun" else "$this ${noun}s"

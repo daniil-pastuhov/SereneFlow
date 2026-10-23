@@ -49,6 +49,8 @@ import platform.UIKit.popoverPresentationController
 import platform.UIKit.presentationController
 import platform.darwin.NSInteger
 import platform.darwin.NSObject
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 actual fun ConfirmDialog(
@@ -85,6 +87,7 @@ actual fun ActionMenu(
     onDismiss: () -> Unit
 ) {
     if (!expanded) return
+    val cancelLabel = stringResource(Res.string.action_cancel)
     val currentActions by rememberUpdatedState(actions)
     val currentOnDismiss by rememberUpdatedState(onDismiss)
 
@@ -101,7 +104,7 @@ actual fun ActionMenu(
                 }
             )
         }
-        sheet.addAction(UIAlertAction.actionWithTitle("Cancel", UIAlertActionStyleCancel) { currentOnDismiss() })
+        sheet.addAction(UIAlertAction.actionWithTitle(cancelLabel, UIAlertActionStyleCancel) { currentOnDismiss() })
         present(sheet)
         onDispose { sheet.dismissIfPresented() }
     }
@@ -115,18 +118,22 @@ actual fun DurationPicker(
 ) {
     val currentOnConfirm by rememberUpdatedState(onConfirm)
     val currentOnDismiss by rememberUpdatedState(onDismiss)
+    val title = stringResource(Res.string.picker_title)
+    // Without arguments the formats come back as written; the wheels fill in each row's number.
+    val minutesRow = stringResource(Res.string.picker_minutes_row)
+    val secondsRow = stringResource(Res.string.picker_seconds_row)
 
     DisposableEffect(Unit) {
         val picker = UIPickerView()
         // The picker holds its data source and delegate weakly; this effect keeps them alive.
-        val wheels = DurationWheels(onSwipeDismiss = { currentOnDismiss() })
+        val wheels = DurationWheels(minutesRow, secondsRow, onSwipeDismiss = { currentOnDismiss() })
         picker.dataSource = wheels
         picker.delegate = wheels
         picker.selectRow((initialSeconds / 60).coerceAtMost(MAX_PICKER_MINUTES).toLong(), inComponent = 0, animated = false)
         picker.selectRow((initialSeconds % 60).toLong(), inComponent = 1, animated = false)
 
         val content = UIViewController()
-        content.title = "Duration"
+        content.title = title
         content.view.backgroundColor = UIColor.systemBackgroundColor
         picker.translatesAutoresizingMaskIntoConstraints = false
         content.view.addSubview(picker)
@@ -166,6 +173,9 @@ actual fun DurationPicker(
 
 /** Minutes and seconds wheels of [DurationPicker], and the sheet's swipe-to-dismiss. */
 private class DurationWheels(
+    /** "%1$d min": a row of the minutes wheel. */
+    private val minutesRow: String,
+    private val secondsRow: String,
     private val onSwipeDismiss: () -> Unit
 ) : NSObject(), UIPickerViewDataSourceProtocol, UIPickerViewDelegateProtocol,
     UIAdaptivePresentationControllerDelegateProtocol {
@@ -177,7 +187,7 @@ private class DurationWheels(
 
     @ObjCSignatureOverride
     override fun pickerView(pickerView: UIPickerView, titleForRow: NSInteger, forComponent: NSInteger): String =
-        if (forComponent == 0L) "$titleForRow min" else "$titleForRow sec"
+        (if (forComponent == 0L) minutesRow else secondsRow).replace("%1\$d", titleForRow.toString())
 
     override fun presentationControllerDidDismiss(presentationController: UIPresentationController) {
         onSwipeDismiss()

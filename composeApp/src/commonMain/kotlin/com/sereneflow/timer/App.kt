@@ -39,6 +39,9 @@ import com.sereneflow.timer.ui.SettingsScreen
 import com.sereneflow.timer.ui.SoundPickerScreen
 import com.sereneflow.timer.ui.VoicePickerScreen
 import com.sereneflow.timer.ui.rememberPredictiveBackTransition
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 sealed class AppScreen {
     data object List : AppScreen()
@@ -150,12 +153,10 @@ fun App(demoLaunch: DemoLaunch? = null) {
         // Asked once, after the first routine is saved; changeable later in Settings.
         if (showBackgroundPrompt) {
             ConfirmDialog(
-                title = "Follow your routine with the screen off?",
-                message = "SereneFlow can keep guiding you when the screen is off or you switch apps, " +
-                    "with a notification showing the current step and time left. " +
-                    "You can change this anytime in Settings.",
-                confirmLabel = "Yes, keep me posted",
-                dismissLabel = "Not now",
+                title = stringResource(Res.string.background_prompt_title),
+                message = stringResource(Res.string.background_prompt_message),
+                confirmLabel = stringResource(Res.string.background_prompt_confirm),
+                dismissLabel = stringResource(Res.string.background_prompt_dismiss),
                 destructive = false,
                 onConfirm = {
                     showBackgroundPrompt = false
@@ -181,26 +182,29 @@ fun App(demoLaunch: DemoLaunch? = null) {
             }
             if (offered == null) {
                 ConfirmDialog(
-                    title = "Can't import this file",
-                    message = "It isn't a SereneFlow routine file, or it is damaged.",
-                    confirmLabel = "OK",
+                    title = stringResource(Res.string.import_failed_title),
+                    message = stringResource(Res.string.import_failed_message),
+                    confirmLabel = stringResource(Res.string.action_ok),
                     destructive = false,
                     onConfirm = { ExternalActions.consume(importAction) },
                     onDismiss = { ExternalActions.consume(importAction) }
                 )
             } else {
                 ConfirmDialog(
-                    title = if (offered.size == 1) "Import \"${offered.single().title}\"?"
-                        else "Import ${offered.size} routines?",
+                    title = if (offered.size == 1) stringResource(Res.string.import_one_title, offered.single().title)
+                        else pluralStringResource(Res.plurals.import_many_title, offered.size, offered.size),
                     message = if (offered.size == 1) {
-                        "${offered.single().stepCountText} · ${offered.single().formattedTotalDuration}. " +
-                            "It is added to your routines; nothing is replaced."
+                        stringResource(
+                            Res.string.import_one_message,
+                            offered.single().stepCountText,
+                            offered.single().formattedTotalDuration
+                        )
                     } else {
                         offered.take(5).joinToString("\n") { it.title } +
                             (if (offered.size > 5) "\n…" else "") +
-                            "\n\nThey are added to your routines; nothing is replaced."
+                            "\n\n" + stringResource(Res.string.import_many_note)
                     },
-                    confirmLabel = "Import",
+                    confirmLabel = stringResource(Res.string.action_import),
                     destructive = false,
                     onConfirm = {
                         ExternalActions.consume(importAction)

@@ -51,6 +51,8 @@ import com.sereneflow.timer.repository.PreferencesRepository
 import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.ui.platform.PlatformIcons
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /** One option of a [ChoiceScreen]. */
 data class Choice<T>(val value: T, val name: String, val detail: String?)
@@ -89,7 +91,7 @@ fun <T> ChoiceScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(imageVector = PlatformIcons.Back, contentDescription = "Back", tint = colors.onBackground)
+                        Icon(imageVector = PlatformIcons.Back, contentDescription = stringResource(Res.string.action_back), tint = colors.onBackground)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.background)
@@ -122,7 +124,7 @@ fun <T> ChoiceScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         if (choices == null) {
-                            ChoiceRow(name = "Loading…", detail = null, isSelected = false, onClick = null)
+                            ChoiceRow(name = stringResource(Res.string.loading), detail = null, isSelected = false, onClick = null)
                         } else {
                             choices.forEach { choice ->
                                 ChoiceRow(choice.name, choice.detail, choice.value == selected) { onSelect(choice.value) }
@@ -215,9 +217,8 @@ internal fun NavigationRow(title: String, description: String, value: String, on
 fun SoundPickerScreen(preferencesRepository: PreferencesRepository, onBack: () -> Unit) {
     val preferences by preferencesRepository.preferences.collectAsState()
     ChoiceScreen(
-        title = "Default sound",
-        note = "Plays at each step in routines whose sound is Default; each routine can pick its own. " +
-            "Tap a sound to hear it.",
+        title = stringResource(Res.string.settings_default_sound),
+        note = stringResource(Res.string.sound_picker_note),
         choices = CueSound.entries.map { Choice(it, it.displayName, it.description) },
         selected = preferences.defaultSound,
         onSelect = { sound ->
@@ -240,11 +241,16 @@ fun VoicePickerScreen(preferencesRepository: PreferencesRepository, onBack: () -
     val list = voices
     // A saved voice that was since removed from the device falls back to the default.
     val selectedId = preferences.voiceId?.takeIf { id -> list?.any { it.id == id } != false }
+    val defaultChoice = Choice<String?>(
+        null,
+        stringResource(Res.string.value_default),
+        stringResource(Res.string.voice_picker_default_detail)
+    )
     ChoiceScreen(
-        title = "Voice",
-        note = "Speaks the step announcements in every routine that uses voice. Tap a voice to hear it.",
+        title = stringResource(Res.string.settings_voice),
+        note = stringResource(Res.string.voice_picker_note),
         choices = list?.let { loaded ->
-            listOf(Choice<String?>(null, "Default", "The device's standard English voice")) +
+            listOf(defaultChoice) +
                 loaded.map { Choice<String?>(it.id, it.name, it.detail) }
         },
         selected = selectedId,
@@ -259,7 +265,7 @@ fun VoicePickerScreen(preferencesRepository: PreferencesRepository, onBack: () -
         },
         onBack = onBack,
         footnote = if (list != null && list.isEmpty()) {
-            "No other English voices are installed. You can add some in the device's text-to-speech settings."
+            stringResource(Res.string.voice_picker_none_installed)
         } else null
     )
 }

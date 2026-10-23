@@ -2,6 +2,9 @@ package com.sereneflow.timer.ui.platform
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.sereneflow.timer.resources.Res
+import com.sereneflow.timer.resources.action_cancel
+import org.jetbrains.compose.resources.stringResource
 
 data class MenuAction(
     val title: String,
@@ -22,7 +25,7 @@ expect fun ConfirmDialog(
     destructive: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    dismissLabel: String = "Cancel"
+    dismissLabel: String = stringResource(Res.string.action_cancel)
 )
 
 /**

@@ -1,6 +1,7 @@
 package com.sereneflow.timer.platform
 
 import com.sereneflow.timer.model.AppThemeMode
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * The launcher icon follows the colour theme: picking a theme in Settings switches to its icon. The
@@ -37,7 +38,7 @@ expect object AppIconSwitcher {
     val isSupported: Boolean
 
     /** What the user should know about a change on this platform, or null. */
-    val changeNote: String?
+    val changeNote: StringResource?
 
     fun current(): AppThemeMode
 

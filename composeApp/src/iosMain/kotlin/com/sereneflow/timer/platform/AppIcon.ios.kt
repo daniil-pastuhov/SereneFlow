@@ -1,6 +1,7 @@
 package com.sereneflow.timer.platform
 
 import com.sereneflow.timer.model.AppThemeMode
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Implemented in Swift (`AppIconManager` in iosApp) and registered in [AppIconRegistry] at launch:
@@ -25,7 +26,7 @@ actual object AppIconSwitcher {
         get() = AppIconRegistry.bridge?.supportsAlternateIcons == true
 
     // iOS confirms every change with its own alert.
-    actual val changeNote: String? = null
+    actual val changeNote: StringResource? = null
 
     actual fun current(): AppThemeMode {
         val name = AppIconRegistry.bridge?.alternateIconName

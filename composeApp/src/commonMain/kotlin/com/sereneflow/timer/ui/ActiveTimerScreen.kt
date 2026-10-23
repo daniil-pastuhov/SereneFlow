@@ -101,6 +101,9 @@ import com.sereneflow.timer.physics.WaterWaveCanvas
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.theme.accentColor
 import com.sereneflow.timer.ui.platform.ConfirmDialog
+import com.sereneflow.timer.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ActiveTimerScreen(
@@ -150,9 +153,9 @@ fun ActiveTimerScreen(
 
     if (showCloseDialog) {
         ConfirmDialog(
-            title = "End routine?",
-            message = "Your progress in \"${routine.title}\" won't be kept.",
-            confirmLabel = "End",
+            title = stringResource(Res.string.timer_end_title),
+            message = stringResource(Res.string.timer_end_message, routine.title),
+            confirmLabel = stringResource(Res.string.action_end),
             destructive = true,
             onConfirm = {
                 showCloseDialog = false
@@ -255,19 +258,19 @@ fun ActiveTimerScreen(
 
             // 2. Centre: step title, countdown and next step, on the canvases' centre. Not inset, so
             // it lines up with the rings, which are drawn on the whole screen.
-            val stepTitle = state.currentStep?.title ?: "Routine Step"
+            val stepTitle = state.currentStep?.title ?: stringResource(Res.string.timer_step_fallback)
             TimerDial(
                 stepTitle = stepTitle,
                 remaining = state.formattedRemaining,
                 // Screen readers: "Breathe, 1 minute 30 seconds left", never "01:30".
-                remainingDescription = if (state.isCompleted) "Routine complete" else
-                    "$stepTitle, ${spokenDuration(state.secondsRemainingInStep)} left",
+                remainingDescription = if (state.isCompleted) stringResource(Res.string.timer_complete_description) else
+                    stringResource(Res.string.timer_time_left_description, stepTitle, spokenDuration(state.secondsRemainingInStep)),
                 stepProgress = state.stepProgress,
                 isPaused = state.isPaused,
-                reminder = reminder?.let { "${it.percentLeft}% of ${it.stepTitle} left" },
+                reminder = reminder?.let { stringResource(Res.string.timer_reminder, it.percentLeft, it.stepTitle) },
                 showReminder = reminderVisible && !state.isCompleted,
-                next = state.nextStep?.let { "Up next: ${it.title} (${it.formattedDuration})" },
-                nextDescription = state.nextStep?.let { "Up next: ${it.title}, ${it.spokenDuration}" },
+                next = state.nextStep?.let { stringResource(Res.string.timer_up_next, it.title, it.formattedDuration) },
+                nextDescription = state.nextStep?.let { stringResource(Res.string.timer_up_next_description, it.title, it.spokenDuration) },
                 scale = dialScale,
                 auraScale = auraScale,
                 onExtend = if (state.isCompleted) null else {
@@ -289,7 +292,7 @@ fun ActiveTimerScreen(
                 {
                     RoundIconButton(
                         icon = if (state.isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = if (state.isMuted) "Unmute" else "Mute",
+                        contentDescription = stringResource(if (state.isMuted) Res.string.timer_unmute else Res.string.timer_mute),
                         tint = if (state.isMuted) colors.onSurfaceVariant else colors.primary,
                         size = 42.dp,
                         iconSize = 20.dp,
@@ -308,10 +311,12 @@ fun ActiveTimerScreen(
                     )
                     Text(
                         text = if (routine.hasRounds) {
-                            val step = roundPosition.stepInRound?.let { "Step ${it + 1} of ${routine.steps.size}" } ?: "Rest"
-                            "Round ${roundPosition.round} of ${roundPosition.rounds} · $step"
+                            val step = roundPosition.stepInRound?.let {
+                                stringResource(Res.string.timer_step_position, it + 1, routine.steps.size)
+                            } ?: stringResource(Res.string.rest_step_title)
+                            stringResource(Res.string.timer_round_position, roundPosition.round, roundPosition.rounds, step)
                         } else {
-                            "Step ${state.currentStepIndex + 1} of ${routine.steps.size}"
+                            stringResource(Res.string.timer_step_position, state.currentStepIndex + 1, routine.steps.size)
                         },
                         fontSize = 12.sp,
                         color = colors.onSurfaceVariant
@@ -321,7 +326,7 @@ fun ActiveTimerScreen(
             val closeButton: @Composable () -> Unit = {
                 RoundIconButton(
                     icon = Icons.Default.Close,
-                    contentDescription = "Close",
+                    contentDescription = stringResource(Res.string.action_close),
                     tint = colors.onSurface,
                     size = 42.dp,
                     onClick = requestClose
@@ -330,14 +335,14 @@ fun ActiveTimerScreen(
             val controls: @Composable () -> Unit = {
                 val buttonSize = 52.dp * controlScale
                 val iconSize = 24.dp * controlScale
-                RoundIconButton(Icons.Default.Refresh, "Restart Step", colors.onSurface, buttonSize, iconSize) { engine.restartStep() }
-                RoundIconButton(Icons.Default.FastRewind, "Previous Step", colors.onSurface, buttonSize, iconSize) { engine.previousStep() }
+                RoundIconButton(Icons.Default.Refresh, stringResource(Res.string.timer_restart_step), colors.onSurface, buttonSize, iconSize) { engine.restartStep() }
+                RoundIconButton(Icons.Default.FastRewind, stringResource(Res.string.timer_previous_step), colors.onSurface, buttonSize, iconSize) { engine.previousStep() }
                 PlayPauseButton(
                     isPlaying = state.isRunning && !state.isPaused,
                     size = 80.dp * controlScale,
                     onClick = { engine.togglePlayPause() }
                 )
-                RoundIconButton(Icons.Default.FastForward, "Skip Step", colors.onSurface, buttonSize, iconSize) { engine.skipStep() }
+                RoundIconButton(Icons.Default.FastForward, stringResource(Res.string.timer_skip_step), colors.onSurface, buttonSize, iconSize) { engine.skipStep() }
             }
 
             if (sideLayout) {
@@ -429,6 +434,7 @@ private fun TimerDial(
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
+    val pausedLabel = stringResource(Res.string.timer_paused)
     val auraSize = 240.dp * scale
     val gap = 16.dp * scale
     // The numerals fill a fixed-size dial, so they are sized in dp: a large font scale would
@@ -467,7 +473,7 @@ private fun TimerDial(
                 .clearAndSetSemantics {
                     contentDescription = remainingDescription
                     progressBarRangeInfo = ProgressBarRangeInfo(stepProgress, 0f..1f)
-                    if (isPaused) stateDescription = "Paused"
+                    if (isPaused) stateDescription = pausedLabel
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -499,7 +505,7 @@ private fun TimerDial(
             ) {
                 // Seen as well as heard: pausing, and each "% left" reminder.
                 if (isPaused) {
-                    StatusPill(text = "Paused", scale = scale)
+                    StatusPill(text = pausedLabel, scale = scale)
                 }
                 AnimatedVisibility(visible = showReminder && reminder != null, enter = fadeIn(), exit = fadeOut()) {
                     StatusPill(text = reminder.orEmpty(), scale = scale)
@@ -548,15 +554,20 @@ private fun StatusPill(text: String, scale: Float) {
 @Composable
 private fun ExtendStepButton(onClick: () -> Unit) {
     val colors = LocalSereneColors.current
+    val description = pluralStringResource(Res.plurals.timer_extend_description, EXTEND_STEP_SECONDS, EXTEND_STEP_SECONDS)
     Box(
         modifier = Modifier
             .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             .clip(RoundedCornerShape(24.dp))
-            .clickable(onClickLabel = "Add 30 seconds to this step", role = Role.Button, onClick = onClick),
+            .clickable(
+                onClickLabel = pluralStringResource(Res.plurals.timer_extend_action, EXTEND_STEP_SECONDS, EXTEND_STEP_SECONDS),
+                role = Role.Button,
+                onClick = onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "+${EXTEND_STEP_SECONDS}s",
+            text = stringResource(Res.string.timer_extend_label, EXTEND_STEP_SECONDS),
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             color = colors.primary,
@@ -565,7 +576,7 @@ private fun ExtendStepButton(onClick: () -> Unit) {
                 .background(colors.surface.copy(alpha = 0.85f))
                 .border(1.dp, colors.primary.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
                 .padding(horizontal = 14.dp, vertical = 6.dp)
-                .semantics { contentDescription = "Add $EXTEND_STEP_SECONDS seconds" }
+                .semantics { contentDescription = description }
         )
     }
 }
@@ -663,7 +674,7 @@ private fun PlayPauseButton(isPlaying: Boolean, size: Dp, onClick: () -> Unit) {
     ) {
         Icon(
             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-            contentDescription = if (isPlaying) "Pause" else "Play",
+            contentDescription = stringResource(if (isPlaying) Res.string.timer_pause else Res.string.timer_play),
             tint = colors.onPrimary,
             modifier = Modifier.size(size * 0.475f)
         )
@@ -706,7 +717,7 @@ private fun CelebrationOverlay(
             )
 
             Text(
-                text = "Routine Complete",
+                text = stringResource(Res.string.timer_complete_title),
                 modifier = Modifier.semantics {
                     heading()
                     liveRegion = LiveRegionMode.Polite
@@ -717,7 +728,7 @@ private fun CelebrationOverlay(
             )
 
             Text(
-                text = "You accomplished \"${routine.title}\" (${routine.formattedTotalDuration}). Take a moment to feel centered and refreshed.",
+                text = stringResource(Res.string.timer_complete_message, routine.title, routine.formattedTotalDuration),
                 fontSize = 14.sp,
                 color = colors.onSurfaceVariant,
                 lineHeight = 20.sp,
@@ -736,7 +747,7 @@ private fun CelebrationOverlay(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Return to Routines",
+                    text = stringResource(Res.string.timer_return),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.onPrimary
