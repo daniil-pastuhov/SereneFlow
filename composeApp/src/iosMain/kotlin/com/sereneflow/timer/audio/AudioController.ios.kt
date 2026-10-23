@@ -5,6 +5,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.set
 import platform.AVFAudio.AVAudioEngine
+import platform.AVFAudio.AVAudioEngineConfigurationChangeNotification
 import platform.AVFAudio.AVAudioFormat
 import platform.AVFAudio.AVAudioPCMBuffer
 import platform.AVFAudio.AVAudioPlayerNode
@@ -21,6 +22,7 @@ import platform.AVFAudio.AVSpeechUtterance
 import platform.AVFAudio.AVAudioSessionInterruptionNotification
 import platform.AVFAudio.AVAudioSessionInterruptionTypeEnded
 import platform.AVFAudio.AVAudioSessionInterruptionTypeKey
+import platform.AVFAudio.AVAudioSessionMediaServicesWereResetNotification
 import platform.AVFAudio.setActive
 import platform.Foundation.NSLocale
 import platform.Foundation.NSLocaleIdentifier
@@ -37,45 +39,36 @@ import platform.darwin.dispatch_get_main_queue
 /**
  * Plays [ToneSynth] tones through AVAudioEngine and speaks with AVSpeechSynthesizer.
  * The `.playback` session category keeps sounds audible with the ringer switch on silent.
- * All AVFoundation work is hopped to the main queue because the timer engine calls in from
- * a background dispatcher.
+ * All AVFoundation work is hopped to the main queue, wherever the caller is.
  */
 @OptIn(ExperimentalForeignApi::class)
 class IOSAudioController : AudioController {
-    private val speechSynthesizer = AVSpeechSynthesizer()
-    private val engine = AVAudioEngine()
+    // Replaced, with the engine and players, when the media services are reset (see rebuild).
+    private var speechSynthesizer = AVSpeechSynthesizer()
+    private var engine = AVAudioEngine()
     private val format = AVAudioFormat(standardFormatWithSampleRate = ToneSynth.SAMPLE_RATE.toDouble(), channels = 1u)
 
     // A small pool so overlapping tones (countdown chime over a bowl) don't queue behind each other.
-    private val players = List(4) { AVAudioPlayerNode() }
+    private var players = makePlayers()
     private var nextPlayer = 0
     private var isSetUp = false
+    private var playersAttached = false
     private var sessionActive = false
     private var voiceId: String? = null
     private var idleGeneration = 0
 
     private fun ensureEngine(): Boolean {
         if (!isSetUp) {
-            val session = AVAudioSession.sharedInstance()
-            session.setCategory(AVAudioSessionCategoryPlayback, withOptions = AVAudioSessionCategoryOptionMixWithOthers, error = null)
-            session.setActive(true, error = null)
+            configureSession()
+            observeSystemChanges()
+            isSetUp = true
+        }
+        if (!playersAttached) {
             players.forEach { player ->
                 engine.attachNode(player)
                 engine.connect(player, to = engine.mainMixerNode, format = format)
             }
-            // A phone call or Siri stops the engine; restart it afterwards if a routine is running.
-            NSNotificationCenter.defaultCenter.addObserverForName(
-                name = AVAudioSessionInterruptionNotification,
-                `object` = session,
-                queue = NSOperationQueue.mainQueue
-            ) { notification ->
-                val type = (notification?.userInfo?.get(AVAudioSessionInterruptionTypeKey) as? NSNumber)?.unsignedLongValue
-                if (type == AVAudioSessionInterruptionTypeEnded && sessionActive) {
-                    session.setActive(true, error = null)
-                    ensureEngine()
-                }
-            }
-            isSetUp = true
+            playersAttached = true
         }
         if (!engine.running) {
             engine.prepare()
@@ -83,6 +76,62 @@ class IOSAudioController : AudioController {
         }
         return true
     }
+
+    private fun configureSession() {
+        val session = AVAudioSession.sharedInstance()
+        session.setCategory(AVAudioSessionCategoryPlayback, withOptions = AVAudioSessionCategoryOptionMixWithOthers, error = null)
+        session.setActive(true, error = null)
+    }
+
+    /**
+     * The system stops the engine on an interruption (a phone call, Siri) and on a configuration
+     * change (headphones or a Bluetooth speaker connected or removed, a sample-rate change). While a
+     * routine runs, the running engine is what keeps the app alive in the background, so restart it.
+     */
+    private fun observeSystemChanges() {
+        val center = NSNotificationCenter.defaultCenter
+        val session = AVAudioSession.sharedInstance()
+        center.addObserverForName(
+            name = AVAudioSessionInterruptionNotification,
+            `object` = session,
+            queue = NSOperationQueue.mainQueue
+        ) { notification ->
+            val type = (notification?.userInfo?.get(AVAudioSessionInterruptionTypeKey) as? NSNumber)?.unsignedLongValue
+            if (type == AVAudioSessionInterruptionTypeEnded && sessionActive) {
+                session.setActive(true, error = null)
+                ensureEngine()
+            }
+        }
+        // Not filtered by object: the engine is replaced after a media services reset.
+        center.addObserverForName(
+            name = AVAudioEngineConfigurationChangeNotification,
+            `object` = null,
+            queue = NSOperationQueue.mainQueue
+        ) { notification ->
+            if (notification?.`object` === engine && sessionActive) ensureEngine()
+        }
+        // The audio daemon restarted: every engine, node and synthesizer made before is now invalid.
+        center.addObserverForName(
+            name = AVAudioSessionMediaServicesWereResetNotification,
+            `object` = session,
+            queue = NSOperationQueue.mainQueue
+        ) { _ ->
+            rebuild()
+            configureSession()
+            if (sessionActive) ensureEngine()
+        }
+    }
+
+    private fun rebuild() {
+        engine.stop()
+        engine = AVAudioEngine()
+        players = makePlayers()
+        nextPlayer = 0
+        playersAttached = false
+        speechSynthesizer = AVSpeechSynthesizer()
+    }
+
+    private fun makePlayers() = List(4) { AVAudioPlayerNode() }
 
     private fun playSamples(samples: FloatArray) = onMain {
         if (samples.isEmpty() || !ensureEngine()) return@onMain
