@@ -64,6 +64,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.VisualEffectType
+import com.sereneflow.timer.model.spokenDuration
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.sereneflow.timer.repository.RoutineRepository
 import com.sereneflow.timer.repository.StarterTemplates
 import com.sereneflow.timer.transfer.RoutineTransfer
@@ -120,7 +125,7 @@ fun RoutineListScreen(
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "New Routine")
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null) // the text says it
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "New Routine",
@@ -289,7 +294,8 @@ private fun RoutineCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                // Title and description, read as one.
+                Column(modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
                     Text(
                         text = routine.title,
                         fontSize = 20.sp,
@@ -342,77 +348,88 @@ private fun RoutineCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Step tags & Info Pills
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Total duration tag
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.primaryContainer.copy(alpha = 0.5f))
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+            // Tags and the first steps, read as one summary.
+            Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
+                // Step tags & Info Pills
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Timer,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
+                    // Total duration tag
+                    Box(
+                        modifier = Modifier
+                            .clearAndSetSemantics { contentDescription = "Total ${spokenDuration(routine.totalDurationSeconds)}" }
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.primaryContainer.copy(alpha = 0.5f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Timer,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = routine.formattedTotalDuration,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.primary
+                            )
+                        }
+                    }
+
+                    // Steps count tag
+                    Box(
+                        modifier = Modifier
+                            .clearAndSetSemantics {
+                                contentDescription = if (routine.hasRounds) {
+                                    "${routine.steps.size.plural("step")}, ${routine.roundCount} rounds"
+                                } else routine.stepCountText
+                            }
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.surfaceVariant.copy(alpha = 0.7f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
                         Text(
-                            text = routine.formattedTotalDuration,
+                            text = routine.stepCountText,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.primary
+                            fontWeight = FontWeight.Medium,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+
+                    // Visual effect badge; the emoji is left out of what a screen reader says.
+                    val effectName = when (visualEffect) {
+                        VisualEffectType.WATER -> "Water"
+                        VisualEffectType.BONSAI_TREE -> "Bonsai"
+                        VisualEffectType.COSMIC_ORBIT -> "Orbit"
+                        VisualEffectType.BREATHING_LOTUS -> "Lotus"
+                        VisualEffectType.HOURGLASS -> "Hourglass"
+                    }
+                    val visualEmoji = "${visualEffect.emoji} $effectName"
+                    Box(
+                        modifier = Modifier
+                            .clearAndSetSemantics { contentDescription = "$effectName effect" }
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.surfaceVariant.copy(alpha = 0.7f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = visualEmoji,
+                            fontSize = 12.sp,
+                            color = colors.onSurfaceVariant
                         )
                     }
                 }
 
-                // Steps count tag
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.surfaceVariant.copy(alpha = 0.7f))
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = routine.stepCountText,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.onSurfaceVariant
-                    )
-                }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Visual effect badge
-                val visualEmoji = when (visualEffect) {
-                    VisualEffectType.WATER -> "🌊 Water"
-                    VisualEffectType.BONSAI_TREE -> "🌳 Bonsai"
-                    VisualEffectType.COSMIC_ORBIT -> "✨ Orbit"
-                    VisualEffectType.BREATHING_LOTUS -> "🌸 Lotus"
-                    VisualEffectType.HOURGLASS -> "⏳ Hourglass"
-                }
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.surfaceVariant.copy(alpha = 0.7f))
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = visualEmoji,
-                        fontSize = 12.sp,
-                        color = colors.onSurfaceVariant
-                    )
-                }
+                // Step sequence visual preview line
+                StepsPreviewBar(steps = routine.steps)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Step sequence visual preview line
-            StepsPreviewBar(steps = routine.steps)
 
             Spacer(modifier = Modifier.height(18.dp))
 
@@ -429,14 +446,16 @@ private fun RoutineCard(
                             )
                         )
                     )
-                    .clickable { onPlay() }
+                    .clickable(role = Role.Button) { onPlay() }
+                    // Names the routine: every card has a button like this.
+                    .semantics { contentDescription = "Start ${routine.title}" }
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clearAndSetSemantics {}) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Start Routine",
+                        contentDescription = null,
                         tint = colors.onPrimary,
                         modifier = Modifier.size(20.dp)
                     )
@@ -461,7 +480,9 @@ private fun StepsPreviewBar(steps: List<com.sereneflow.timer.model.RoutineStep>)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         steps.take(3).forEachIndexed { index, step ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clearAndSetSemantics { contentDescription = "${step.title}, ${step.spokenDuration}" },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -500,3 +521,6 @@ private fun StepsPreviewBar(steps: List<com.sereneflow.timer.model.RoutineStep>)
         }
     }
 }
+
+/** "1 step", "3 steps". */
+private fun Int.plural(noun: String): String = if (this == 1) "1 $noun" else "$this ${noun}s"
