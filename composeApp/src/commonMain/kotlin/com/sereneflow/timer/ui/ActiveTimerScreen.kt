@@ -109,6 +109,9 @@ import org.jetbrains.compose.resources.stringResource
 fun ActiveTimerScreen(
     session: ActiveSession,
     keepScreenOn: Boolean,
+    /** Whether the one-time voice commands tip hasn't been shown yet. */
+    offerVoiceTip: Boolean,
+    onVoiceTipShown: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -140,6 +143,30 @@ fun ActiveTimerScreen(
             reminderVisible = false
         }
     }
+
+    // Voice commands are taught once ever: at the first pause, while it is the phrase that carries
+    // on, or else when the first routine completes, with the phrase that starts it again. The pause
+    // tip goes when the routine carries on, and isn't offered again.
+    var voiceTip by remember { mutableStateOf<VoiceTipMoment?>(null) }
+    LaunchedEffect(state.isPaused, state.isCompleted) {
+        if (voiceTip == VoiceTipMoment.PAUSED && !state.isPaused) voiceTip = null
+        if (!offerVoiceTip || voiceTip != null) return@LaunchedEffect
+        voiceTip = when {
+            state.isCompleted -> VoiceTipMoment.COMPLETED
+            state.isPaused -> VoiceTipMoment.PAUSED
+            else -> return@LaunchedEffect
+        }
+        onVoiceTipShown()
+    }
+    val pauseTip: (@Composable () -> Unit)? = if (voiceTip == VoiceTipMoment.PAUSED && state.isPaused) {
+        {
+            VoiceTipCard(
+                text = stringResource(Res.string.voice_tip_paused, resumePhrase()),
+                onDismiss = { voiceTip = null },
+                modifier = Modifier.padding(top = 12.dp).widthIn(max = 420.dp).fillMaxWidth()
+            )
+        }
+    } else null
 
     var showCloseDialog by remember { mutableStateOf(false) }
     val canCloseSilently = !state.isRunning || state.isCompleted
@@ -355,6 +382,7 @@ fun ActiveTimerScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     StepRail(stepCount = routine.steps.size, currentIndex = railIndex)
+                    pauseTip?.invoke()
                 }
                 Column(
                     modifier = Modifier.align(Alignment.CenterEnd),
@@ -381,6 +409,7 @@ fun ActiveTimerScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     StepRail(stepCount = routine.steps.size, currentIndex = railIndex)
+                    pauseTip?.invoke()
                 }
                 Row(
                     modifier = Modifier
@@ -403,6 +432,9 @@ fun ActiveTimerScreen(
         ) {
             CelebrationOverlay(
                 routine = routine,
+                voiceTip = if (voiceTip == VoiceTipMoment.COMPLETED) {
+                    stringResource(Res.string.voice_tip_completed, startPhrase(routine.title))
+                } else null,
                 onDismiss = onClose
             )
         }
@@ -583,6 +615,9 @@ private fun ExtendStepButton(onClick: () -> Unit) {
 
 private const val EXTEND_STEP_SECONDS = 30
 
+/** When the voice commands tip shows. */
+private enum class VoiceTipMoment { PAUSED, COMPLETED }
+
 /** How long a "% left" reminder stays on screen. */
 private const val REMINDER_BANNER_MS = 4_000L
 
@@ -684,6 +719,8 @@ private fun PlayPauseButton(isPlaying: Boolean, size: Dp, onClick: () -> Unit) {
 @Composable
 private fun CelebrationOverlay(
     routine: Routine,
+    /** The one-time voice commands tip, or null. */
+    voiceTip: String?,
     onDismiss: () -> Unit
 ) {
     val colors = LocalSereneColors.current
@@ -734,6 +771,10 @@ private fun CelebrationOverlay(
                 lineHeight = 20.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
+
+            if (voiceTip != null) {
+                VoiceTipCard(text = voiceTip, onDismiss = null, modifier = Modifier.fillMaxWidth())
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 

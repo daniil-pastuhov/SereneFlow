@@ -236,6 +236,8 @@ data class AppPreferences(
     val hapticsEnabled: Boolean = true,
     /** The routine started most recently, which quick-start shortcuts and the widget offer first. */
     val lastRoutineId: String? = null,
+    /** Whether the timer has shown its one-time tip about voice commands (Siri, Google Assistant). */
+    val voiceTipShown: Boolean = false,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @SerialName("defaultSoundMode") val legacyDefaultSoundMode: LegacySoundMode? = null

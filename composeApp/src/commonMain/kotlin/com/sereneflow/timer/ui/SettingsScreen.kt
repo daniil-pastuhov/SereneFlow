@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PhoneAndroid
@@ -59,6 +60,7 @@ import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.audio.VoiceOption
 import com.sereneflow.timer.platform.AppIconSwitcher
+import com.sereneflow.timer.platform.voiceAssistant
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.PreferencesRepository
 import com.sereneflow.timer.resources.*
@@ -86,6 +88,7 @@ fun SettingsScreen(
     preferencesRepository: PreferencesRepository,
     onOpenSoundPicker: () -> Unit,
     onOpenVoicePicker: () -> Unit,
+    onOpenVoiceCommands: () -> Unit,
     /** How many routines a backup would hold. */
     routineCount: Int,
     onExportRoutines: () -> Unit,
@@ -294,6 +297,27 @@ fun SettingsScreen(
                                 preferencesRepository.setBackgroundMode(enabled)
                                 if (enabled) requestNotificationPermission()
                             }
+                        )
+                    }
+                }
+
+                // Siri or Google Assistant: what to say, on a screen of its own
+                item {
+                    SectionHeader(title = stringResource(Res.string.settings_voice_commands), icon = Icons.Default.KeyboardVoice)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(vertical = 6.dp)
+                    ) {
+                        NavigationRow(
+                            title = stringResource(voiceAssistant.nameResource),
+                            description = stringResource(Res.string.settings_voice_commands_description),
+                            value = "",
+                            onClick = onOpenVoiceCommands
                         )
                     }
                 }
