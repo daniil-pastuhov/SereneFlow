@@ -8,6 +8,61 @@ import kotlinx.coroutines.flow.asStateFlow
 sealed interface ExternalAction {
     /** Import the routines in a `.sereneflow` file's [contents] (opened from another app or picked). */
     data class ImportRoutines(val contents: String) : ExternalAction
+
+    /**
+     * Start a routine (a launcher shortcut, the widget, a `sereneflow://start` link): its id, or
+     * [LAST_ROUTINE] for the one started most recently. Ignored while a routine is running.
+     */
+    data class StartRoutine(val routineId: String) : ExternalAction
+
+    companion object {
+        const val LAST_ROUTINE = "last"
+        const val URL_SCHEME = "sereneflow"
+
+        /** `sereneflow://start?routine=<id>`, which [parseUrl] reads back. */
+        fun startUrl(routineId: String): String = "$URL_SCHEME://start?routine=${encode(routineId)}"
+
+        /** The action a `sereneflow://` link asks for, or null for anything else. */
+        fun parseUrl(url: String): ExternalAction? {
+            val prefix = "$URL_SCHEME://start"
+            if (!url.startsWith(prefix, ignoreCase = true)) return null
+            val query = url.substringAfter('?', "")
+            val id = query.split('&')
+                .map { it.substringBefore('=') to it.substringAfter('=', "") }
+                .firstOrNull { it.first == "routine" }?.second
+                ?.let(::decode)
+                ?.takeIf { it.isNotBlank() }
+                ?: LAST_ROUTINE
+            return StartRoutine(id)
+        }
+
+        // Ids are "routine_<digits>" or seed names, but a link may come from anywhere.
+        private fun encode(value: String): String = buildString {
+            value.encodeToByteArray().forEach { byte ->
+                val c = byte.toInt().toChar()
+                if (byte >= 0 && (c.isLetterOrDigit() || c == '_' || c == '-' || c == '.')) append(c)
+                else append('%').append((byte.toInt() and 0xFF).toString(16).uppercase().padStart(2, '0'))
+            }
+        }
+
+        private fun decode(value: String): String? = try {
+            val bytes = ArrayList<Byte>()
+            var i = 0
+            while (i < value.length) {
+                val c = value[i]
+                if (c == '%' && i + 2 <= value.lastIndex) {
+                    bytes.add(value.substring(i + 1, i + 3).toInt(16).toByte())
+                    i += 3
+                } else {
+                    c.toString().encodeToByteArray().forEach { bytes.add(it) }
+                    i++
+                }
+            }
+            bytes.toByteArray().decodeToString()
+        } catch (_: NumberFormatException) {
+            null
+        }
+    }
 }
 
 /**

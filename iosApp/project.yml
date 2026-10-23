@@ -46,6 +46,11 @@ targets:
         ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-OceanMist AppIcon-SunsetClay AppIcon-MidnightStarlight"
         # Simulator builds are ad-hoc signed; the Live Activity extension won't launch unsigned.
         CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: "-"
+        # The App Group the Quick Start widget reads its routines from. Simulator only for now:
+        # device builds need group.com.sereneflow.timer registered for the team (Xcode's Signing &
+        # Capabilities, or the developer portal) first; then drop the [sdk=...] qualifier here and
+        # on the widget. Without it the widget offers "your last routine" instead of a list.
+        CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]: "iosApp/iosApp.entitlements"
         # Only the framework the pre-build script just made for this configuration and SDK, so a
         # Release archive can never link a leftover Debug framework.
         FRAMEWORK_SEARCH_PATHS:
@@ -67,6 +72,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: "com.sereneflow.timer.widget"
         INFOPLIST_FILE: "SereneFlowWidget/Info.plist"
         CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: "-"
+        # See the app target's CODE_SIGN_ENTITLEMENTS.
+        CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]: "SereneFlowWidget/SereneFlowWidget.entitlements"
         ARCHS: "arm64"
         ONLY_ACTIVE_ARCH: "YES"
         SKIP_INSTALL: "YES"

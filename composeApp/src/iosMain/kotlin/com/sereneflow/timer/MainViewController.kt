@@ -17,6 +17,16 @@ fun openRoutineFile(url: NSURL) {
     readRoutineFile(url)?.let { ExternalActions.post(ExternalAction.ImportRoutines(it)) }
 }
 
+/** Called by the Swift app for a `sereneflow://start?routine=<id>` link (widget, links). */
+fun openAppUrl(url: String) {
+    ExternalAction.parseUrl(url)?.let(ExternalActions::post)
+}
+
+/** Called by the Swift SceneDelegate for a Home Screen quick action. */
+fun startRoutineFromShortcut(routineId: String) {
+    ExternalActions.post(ExternalAction.StartRoutine(routineId))
+}
+
 /** `-demoScreen timer -demoRoutine <id> -demoElapsed <seconds>`; see [DemoLaunch]. */
 @OptIn(ExperimentalNativeApi::class)
 private fun demoLaunchFromArguments(): DemoLaunch? {

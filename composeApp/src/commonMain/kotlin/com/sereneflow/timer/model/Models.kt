@@ -277,6 +277,8 @@ data class AppPreferences(
     val voiceId: String? = null,
     /** Vibrate on step changes, the 3-2-1 countdown and completion; independent of mute. */
     val hapticsEnabled: Boolean = true,
+    /** The routine started most recently, which quick-start shortcuts and the widget offer first. */
+    val lastRoutineId: String? = null,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @SerialName("defaultSoundMode") val legacyDefaultSoundMode: LegacySoundMode? = null

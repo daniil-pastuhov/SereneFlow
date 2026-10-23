@@ -25,6 +25,8 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.repository.Repositories
 import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
+import com.sereneflow.timer.platform.publishQuickStart
+import com.sereneflow.timer.platform.quickStartItems
 import com.sereneflow.timer.transfer.RoutineTransfer
 import com.sereneflow.timer.transfer.shareFile
 import com.sereneflow.timer.ui.platform.ConfirmDialog
@@ -84,6 +86,31 @@ fun App(demoLaunch: DemoLaunch? = null) {
         backStack.add(screen)
     }
 
+    // Launcher shortcuts, iOS quick actions and the widget offer the last-started routines.
+    val routines by routineRepository.routines.collectAsState()
+    val quickStart = remember(routines, preferences.lastRoutineId) {
+        quickStartItems(routines, preferences.lastRoutineId)
+    }
+    LaunchedEffect(quickStart) { publishQuickStart(quickStart) }
+
+    // A routine started from outside the app (shortcut, widget, link). The session effect below
+    // then shows its timer. A routine already running is left alone rather than ended.
+    val pendingExternal by ExternalActions.pending.collectAsState()
+    LaunchedEffect(pendingExternal) {
+        val start = pendingExternal as? ExternalAction.StartRoutine ?: return@LaunchedEffect
+        ExternalActions.consume(start)
+        if (TimerSession.active.value != null) return@LaunchedEffect
+        val id = if (start.routineId == ExternalAction.LAST_ROUTINE) {
+            preferences.lastRoutineId ?: routines.firstOrNull()?.id
+        } else {
+            start.routineId
+        }
+        val routine = id?.let(routineRepository::getRoutine)?.takeIf { it.steps.isNotEmpty() } ?: return@LaunchedEffect
+        // Shown over whatever screen is open (an editor keeps its unsaved edits underneath).
+        TimerSession.start(routine, preferences, preferences.backgroundMode)
+        preferencesRepository.setLastRoutine(routine.id)
+    }
+
     fun pop() {
         if (backStack.size <= 1) return
         // Leaving the timer screen ends the session; it never keeps running without its UI.
@@ -141,8 +168,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
         }
 
         // A routine file opened with the app or picked in Settings: confirm, then add its routines.
-        val pendingAction by ExternalActions.pending.collectAsState()
-        val importAction = pendingAction as? ExternalAction.ImportRoutines
+        val importAction = pendingExternal as? ExternalAction.ImportRoutines
         if (importAction != null) {
             val offered = remember(importAction) {
                 try {
@@ -208,6 +234,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         defaultVisualEffect = preferences.defaultVisualEffect,
                         onStartRoutine = { routine ->
                             TimerSession.start(routine, preferences, preferences.backgroundMode)
+                            preferencesRepository.setLastRoutine(routine.id)
                             push(AppScreen.Timer(routine))
                         },
                         onEditRoutine = { routine -> push(AppScreen.Editor(routine)) },
@@ -248,7 +275,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         preferencesRepository = preferencesRepository,
                         onOpenSoundPicker = { push(AppScreen.SoundPicker) },
                         onOpenVoicePicker = { push(AppScreen.VoicePicker) },
-                        routineCount = routineRepository.routines.collectAsState().value.size,
+                        routineCount = routines.size,
                         onExportRoutines = {
                             shareFile(
                                 RoutineTransfer.BACKUP_FILE_NAME,

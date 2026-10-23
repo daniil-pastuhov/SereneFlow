@@ -32,10 +32,17 @@ class SereneFlowActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    /** A routine file opened with the app: [App] offers to import it. */
+    /**
+     * A `sereneflow://start` link (launcher shortcut) starts its routine; a routine file opened
+     * with the app is offered for import. [App] carries out both.
+     */
     private fun handleIntent(intent: Intent?) {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
+        if (uri.scheme == ExternalAction.URL_SCHEME) {
+            ExternalAction.parseUrl(uri.toString())?.let(ExternalActions::post)
+            return
+        }
         readText(this, uri)?.let { ExternalActions.post(ExternalAction.ImportRoutines(it)) }
     }
 

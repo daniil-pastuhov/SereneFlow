@@ -15,6 +15,13 @@
             android:exported="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|density|fontScale|locale|layoutDirection"
             android:windowSoftInputMode="adjustResize">
+            <!-- sereneflow://start?routine=<id> starts a routine (launcher shortcuts, links). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sereneflow" android:host="start" />
+            </intent-filter>
             <!-- Opening a shared .sereneflow routine file (or a backup) offers to import it.
                  Providers rarely know the extension's type, so JSON and generic files are taken
                  too; the file's contents decide whether it is a routine. -->

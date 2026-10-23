@@ -5,5 +5,6 @@ import WidgetKit
 struct SereneFlowWidgetBundle: WidgetBundle {
     var body: some Widget {
         TimerLiveActivity()
+        QuickStartWidget()
     }
 }

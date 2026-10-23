@@ -166,6 +166,10 @@ class PreferencesRepository(
         _preferences.update { it.copy(keepScreenOn = enabled) }
     }
 
+    fun setLastRoutine(id: String) {
+        _preferences.update { if (it.lastRoutineId == id) it else it.copy(lastRoutineId = id) }
+    }
+
     fun setHapticsEnabled(enabled: Boolean) {
         _preferences.update { it.copy(hapticsEnabled = enabled) }
     }
