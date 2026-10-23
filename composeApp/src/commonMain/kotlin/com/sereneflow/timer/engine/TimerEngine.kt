@@ -14,6 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
@@ -31,7 +32,8 @@ class TimerEngine(
     private val cues: RoutineCues,
     private val audioController: AudioController,
     reminderThresholds: Set<Int> = emptySet(),
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+    /** Main by default, the thread the UI and notification controls call in on, so state has one writer. */
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate),
     private val clock: () -> Long = ::nowEpochMs
 ) {
     private val _timerState = MutableStateFlow(
@@ -58,14 +60,16 @@ class TimerEngine(
 
     fun start() {
         if (isTicking || routine.steps.isEmpty()) return
-        val state = _timerState.value
-        _timerState.value = state.copy(
-            isRunning = true,
-            isPaused = false,
-            isCompleted = false,
-            stepEndEpochMs = clock() + state.pausedRemainingMs
-        )
-        announceStepStart(state.currentStepIndex)
+        val now = clock()
+        _timerState.update {
+            it.copy(
+                isRunning = true,
+                isPaused = false,
+                isCompleted = false,
+                stepEndEpochMs = now + it.pausedRemainingMs
+            )
+        }
+        announceStepStart(_timerState.value.currentStepIndex)
         startTickerLoop()
     }
 
@@ -73,23 +77,19 @@ class TimerEngine(
         if (!isTicking) return
         timerJob?.cancel()
         sync()
-        val state = _timerState.value
-        if (state.isCompleted) return
-        _timerState.value = state.copy(
-            isPaused = true,
-            pausedRemainingMs = state.stepRemainingMsAt(clock()),
-            stepEndEpochMs = null
-        )
+        if (_timerState.value.isCompleted) return
+        val now = clock()
+        _timerState.update {
+            it.copy(isPaused = true, pausedRemainingMs = it.stepRemainingMsAt(now), stepEndEpochMs = null)
+        }
         audioController.stop()
     }
 
     fun resume() {
         val state = _timerState.value
         if (!state.isRunning || !state.isPaused) return
-        _timerState.value = state.copy(
-            isPaused = false,
-            stepEndEpochMs = clock() + state.pausedRemainingMs
-        )
+        val now = clock()
+        _timerState.update { it.copy(isPaused = false, stepEndEpochMs = now + it.pausedRemainingMs) }
         startTickerLoop()
     }
 
@@ -117,7 +117,7 @@ class TimerEngine(
     }
 
     fun setMuted(muted: Boolean) {
-        _timerState.value = _timerState.value.copy(isMuted = muted)
+        _timerState.update { it.copy(isMuted = muted) }
         if (muted) audioController.stop()
     }
 
@@ -128,8 +128,7 @@ class TimerEngine(
      * timer that isn't ticking has no step end, so it stays where it is.
      */
     fun fastForward(ms: Long) {
-        val state = _timerState.value
-        _timerState.value = state.copy(stepEndEpochMs = state.stepEndEpochMs?.minus(ms))
+        _timerState.update { it.copy(stepEndEpochMs = it.stepEndEpochMs?.minus(ms)) }
         sync()
     }
 
@@ -140,13 +139,15 @@ class TimerEngine(
     fun stop() {
         timerJob?.cancel()
         audioController.stop()
-        val state = _timerState.value
-        _timerState.value = state.copy(
-            isRunning = false,
-            isPaused = false,
-            pausedRemainingMs = state.stepRemainingMsAt(clock()),
-            stepEndEpochMs = null
-        )
+        val now = clock()
+        _timerState.update {
+            it.copy(
+                isRunning = false,
+                isPaused = false,
+                pausedRemainingMs = it.stepRemainingMsAt(now),
+                stepEndEpochMs = null
+            )
+        }
     }
 
     /**
@@ -172,11 +173,14 @@ class TimerEngine(
         }
         if (index != state.currentStepIndex) {
             announcedReminders.clear()
-            _timerState.value = state.copy(
-                currentStepIndex = index,
-                stepEndEpochMs = stepEnd,
-                secondsRemainingInStep = routine.steps[index].durationSeconds
-            )
+            val newEnd = stepEnd
+            _timerState.update {
+                it.copy(
+                    currentStepIndex = index,
+                    stepEndEpochMs = newEnd,
+                    secondsRemainingInStep = routine.steps[index].durationSeconds
+                )
+            }
             // Only the step we landed on is announced, even if several were skipped while suspended.
             announceStepStart(index)
         }
@@ -186,7 +190,7 @@ class TimerEngine(
         val remainingSeconds = ceilSeconds(stepEnd - now)
         if (remainingSeconds == previousSeconds) return
 
-        _timerState.value = _timerState.value.copy(secondsRemainingInStep = remainingSeconds)
+        _timerState.update { it.copy(secondsRemainingInStep = remainingSeconds) }
         checkReminders(step, remainingSeconds)
 
         // 3, 2, 1 countdown chime, only when the second was reached live (not after a long gap).
@@ -200,13 +204,17 @@ class TimerEngine(
         val step = routine.steps.getOrNull(index) ?: return
         announcedReminders.clear()
         val state = _timerState.value
-        _timerState.value = state.copy(
-            currentStepIndex = index,
-            secondsRemainingInStep = step.durationSeconds,
-            stepEndEpochMs = if (isTicking) clock() + step.durationMs else null,
-            pausedRemainingMs = step.durationMs
-        )
-        if (isTicking || (announceWhenPaused && state.isRunning)) {
+        val ticking = isTicking
+        val stepEnd = if (ticking) clock() + step.durationMs else null
+        _timerState.update {
+            it.copy(
+                currentStepIndex = index,
+                secondsRemainingInStep = step.durationSeconds,
+                stepEndEpochMs = stepEnd,
+                pausedRemainingMs = step.durationMs
+            )
+        }
+        if (ticking || (announceWhenPaused && state.isRunning)) {
             announceStepStart(index)
         }
     }
@@ -223,14 +231,16 @@ class TimerEngine(
 
     private fun completeRoutine() {
         timerJob?.cancel()
-        _timerState.value = _timerState.value.copy(
-            secondsRemainingInStep = 0,
-            stepEndEpochMs = null,
-            pausedRemainingMs = 0,
-            isRunning = false,
-            isPaused = false,
-            isCompleted = true
-        )
+        _timerState.update {
+            it.copy(
+                secondsRemainingInStep = 0,
+                stepEndEpochMs = null,
+                pausedRemainingMs = 0,
+                isRunning = false,
+                isPaused = false,
+                isCompleted = true
+            )
+        }
 
         if (_timerState.value.isMuted) return
         if (cues.sound != CueSound.NONE) audioController.playRoutineComplete()

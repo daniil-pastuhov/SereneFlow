@@ -71,9 +71,9 @@ class TimerEngineTest {
     private val bowlAndVoice = RoutineCues(VisualEffectType.WATER, CueSound.TIBETAN_BOWL, voice = true)
 
     @Test
-    fun testTimerEngineInitialState() {
+    fun testTimerEngineInitialState() = runTest {
         val audio = FakeAudioController()
-        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio)
+        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio, scope = this)
         val state = engine.timerState.value
 
         assertEquals(0, state.currentStepIndex)
@@ -85,9 +85,9 @@ class TimerEngineTest {
     }
 
     @Test
-    fun testTimerEngineSkipAndPrevious() {
+    fun testTimerEngineSkipAndPrevious() = runTest {
         val audio = FakeAudioController()
-        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio)
+        val engine = TimerEngine(routine = testRoutine, cues = bowlAndVoice, audioController = audio, scope = this)
 
         engine.skipStep()
         var state = engine.timerState.value
@@ -331,6 +331,42 @@ class TimerEngineTest {
         engine.resume()
         assertEquals(66_600, engine.timerState.value.stepEndEpochMs)
         assertEquals(0, engine.timerState.value.currentStepIndex)
+        engine.stop()
+    }
+
+    @Test
+    fun testPauseAtStepBoundary() = runTest {
+        val audio = FakeAudioController()
+        var now = 0L
+        val engine = TimerEngine(
+            routine = testRoutine,
+            cues = bowlAndVoice,
+            audioController = audio,
+            scope = this,
+            clock = { now }
+        )
+
+        engine.start()
+        // Paused exactly as step 1 ends, before a tick has seen it: the pause lands on step 2, whole.
+        now = 10_000
+        engine.pause()
+        var state = engine.timerState.value
+        assertEquals(1, state.currentStepIndex)
+        assertTrue(state.isPaused)
+        assertEquals(20_000, state.pausedRemainingMs)
+        assertEquals(20, state.secondsRemainingInStep)
+
+        now = 50_000
+        engine.resume()
+        assertEquals(70_000, engine.timerState.value.stepEndEpochMs)
+
+        // Paused exactly as the last step ends: the routine completes rather than pausing.
+        now = 70_000
+        engine.pause()
+        state = engine.timerState.value
+        assertTrue(state.isCompleted)
+        assertFalse(state.isPaused)
+        assertFalse(state.isRunning)
         engine.stop()
     }
 
