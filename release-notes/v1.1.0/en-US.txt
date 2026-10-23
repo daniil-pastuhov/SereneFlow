@@ -1,0 +1,6 @@
+• New Apple Watch app: follow and control your running routine, also in the Smart Stack
+• Rounds: repeat a routine's steps, with an optional rest in between
+• Starter templates, an accent colour per routine, and +30s to extend a step
+• Start routines from shortcuts, a widget or Siri; share and back up routines as files
+• Select and reorder routines with a long press; haptics on step changes
+• Much better screen reader, large text and Reduce Motion support
