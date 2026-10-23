@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.safeDrawing
@@ -35,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -106,7 +109,8 @@ fun <T> ChoiceScreen(
                             .clip(RoundedCornerShape(20.dp))
                             .background(colors.cardBackground)
                             .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                            .padding(14.dp),
+                            .padding(14.dp)
+                            .selectableGroup(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         if (choices == null) {
@@ -141,7 +145,11 @@ private fun ChoiceRow(name: String, detail: String?, isSelected: Boolean, onClic
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(
+                if (onClick != null) {
+                    Modifier.selectable(selected = isSelected, role = Role.RadioButton, onClick = onClick)
+                } else Modifier
+            )
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -160,7 +168,7 @@ private fun ChoiceRow(name: String, detail: String?, isSelected: Boolean, onClic
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = null, // the row is announced as a selected radio button
                 tint = colors.primary,
                 modifier = Modifier.size(20.dp)
             )

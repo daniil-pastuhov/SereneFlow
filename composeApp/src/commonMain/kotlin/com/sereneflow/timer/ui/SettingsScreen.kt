@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.safeDrawing
@@ -45,6 +47,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -150,7 +154,8 @@ fun SettingsScreen(
                             .clip(RoundedCornerShape(20.dp))
                             .background(colors.cardBackground)
                             .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                            .padding(14.dp),
+                            .padding(14.dp)
+                            .selectableGroup(),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         AppThemeMode.entries.forEach { mode ->
@@ -161,7 +166,7 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(14.dp))
                                     .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                    .clickable {
+                                    .selectable(selected = isSelected, role = Role.RadioButton) {
                                         preferencesRepository.setThemeMode(mode)
                                         // The app icon follows the theme. Only on a real change: iOS
                                         // shows its alert even when the icon stays the same.
@@ -196,7 +201,7 @@ fun SettingsScreen(
                                 if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
+                                        contentDescription = null, // the row is announced as a selected radio button
                                         tint = colors.primary,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -335,7 +340,8 @@ fun SettingsScreen(
                             .clip(RoundedCornerShape(20.dp))
                             .background(colors.cardBackground)
                             .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-                            .padding(14.dp),
+                            .padding(14.dp)
+                            .selectableGroup(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         VisualEffectType.entries.forEach { effect ->
@@ -346,13 +352,15 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(14.dp))
                                     .background(if (isSelected) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
-                                    .clickable { preferencesRepository.setDefaultVisualEffect(effect) }
+                                    .selectable(selected = isSelected, role = Role.RadioButton) {
+                                        preferencesRepository.setDefaultVisualEffect(effect)
+                                    }
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Text(text = effect.emoji, fontSize = 20.sp)
+                                    Text(text = effect.emoji, fontSize = 20.sp, modifier = Modifier.clearAndSetSemantics {})
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
@@ -372,7 +380,7 @@ fun SettingsScreen(
                                 if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
+                                        contentDescription = null, // the row is announced as a selected radio button
                                         tint = colors.primary,
                                         modifier = Modifier.size(20.dp)
                                     )

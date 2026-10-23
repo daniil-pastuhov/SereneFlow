@@ -375,7 +375,10 @@ fun RoutineEditorScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             SectionLabel("VOICE GUIDANCE")
 
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.selectableGroup(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 VoiceGuidance.entries.forEach { voice ->
                                     OptionChip(
                                         label = if (voice == VoiceGuidance.DEFAULT) {
@@ -554,6 +557,7 @@ fun RoutineEditorScreen(
                             if (rounds > 1) {
                                 Text("Rest between rounds", fontSize = 13.sp, color = colors.onSurfaceVariant)
                                 FlowRow(
+                                    modifier = Modifier.selectableGroup(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
@@ -891,7 +895,7 @@ private fun SectionLabel(text: String) {
 @Composable
 private fun OptionChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     val colors = LocalSereneColors.current
-    SmallTarget(onClick = onClick) { indication ->
+    SmallTarget(onClick = onClick, selected = isSelected) { indication ->
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(14.dp))
@@ -936,19 +940,27 @@ private fun DurationPill(
 
 /**
  * A 48dp touch target around a smaller control drawn by [content], which applies the modifier it
- * is given after its clip so the press ripple follows its own shape.
+ * is given after its clip so the press ripple follows its own shape. With [selected] set it is one
+ * option of a `selectableGroup`, a radio button to screen readers.
  */
 @Composable
 private fun SmallTarget(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    selected: Boolean? = null,
     content: @Composable (indication: Modifier) -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
             .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-            .clickable(interactionSource = interactionSource, indication = null, role = Role.Button, onClick = onClick),
+            .then(
+                if (selected == null) {
+                    Modifier.clickable(interactionSource = interactionSource, indication = null, role = Role.Button, onClick = onClick)
+                } else {
+                    Modifier.selectable(selected, interactionSource = interactionSource, indication = null, role = Role.RadioButton, onClick = onClick)
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         content(Modifier.indication(interactionSource, ripple()))
