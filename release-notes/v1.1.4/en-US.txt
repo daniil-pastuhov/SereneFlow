@@ -1,0 +1,5 @@
+• New Random visual effect: each start picks one of the animations, so a routine looks different every time
+• Richer Orbit animation with nebula clouds, twinkling stars and a comet-tailed, ringed planet
+• The Bonsai tree now grows through each step, with blossoms that open and petals that drift down
+• The countdown sits on frosted glass, so it stays easy to read over every animation
+• Better landscape layout: step details, countdown and controls side by side, nothing cut off
