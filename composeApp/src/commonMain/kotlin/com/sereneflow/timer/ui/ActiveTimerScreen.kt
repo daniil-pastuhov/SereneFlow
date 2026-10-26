@@ -23,6 +23,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -72,6 +76,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -223,14 +228,20 @@ fun ActiveTimerScreen(
         val dialScale = (minOf(maxWidth, maxHeight) / 440.dp).coerceIn(0.7f, 2f)
         // Controls grow less: touch targets need no more than a little extra on a tablet.
         val controlScale = dialScale.coerceIn(1f, 1.3f)
-        // The ring effects draw a ring (or a lotus) around the centre that would run under the side column of
-        // controls, so beside it they are centred on the space that is left. The others fill the
-        // screen and stay clear of the column on their own.
+        // The ring effects draw a ring (or a lotus) around the centre that would run under the side
+        // columns (title and step details, controls), so beside them they are centred on the space
+        // between. The others fill the screen and stay clear of the columns on their own.
         val ringEffect = session.cues.visualEffect == VisualEffectType.COSMIC_ORBIT ||
             session.cues.visualEffect == VisualEffectType.BREATHING_LOTUS
+        val safePadding = WindowInsets.safeDrawing.asPaddingValues()
+        val layoutDirection = LocalLayoutDirection.current
+        val stageStartPadding = if (sideLayout && ringEffect) {
+            safePadding.calculateStartPadding(layoutDirection) + 24.dp + SideColumnWidth + 16.dp
+        } else {
+            0.dp
+        }
         val stageEndPadding = if (sideLayout && ringEffect) {
-            val safeEnd = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current)
-            safeEnd + 24.dp + 80.dp * controlScale + 16.dp
+            safePadding.calculateEndPadding(layoutDirection) + 24.dp + 80.dp * controlScale + 16.dp
         } else {
             0.dp
         }
@@ -238,7 +249,16 @@ fun ActiveTimerScreen(
         // Under the completion overlay, nothing is left for a screen reader to reach.
         val hiddenWhenCompleted = if (state.isCompleted) Modifier.clearAndSetSemantics {} else Modifier
 
-        Box(modifier = Modifier.fillMaxSize().padding(end = stageEndPadding).then(hiddenWhenCompleted)) {
+        val stepTitle = state.currentStep?.title ?: stringResource(Res.string.timer_step_fallback)
+        val reminderText = reminder?.let { stringResource(Res.string.timer_reminder, it.percentLeft, it.stepTitle) }
+        val showReminder = reminderVisible && !state.isCompleted
+        val nextText = state.nextStep?.let { stringResource(Res.string.timer_up_next, it.title, shortDuration(it.durationSeconds)) }
+        val nextDescription = state.nextStep?.let { stringResource(Res.string.timer_up_next_description, it.title, spokenDuration(it.durationSeconds)) }
+        val onExtend: (() -> Unit)? = if (state.isCompleted) null else {
+            { engine.extendStep(EXTEND_STEP_SECONDS * 1000L) }
+        }
+
+        Box(modifier = Modifier.fillMaxSize().padding(start = stageStartPadding, end = stageEndPadding).then(hiddenWhenCompleted)) {
             // 1. Full-screen animated backdrop. Decorative: the dial below says the same in words.
             Box(modifier = Modifier.fillMaxSize().clearAndSetSemantics {}.captureBackdrop(backdrop)) {
                 when (session.cues.visualEffect) {
@@ -285,8 +305,9 @@ fun ActiveTimerScreen(
             }
 
             // 2. Centre: step title, countdown and next step, on the canvases' centre. Not inset, so
-            // it lines up with the rings, which are drawn on the whole screen.
-            val stepTitle = state.currentStep?.title ?: stringResource(Res.string.timer_step_fallback)
+            // it lines up with the rings, which are drawn on the whole screen. A wide window has
+            // no height to spare for the titles above and below, so there they move to the left
+            // column and the countdown stands alone.
             TimerDial(
                 stepTitle = stepTitle,
                 remaining = state.formattedRemaining,
@@ -295,16 +316,18 @@ fun ActiveTimerScreen(
                     stringResource(Res.string.timer_time_left_description, stepTitle, spokenDuration(state.secondsRemainingInStep)),
                 stepProgress = state.stepProgress,
                 isPaused = state.isPaused,
-                reminder = reminder?.let { stringResource(Res.string.timer_reminder, it.percentLeft, it.stepTitle) },
-                showReminder = reminderVisible && !state.isCompleted,
-                next = state.nextStep?.let { stringResource(Res.string.timer_up_next, it.title, shortDuration(it.durationSeconds)) },
-                nextDescription = state.nextStep?.let { stringResource(Res.string.timer_up_next_description, it.title, spokenDuration(it.durationSeconds)) },
+                reminder = reminderText,
+                showReminder = showReminder,
+                next = nextText,
+                nextDescription = nextDescription,
                 scale = dialScale,
                 auraScale = auraScale,
                 backdrop = backdrop,
-                onExtend = if (state.isCompleted) null else {
-                    { engine.extendStep(EXTEND_STEP_SECONDS * 1000L) }
-                },
+                onExtend = onExtend,
+                countdownOnly = sideLayout,
+                // The hourglass fills the height of a wide window, and a disc would hide its
+                // bulbs; a pill that just fits the digits leaves them, and the sand, in view.
+                pillGlass = sideLayout && session.cues.visualEffect == VisualEffectType.HOURGLASS,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -377,7 +400,16 @@ fun ActiveTimerScreen(
             }
 
             if (sideLayout) {
-                Column(modifier = Modifier.align(Alignment.TopStart).width(240.dp).then(TopBarFirst)) {
+                // Scrolls when a short window can't fit the pause tip, the status pills and the step
+                // details at once, so "+30s" is never pushed out of reach.
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .width(SideColumnWidth)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState())
+                        .then(TopBarFirst)
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         closeButton()
                         Spacer(modifier = Modifier.width(12.dp))
@@ -385,6 +417,19 @@ fun ActiveTimerScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     StepRail(stepCount = routine.steps.size, currentIndex = railIndex)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    StepDetails(
+                        stepTitle = stepTitle,
+                        isPaused = state.isPaused,
+                        reminder = reminderText,
+                        showReminder = showReminder,
+                        next = nextText,
+                        nextDescription = nextDescription,
+                        scale = 1f,
+                        onExtend = onExtend,
+                        alignment = Alignment.Start
+                    )
+                    // The one-off voice tip goes last, so it never pushes the step out of view.
                     pauseTip?.invoke()
                 }
                 Column(
@@ -447,7 +492,8 @@ fun ActiveTimerScreen(
 /**
  * The current step's title above the countdown and the next step below it, with the countdown
  * exactly in the middle of [modifier]'s area: equal space above and below keeps it on the centre
- * the canvases draw their rings around.
+ * the canvases draw their rings around. With [countdownOnly] it is just the countdown, centred,
+ * for layouts that show the rest beside it ([StepDetails]).
  */
 @Composable
 private fun TimerDial(
@@ -468,6 +514,9 @@ private fun TimerDial(
     backdrop: BackdropCapture,
     /** Adds time to the current step; null hides the button. */
     onExtend: (() -> Unit)?,
+    countdownOnly: Boolean,
+    /** Frosts a pill that just fits the digits instead of the round aura. */
+    pillGlass: Boolean,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
@@ -479,100 +528,164 @@ private fun TimerDial(
     val density = LocalDensity.current
     val countdownSize = with(density) { (68.dp * scale).toSp() }
     val countdownSpacing = with(density) { (3.dp * scale).toSp() }
+    val countdownSemantics = Modifier.clearAndSetSemantics {
+        contentDescription = remainingDescription
+        progressBarRangeInfo = ProgressBarRangeInfo(stepProgress, 0f..1f)
+        if (isPaused) stateDescription = pausedLabel
+    }
+    val digits: @Composable (Modifier) -> Unit = { textModifier ->
+        Text(
+            text = remaining,
+            modifier = textModifier,
+            fontSize = countdownSize,
+            fontWeight = FontWeight.Light,
+            letterSpacing = countdownSpacing,
+            color = colors.onBackground,
+            softWrap = false
+        )
+    }
+    val countdown: @Composable () -> Unit = {
+        if (pillGlass) {
+            digits(
+                countdownSemantics
+                    .countdownGlass(RoundedCornerShape(percent = 50), backdrop, scale)
+                    .padding(horizontal = 24.dp * scale, vertical = 4.dp * scale)
+            )
+        } else {
+            Box(modifier = Modifier.size(auraSize).then(countdownSemantics), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.size(auraSize * auraScale).countdownGlass(CircleShape, backdrop, scale))
+                digits(Modifier)
+            }
+        }
+    }
+
+    if (countdownOnly) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) { countdown() }
+        return
+    }
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier.weight(1f).padding(bottom = gap),
             contentAlignment = Alignment.BottomCenter
         ) {
-            // Current Step Pill. Announced when the step changes; the countdown is not, or it
-            // would be read out every second.
-            Box(
-                modifier = Modifier
-                    .semantics { liveRegion = LiveRegionMode.Polite }
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(colors.surface.copy(alpha = 0.88f))
-                    .border(1.dp, colors.cardBorder.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 22.dp, vertical = 10.dp)
-            ) {
-                Text(
-                    text = stepTitle,
-                    fontSize = 16.sp * scale.coerceAtMost(1.4f),
-                    fontWeight = FontWeight.Medium,
-                    color = colors.onSurface
-                )
-            }
+            StepTitlePill(stepTitle, scale)
         }
 
-        // Large Glowing Countdown Numbers
-        Box(
-            modifier = Modifier
-                .size(auraSize)
-                .clearAndSetSemantics {
-                    contentDescription = remainingDescription
-                    progressBarRangeInfo = ProgressBarRangeInfo(stepProgress, 0f..1f)
-                    if (isPaused) stateDescription = pausedLabel
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            // Soft aura of frosted glass: the animation behind it is blurred and veiled, so the
-            // countdown stays readable whatever the effect draws there.
-            Box(
-                modifier = Modifier
-                    .size(auraSize * auraScale)
-                    .clip(CircleShape)
-                    // Opaque base: the canvases draw on a transparent background, so without it
-                    // the sharp animation would show through the blurred copy.
-                    .background(colors.background)
-                    .frostedBackdrop(backdrop, radius = 20.dp * scale)
-                    .background(colors.background.copy(alpha = 0.35f))
-                    .background(colors.accentGlow)
-            )
-
-            Text(
-                text = remaining,
-                fontSize = countdownSize,
-                fontWeight = FontWeight.Light,
-                letterSpacing = countdownSpacing,
-                color = colors.onBackground,
-                softWrap = false
-            )
-        }
+        countdown()
 
         Box(
             modifier = Modifier.weight(1f).padding(top = gap),
             contentAlignment = Alignment.TopCenter
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // Seen as well as heard: pausing, and each "% left" reminder.
-                if (isPaused) {
-                    StatusPill(text = pausedLabel, scale = scale)
-                }
-                AnimatedVisibility(visible = showReminder && reminder != null, enter = fadeIn(), exit = fadeOut()) {
-                    StatusPill(text = reminder.orEmpty(), scale = scale)
-                }
+            StepStatus(isPaused, reminder, showReminder, next, nextDescription, scale, onExtend, Alignment.CenterHorizontally)
+        }
+    }
+}
 
-                // Up Next Step Banner
-                if (next != null) {
-                    Box(
-                        modifier = Modifier
-                            .clearAndSetSemantics { contentDescription = nextDescription ?: next }
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(colors.surface.copy(alpha = 0.75f))
-                            .padding(horizontal = 14.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = next,
-                            fontSize = 12.sp * scale.coerceAtMost(1.4f),
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-                }
-                if (onExtend != null) ExtendStepButton(onClick = onExtend)
+/**
+ * Frosted glass behind the countdown: the animation behind it is blurred and veiled, so the
+ * digits stay readable whatever the effect draws there. The opaque base comes first: the
+ * canvases draw on a transparent background, so without it the sharp animation would show
+ * through the blur.
+ */
+@Composable
+private fun Modifier.countdownGlass(shape: Shape, backdrop: BackdropCapture, scale: Float): Modifier {
+    val colors = LocalSereneColors.current
+    return clip(shape)
+        .background(colors.background)
+        .frostedBackdrop(backdrop, radius = 20.dp * scale)
+        .background(colors.background.copy(alpha = 0.35f))
+        .background(colors.accentGlow)
+}
+
+/**
+ * The step title, status, next step and "+30s" in one column, for layouts that show them beside
+ * the countdown rather than above and below it.
+ */
+@Composable
+private fun StepDetails(
+    stepTitle: String,
+    isPaused: Boolean,
+    reminder: String?,
+    showReminder: Boolean,
+    next: String?,
+    nextDescription: String?,
+    scale: Float,
+    onExtend: (() -> Unit)?,
+    alignment: Alignment.Horizontal
+) {
+    Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        StepTitlePill(stepTitle, scale)
+        StepStatus(isPaused, reminder, showReminder, next, nextDescription, scale, onExtend, alignment)
+    }
+}
+
+/**
+ * The current step's title. Announced when the step changes; the countdown is not, or it would
+ * be read out every second.
+ */
+@Composable
+private fun StepTitlePill(stepTitle: String, scale: Float) {
+    val colors = LocalSereneColors.current
+    Box(
+        modifier = Modifier
+            .semantics { liveRegion = LiveRegionMode.Polite }
+            .clip(RoundedCornerShape(20.dp))
+            .background(colors.surface.copy(alpha = 0.88f))
+            .border(1.dp, colors.cardBorder.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 22.dp, vertical = 10.dp)
+    ) {
+        Text(
+            text = stepTitle,
+            fontSize = 16.sp * scale.coerceAtMost(1.4f),
+            fontWeight = FontWeight.Medium,
+            color = colors.onSurface
+        )
+    }
+}
+
+/** Paused and reminder status, the next step and "+30s", under the countdown or beside it. */
+@Composable
+private fun StepStatus(
+    isPaused: Boolean,
+    reminder: String?,
+    showReminder: Boolean,
+    next: String?,
+    nextDescription: String?,
+    scale: Float,
+    onExtend: (() -> Unit)?,
+    alignment: Alignment.Horizontal
+) {
+    val colors = LocalSereneColors.current
+    Column(
+        horizontalAlignment = alignment,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Seen as well as heard: pausing, and each "% left" reminder.
+        if (isPaused) {
+            StatusPill(text = stringResource(Res.string.timer_paused), scale = scale)
+        }
+        AnimatedVisibility(visible = showReminder && reminder != null, enter = fadeIn(), exit = fadeOut()) {
+            StatusPill(text = reminder.orEmpty(), scale = scale)
+        }
+
+        // Up Next Step Banner
+        if (next != null) {
+            Box(
+                modifier = Modifier
+                    .clearAndSetSemantics { contentDescription = nextDescription ?: next }
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(colors.surface.copy(alpha = 0.75f))
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = next,
+                    fontSize = 12.sp * scale.coerceAtMost(1.4f),
+                    color = colors.onSurfaceVariant
+                )
             }
         }
+        if (onExtend != null) ExtendStepButton(onClick = onExtend)
     }
 }
 
@@ -625,6 +738,9 @@ private fun ExtendStepButton(onClick: () -> Unit) {
 }
 
 private const val EXTEND_STEP_SECONDS = 30
+
+/** Width of the title and step details column in wide layouts. */
+private val SideColumnWidth = 240.dp
 
 /** When the voice commands tip shows. */
 private enum class VoiceTipMoment { PAUSED, COMPLETED }
