@@ -14,7 +14,19 @@ enum class VisualEffectType(val emoji: String) {
     BONSAI_TREE("🌳"),
     COSMIC_ORBIT("✨"),
     BREATHING_LOTUS("🌸"),
-    HOURGLASS("⏳")
+    HOURGLASS("⏳"),
+
+    /** Not an animation: one of the others, picked anew each time the routine starts ([resolved]). */
+    RANDOM("🎲");
+
+    /** This effect as one the timer can draw: [RANDOM] becomes one of the [animations]. */
+    fun resolved(random: Random = Random.Default): VisualEffectType =
+        if (this == RANDOM) animations.random(random) else this
+
+    companion object {
+        /** The effects that are an animation of their own, everything but [RANDOM]. */
+        val animations: List<VisualEffectType> = entries - RANDOM
+    }
 }
 
 /** The tone played when a step starts; spoken guidance is chosen separately ([VoiceGuidance]). */
@@ -51,7 +63,10 @@ enum class LegacySoundMode(val sound: CueSound, val voice: Boolean) {
     MUTE(CueSound.NONE, false)
 }
 
-/** What a routine actually looks and sounds like once its Default choices are filled in. */
+/**
+ * What a routine actually looks and sounds like once its Default choices are filled in, and a
+ * Random effect picked: [visualEffect] is never [VisualEffectType.RANDOM].
+ */
 data class RoutineCues(
     val visualEffect: VisualEffectType,
     val sound: CueSound,
@@ -148,8 +163,9 @@ data class Routine(
         )
     }
 
-    fun resolve(preferences: AppPreferences): RoutineCues = RoutineCues(
-        visualEffect = visualEffect ?: preferences.defaultVisualEffect,
+    /** The routine's cues for one run; a Random effect is picked here, so each run can differ. */
+    fun resolve(preferences: AppPreferences, random: Random = Random.Default): RoutineCues = RoutineCues(
+        visualEffect = (visualEffect ?: preferences.defaultVisualEffect).resolved(random),
         sound = sound ?: preferences.defaultSound,
         voice = when (voice) {
             VoiceGuidance.DEFAULT -> preferences.defaultVoice

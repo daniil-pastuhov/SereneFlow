@@ -271,7 +271,8 @@ fun ActiveTimerScreen(
                             waterColor = colors.secondary
                         )
                     }
-                    VisualEffectType.HOURGLASS -> {
+                    // RANDOM never gets here: TimerSession.start picks one of the others.
+                    VisualEffectType.HOURGLASS, VisualEffectType.RANDOM -> {
                         HourglassCanvas(
                             progress = progress,
                             glassColor = colors.onBackground,
