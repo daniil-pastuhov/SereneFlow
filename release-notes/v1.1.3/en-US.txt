@@ -1,0 +1,1 @@
+• Fixed the duration picker on iPhone and iPad: its wheels no longer show blank rows when you scroll, and swiping the picker down closes it again
