@@ -205,6 +205,7 @@ fun ActiveTimerScreen(
         label = "AuraPulse"
     )
     val auraScale = if (reduceMotion) 1f else pulse
+    val backdrop = rememberBackdropCapture()
 
     BoxWithConstraints(
         modifier = modifier
@@ -239,7 +240,7 @@ fun ActiveTimerScreen(
 
         Box(modifier = Modifier.fillMaxSize().padding(end = stageEndPadding).then(hiddenWhenCompleted)) {
             // 1. Full-screen animated backdrop. Decorative: the dial below says the same in words.
-            Box(modifier = Modifier.fillMaxSize().clearAndSetSemantics {}) {
+            Box(modifier = Modifier.fillMaxSize().clearAndSetSemantics {}.captureBackdrop(backdrop)) {
                 when (session.cues.visualEffect) {
                     VisualEffectType.WATER -> {
                         WaterWaveCanvas(
@@ -300,6 +301,7 @@ fun ActiveTimerScreen(
                 nextDescription = state.nextStep?.let { stringResource(Res.string.timer_up_next_description, it.title, spokenDuration(it.durationSeconds)) },
                 scale = dialScale,
                 auraScale = auraScale,
+                backdrop = backdrop,
                 onExtend = if (state.isCompleted) null else {
                     { engine.extendStep(EXTEND_STEP_SECONDS * 1000L) }
                 },
@@ -462,6 +464,8 @@ private fun TimerDial(
     nextDescription: String?,
     scale: Float,
     auraScale: Float,
+    /** The animation behind the dial, shown frosted behind the countdown. */
+    backdrop: BackdropCapture,
     /** Adds time to the current step; null hides the button. */
     onExtend: (() -> Unit)?,
     modifier: Modifier = Modifier
@@ -510,11 +514,17 @@ private fun TimerDial(
                 },
             contentAlignment = Alignment.Center
         ) {
-            // Soft Aura
+            // Soft aura of frosted glass: the animation behind it is blurred and veiled, so the
+            // countdown stays readable whatever the effect draws there.
             Box(
                 modifier = Modifier
                     .size(auraSize * auraScale)
                     .clip(CircleShape)
+                    // Opaque base: the canvases draw on a transparent background, so without it
+                    // the sharp animation would show through the blurred copy.
+                    .background(colors.background)
+                    .frostedBackdrop(backdrop, radius = 20.dp * scale)
+                    .background(colors.background.copy(alpha = 0.35f))
                     .background(colors.accentGlow)
             )
 
