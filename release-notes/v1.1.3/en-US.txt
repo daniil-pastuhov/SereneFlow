@@ -1,4 +1,1 @@
-• Control a running routine with Google Assistant: pause, resume, skip a step or end it, just like with Siri on iOS
-• New Voice commands screen in Settings shows what to say to Siri or Google Assistant, using the routine you started last
-• The timer now suggests a handy voice command the first time you pause or finish a routine
 • Fixed the duration picker on iPhone and iPad: its wheels no longer show blank rows when you scroll, and swiping the picker down closes it again
