@@ -56,6 +56,10 @@ private class TreeFrame(
     val levels: Float,
     /** The first limbs' length; the trunk's own length only lifts the crown. */
     val crownLength: Float,
+    /** How far children turn from their parent, at least; more makes a broader crown. */
+    val spread: Float,
+    /** How much each branch leans back toward upright; less lets the crown spread sideways. */
+    val lean: Float,
     val seconds: Float,
     val gust: Float,
     val barkColor: Color,
@@ -91,12 +95,13 @@ fun BonsaiTreeCanvas(
         val rootX = width * 0.5f
         val rootY = groundY - unit * 0.01f
         // The trunk forks behind the countdown, and the crown is sized on its own to reach from
-        // there to just under the top bar while staying within the screen's width.
-        val forkY = height * 0.47f
+        // there to just under the top bar while staying within the screen's width. In a wide
+        // window the countdown takes most of the height, so the tree forks lower and its crown
+        // spreads out to both sides of the countdown instead of rising above it.
+        val wide = width > height * 1.15f
+        val forkY = height * (if (wide) 0.6f else 0.47f)
         val trunkLength = rootY - forkY
-        // In a wide window the countdown takes most of the height, so the crown spreads out to
-        // its sides instead of rising above it.
-        val crownLength = if (width > height * 1.15f) height * 0.2f else min(height * 0.135f, width * 0.37f)
+        val crownLength = if (wide) min(height * 0.24f, width * 0.14f) else min(height * 0.135f, width * 0.37f)
         val canopyY = forkY - crownLength * 1.2f
 
         // Soft light behind the canopy, warming as the tree blooms.
@@ -119,6 +124,8 @@ fun BonsaiTreeCanvas(
             scratch = scratch,
             levels = (0.45f + 0.55f * progress) * (MAX_DEPTH + 1),
             crownLength = crownLength,
+            spread = if (wide) 0.5f else 0.36f,
+            lean = if (wide) 0.04f else 0.18f,
             seconds = seconds,
             gust = gust,
             barkColor = trunkColor.copy(alpha = 0.8f),
@@ -227,10 +234,10 @@ private fun DrawScope.drawBranch(
             k == 0 -> -1f
             else -> 1f
         }
-        val spread = 0.36f + 0.22f * hash01(childId, 4)
+        val spread = frame.spread + 0.22f * hash01(childId, 4)
         // Lean every branch a little back toward upright, so the crown stays within the screen.
         val raw = angle + side * spread
-        val childAngle = raw + (-PI.toFloat() / 2f - raw) * 0.18f
+        val childAngle = raw + (-PI.toFloat() / 2f - raw) * frame.lean
         drawBranch(
             frame = frame,
             startX = endX,
