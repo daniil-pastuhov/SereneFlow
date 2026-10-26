@@ -84,6 +84,8 @@
     <string name="effect_lotus_description">A lotus opening petal by petal to a calm 4-4-6-2 breath</string>
     <string name="effect_hourglass">Zen Hourglass</string>
     <string name="effect_hourglass_description">Streaming cascade of glowing sand particles and accumulating mound</string>
+    <string name="effect_random">Random</string>
+    <string name="effect_random_description">A different animation each time the routine starts</string>
 
     <!-- Step sounds -->
     <string name="sound_tibetan_bowl">Tibetan Bowl</string>
@@ -209,6 +211,7 @@
     <string name="effect_orbit_short">Orbit</string>
     <string name="effect_lotus_short">Lotus</string>
     <string name="effect_hourglass_short">Hourglass</string>
+    <string name="effect_random_short">Random</string>
     <!-- %1$s: the effect's short name, e.g. "Water" -->
     <string name="list_effect_description">%1$s effect</string>
     <string name="list_start_routine_description">Start %1$s</string>

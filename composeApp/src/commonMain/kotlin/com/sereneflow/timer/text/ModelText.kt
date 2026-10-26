@@ -22,6 +22,7 @@ val VisualEffectType.nameRes: StringResource
         VisualEffectType.COSMIC_ORBIT -> Res.string.effect_orbit
         VisualEffectType.BREATHING_LOTUS -> Res.string.effect_lotus
         VisualEffectType.HOURGLASS -> Res.string.effect_hourglass
+        VisualEffectType.RANDOM -> Res.string.effect_random
     }
 
 val VisualEffectType.descriptionRes: StringResource
@@ -31,6 +32,7 @@ val VisualEffectType.descriptionRes: StringResource
         VisualEffectType.COSMIC_ORBIT -> Res.string.effect_orbit_description
         VisualEffectType.BREATHING_LOTUS -> Res.string.effect_lotus_description
         VisualEffectType.HOURGLASS -> Res.string.effect_hourglass_description
+        VisualEffectType.RANDOM -> Res.string.effect_random_description
     }
 
 /** The short name on routine cards: "Water", "Orbit". */
@@ -41,6 +43,7 @@ val VisualEffectType.shortNameRes: StringResource
         VisualEffectType.COSMIC_ORBIT -> Res.string.effect_orbit_short
         VisualEffectType.BREATHING_LOTUS -> Res.string.effect_lotus_short
         VisualEffectType.HOURGLASS -> Res.string.effect_hourglass_short
+        VisualEffectType.RANDOM -> Res.string.effect_random_short
     }
 
 val CueSound.nameRes: StringResource

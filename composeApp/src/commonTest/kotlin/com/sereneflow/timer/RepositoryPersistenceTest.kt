@@ -204,4 +204,17 @@ class RepositoryPersistenceTest {
         )
         assertEquals(RoutineCues(VisualEffectType.WATER, CueSound.NONE, voice = true), own.resolve(prefs))
     }
+
+    @Test
+    fun randomEffectPicksEveryAnimationAndNeverRandom() {
+        val random = kotlin.random.Random(42)
+        val own = Routine(id = "r", title = "R", visualEffect = VisualEffectType.RANDOM)
+        val fromDefault = Routine(id = "d", title = "D")
+        val prefs = AppPreferences(defaultVisualEffect = VisualEffectType.RANDOM)
+
+        val picked = (1..200).flatMap {
+            listOf(own.resolve(prefs, random).visualEffect, fromDefault.resolve(prefs, random).visualEffect)
+        }.toSet()
+        assertEquals(VisualEffectType.animations.toSet(), picked)
+    }
 }
