@@ -123,10 +123,14 @@ actual fun DurationPicker(
     val minutesRow = stringResource(Res.string.picker_minutes_row)
     val secondsRow = stringResource(Res.string.picker_seconds_row)
 
-    DisposableEffect(Unit) {
+    // UIKit holds the picker's data source and delegate and the sheet's delegate weakly, so the
+    // composition keeps the wheels alive: once collected, rows scrolled into view come up blank.
+    val wheels = remember(minutesRow, secondsRow) {
+        DurationWheels(minutesRow, secondsRow, onSwipeDismiss = { currentOnDismiss() })
+    }
+
+    DisposableEffect(wheels) {
         val picker = UIPickerView()
-        // The picker holds its data source and delegate weakly; this effect keeps them alive.
-        val wheels = DurationWheels(minutesRow, secondsRow, onSwipeDismiss = { currentOnDismiss() })
         picker.dataSource = wheels
         picker.delegate = wheels
         picker.selectRow((initialSeconds / 60).coerceAtMost(MAX_PICKER_MINUTES).toLong(), inComponent = 0, animated = false)
