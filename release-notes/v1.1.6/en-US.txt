@@ -1,0 +1,2 @@
+• The countdown, step name and controls no longer overlap on short or nearly square screens, such as an unfolded foldable
+• The hourglass and bonsai timers show the countdown on a frosted pill, so the animation behind it stays visible
