@@ -244,7 +244,7 @@ data class AppPreferences(
      * Live Activity, banners and background audio (iOS). Off until the user opts in.
      */
     val backgroundMode: Boolean = false,
-    /** Whether the user has answered the background-mode prompt shown after their first save. */
+    /** Whether the user has answered the background-mode prompt (first save or first start). */
     val backgroundModeAsked: Boolean = false,
     /** The text-to-speech voice for spoken cues (AudioController.englishVoices); null = default. */
     val voiceId: String? = null,

@@ -66,6 +66,8 @@ fun App(demoLaunch: DemoLaunch? = null) {
     val activeSession by TimerSession.active.collectAsState()
     val requestNotificationPermission = rememberNotificationPermissionRequest()
     var showBackgroundPrompt by remember { mutableStateOf(false) }
+    // A routine whose start waits for the background prompt's answer, so the answer applies to it.
+    var startAfterPrompt by remember { mutableStateOf<Routine?>(null) }
     // A routine just added at the end of the list, which the list scrolls to when it next shows.
     var revealRoutineId by remember { mutableStateOf<String?>(null) }
     val backStack = remember {
@@ -127,6 +129,21 @@ fun App(demoLaunch: DemoLaunch? = null) {
         preferencesRepository.setLastRoutine(routine.id)
     }
 
+    fun startRoutine(routine: Routine, backgroundMode: Boolean) {
+        TimerSession.start(routine, preferences, backgroundMode, restTitle)
+        preferencesRepository.setLastRoutine(routine.id)
+        push(AppScreen.Timer(routine))
+    }
+
+    fun answerBackgroundPrompt(enabled: Boolean) {
+        showBackgroundPrompt = false
+        preferencesRepository.setBackgroundMode(enabled)
+        // A routine started from outside while the prompt was open is left running.
+        val held = startAfterPrompt
+        startAfterPrompt = null
+        if (held != null && TimerSession.active.value == null) startRoutine(held, enabled)
+    }
+
     fun pop() {
         if (backStack.size <= 1) return
         // Leaving the timer screen ends the session; it never keeps running without its UI.
@@ -161,7 +178,8 @@ fun App(demoLaunch: DemoLaunch? = null) {
     )
 
     SereneFlowTheme(themeMode = preferences.themeMode) {
-        // Asked once, after the first routine is saved; changeable later in Settings.
+        // Asked once, after the first routine is saved or before the first one starts from the list;
+        // changeable later in Settings.
         if (showBackgroundPrompt) {
             ConfirmDialog(
                 title = stringResource(Res.string.background_prompt_title),
@@ -170,14 +188,10 @@ fun App(demoLaunch: DemoLaunch? = null) {
                 dismissLabel = stringResource(Res.string.background_prompt_dismiss),
                 destructive = false,
                 onConfirm = {
-                    showBackgroundPrompt = false
-                    preferencesRepository.setBackgroundMode(true)
                     requestNotificationPermission()
+                    answerBackgroundPrompt(true)
                 },
-                onDismiss = {
-                    showBackgroundPrompt = false
-                    preferencesRepository.setBackgroundMode(false)
-                }
+                onDismiss = { answerBackgroundPrompt(false) }
             )
         }
 
@@ -250,9 +264,12 @@ fun App(demoLaunch: DemoLaunch? = null) {
                         routineRepository = routineRepository,
                         defaultVisualEffect = preferences.defaultVisualEffect,
                         onStartRoutine = { routine ->
-                            TimerSession.start(routine, preferences, preferences.backgroundMode, restTitle)
-                            preferencesRepository.setLastRoutine(routine.id)
-                            push(AppScreen.Timer(routine))
+                            if (preferences.backgroundModeAsked) {
+                                startRoutine(routine, preferences.backgroundMode)
+                            } else {
+                                startAfterPrompt = routine
+                                showBackgroundPrompt = true
+                            }
                         },
                         onEditRoutine = { routine -> push(AppScreen.Editor(routine)) },
                         onCreateNewRoutine = { push(AppScreen.Editor(null)) },

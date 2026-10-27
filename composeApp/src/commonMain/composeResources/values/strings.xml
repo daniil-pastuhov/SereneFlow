@@ -26,7 +26,7 @@
     <string name="value_off">Off</string>
     <string name="loading">Loading…</string>
 
-    <!-- Background mode prompt, after the first routine is saved -->
+    <!-- Background mode prompt, after the first routine is saved or before the first start -->
     <string name="background_prompt_title">Follow your routine with the screen off?</string>
     <string name="background_prompt_message">SereneFlow can keep guiding you when the screen is off or you switch apps, with a notification showing the current step and time left. You can change this anytime in Settings.</string>
     <string name="background_prompt_confirm">Yes, keep me posted</string>
