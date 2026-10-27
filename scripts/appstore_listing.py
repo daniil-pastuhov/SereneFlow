@@ -2,14 +2,15 @@
 """Fills in the App Store listing of the editable App Store version from store-listing/app-store/
 through the App Store Connect API: app information (name, subtitle, privacy policy, categories,
 content rights, age rating), availability and price (free, everywhere), the version's texts and
-copyright, the App Review contact and notes, and the iPhone 6.9" and iPad 13" screenshots.
+copyright, the App Review contact and notes, and the iPhone 6.9", iPhone Duo, iPad 13" and
+Apple Watch screenshots and the app previews.
 
     source ~/.config/sereneflow/store.env
     python3 scripts/appstore_listing.py --version 1.0.0 --review-contact-from com.foodbest.ios
 
 Run it before `scripts/testflight.py appstore`, which attaches the build and submits. Reads the
 same ASC_* variables. The parts without an API are listed in store-listing/app-store/README.md:
-App Privacy, the iPhone Duo screenshots and the Header and Search Results images.
+App Privacy and the Header and Search Results images.
 
 --review-contact-from copies the App Review contact (name, phone, email) from another app's newest
 version on the same account, so the personal details stay out of this repository.
@@ -32,7 +33,13 @@ COPYRIGHT = "2026 Daniil Pastuhov"
 PRIMARY_CATEGORY, SECONDARY_CATEGORY = "HEALTH_AND_FITNESS", "PRODUCTIVITY"
 # Folder under <locale>/ -> App Store Connect display type. 1320x2868 iPhone screenshots go in
 # the 6.7" slot, which App Store Connect labels 6.9" and also uses for smaller iPhones.
-SCREENSHOT_SETS = {"screenshots": "APP_IPHONE_67", "ipad-screenshots": "APP_IPAD_PRO_3GEN_129"}
+# APP_IPHONE_DUO isn't in Apple's documentation or OpenAPI spec yet, but the API takes it: one set
+# that holds either Duo display's size (inner 2007x2853, outer 1398x2034), at most 10 in all.
+# Apple Watch shots are the bare 416x496 screen (Series 10 and later, 46mm), without a frame.
+SCREENSHOT_SETS = {"screenshots": "APP_IPHONE_67", "duo-inner-screenshots": "APP_IPHONE_DUO",
+                   "ipad-screenshots": "APP_IPAD_PRO_3GEN_129", "watch-screenshots": "APP_WATCH_SERIES_10"}
+# The same for app previews (.mp4, made by scripts/ios_previews.sh).
+PREVIEW_SETS = {"app-previews": "IPHONE_67", "ipad-app-previews": "IPAD_PRO_3GEN_129"}
 LIMITS = {"name.txt": 30, "subtitle.txt": 30, "promotional_text.txt": 170, "keywords.txt": 100,
           "description.txt": 4000}
 # Every age-rating question answered No / None, except that the routines are about wellness
@@ -52,7 +59,11 @@ REVIEW_NOTES = """SereneFlow has no account or login, and no network access; eve
 
 To try it: tap "Begin Routine" on "Morning Awakening". Each step counts down with an animated visual timer, and a voice announces the steps (turn the volume up). Use "New Routine" to build one, and the gear button for themes, default sounds and reminders.
 
-Background audio: with "Follow routine with screen off" on (Settings, or the prompt after saving a routine), the app keeps its audio session active while a routine runs, so spoken step cues and chimes play on time with the screen locked. A Live Activity shows the current step and time left. The audio session is released when the routine is paused or ends."""
+Background audio (UIBackgroundModes: audio): SereneFlow speaks each step's name aloud and plays chimes, a 3-2-1 countdown and a closing bell while a routine runs, including when the phone is locked or another app is in front. To test it:
+1. Tap "Begin Routine" on any routine.
+2. In the "Follow your routine with the screen off?" alert, tap "Yes, keep me posted" (it can also be turned on in Settings > "Follow routine with screen off").
+3. Go to the Home Screen. Each step is announced aloud and chimes play until the routine ends.
+The first step of "Morning Awakening" is 2 minutes long, so its first background cue comes about a minute in; a short routine (+ button, e.g. three 20-second steps) shows the cues sooner. A Live Activity shows the current step and time left. The audio session is released when the routine is paused or ends."""
 
 
 def text(locale, name):
@@ -204,17 +215,22 @@ def review_detail(asc, version, contact_from):
 
 
 def upload_screenshot(asc, set_id, path):
+    return upload_asset(asc, "appScreenshots", {}, "appScreenshotSet", set_id, path)
+
+
+def upload_asset(asc, kind, attributes, set_relationship, set_id, path):
+    """Uploads a screenshot or app preview into its set; kind is appScreenshots or appPreviews."""
     data = path.read_bytes()
-    shot = asc.call("POST", "/appScreenshots", body={"data": {
-        "type": "appScreenshots", "attributes": {"fileName": path.name, "fileSize": len(data)},
-        "relationships": {"appScreenshotSet": {"data": {"type": "appScreenshotSets", "id": set_id}}}}})["data"]
+    shot = asc.call("POST", f"/{kind}", body={"data": {
+        "type": kind, "attributes": {"fileName": path.name, "fileSize": len(data), **attributes},
+        "relationships": {set_relationship: {"data": {"type": set_relationship + "s", "id": set_id}}}}})["data"]
     for op in shot["attributes"]["uploadOperations"]:
         chunk = data[op["offset"]:op["offset"] + op["length"]]
         request = urllib.request.Request(op["url"], data=chunk, method=op["method"],
                                          headers={h["name"]: h["value"] for h in op["requestHeaders"]})
         with urllib.request.urlopen(request, timeout=120):
             pass
-    patch(asc, "appScreenshots", shot["id"],
+    patch(asc, kind, shot["id"],
           {"uploaded": True, "sourceFileChecksum": hashlib.md5(data).hexdigest()})
     return shot["id"]
 
@@ -238,24 +254,49 @@ def screenshots(asc, localization_ids):
                     "relationships": {"appStoreVersionLocalization": {"data": {
                         "type": "appStoreVersionLocalizations", "id": localization_id}}}}})["data"]["id"]
             ids = [upload_screenshot(asc, set_id, f) for f in files]
-            wait_for_screenshots(asc, ids)
+            wait_for_assets(asc, "appScreenshots", ids)
             print(f"{locale}: {display_type} ({len(ids)} screenshots)")
 
 
-def wait_for_screenshots(asc, ids, timeout=900):
+def previews(asc, localization_ids):
+    """Replaces each app preview set that has files in its folder, as screenshots() does."""
+    for locale, localization_id in localization_ids.items():
+        sets = {s["attributes"]["previewType"]: s["id"] for s in asc.call(
+            "GET", f"/appStoreVersionLocalizations/{localization_id}/appPreviewSets")["data"]}
+        for folder, preview_type in PREVIEW_SETS.items():
+            files = sorted((LISTING_DIR / locale / folder).glob("*.mp4"), key=lambda p: (len(p.stem), p.stem))
+            if not files:
+                continue
+            if preview_type in sets:
+                for old in asc.call("GET", f"/appPreviewSets/{sets[preview_type]}/appPreviews")["data"]:
+                    asc.call("DELETE", f"/appPreviews/{old['id']}")
+                set_id = sets[preview_type]
+            else:
+                set_id = asc.call("POST", "/appPreviewSets", body={"data": {
+                    "type": "appPreviewSets", "attributes": {"previewType": preview_type},
+                    "relationships": {"appStoreVersionLocalization": {"data": {
+                        "type": "appStoreVersionLocalizations", "id": localization_id}}}}})["data"]["id"]
+            ids = [upload_asset(asc, "appPreviews", {"mimeType": "video/mp4"}, "appPreviewSet", set_id, f)
+                   for f in files]
+            # Delivered here; App Store Connect then transcodes the video, which can take a while.
+            wait_for_assets(asc, "appPreviews", ids)
+            print(f"{locale}: {preview_type} ({len(ids)} app previews)")
+
+
+def wait_for_assets(asc, kind, ids, timeout=900):
     deadline = time.time() + timeout
     pending = set(ids)
     while pending:
-        for shot_id in list(pending):
-            state = asc.call("GET", f"/appScreenshots/{shot_id}")["data"]["attributes"] \
+        for asset_id in list(pending):
+            state = asc.call("GET", f"/{kind}/{asset_id}")["data"]["attributes"] \
                 .get("assetDeliveryState") or {}
             if state.get("state") == "COMPLETE":
-                pending.discard(shot_id)
+                pending.discard(asset_id)
             elif state.get("state") == "FAILED":
-                sys.exit(f"Screenshot {shot_id} failed processing: {state.get('errors')}")
+                sys.exit(f"{kind} {asset_id} failed processing: {state.get('errors')}")
         if pending:
             if time.time() > deadline:
-                sys.exit(f"{len(pending)} screenshots still processing after {timeout} s")
+                sys.exit(f"{len(pending)} {kind} still processing after {timeout} s")
             time.sleep(5)
 
 
@@ -264,7 +305,8 @@ def main():
     parser.add_argument("--version", required=True, help="marketing version, e.g. 1.0.0")
     parser.add_argument("--review-contact-from", metavar="BUNDLE_ID",
                         help="copy the App Review contact from this app's newest version")
-    parser.add_argument("--skip-screenshots", action="store_true")
+    parser.add_argument("--skip-screenshots", action="store_true",
+                        help="leave the screenshots and app previews as they are")
     args = parser.parse_args()
 
     locales = sorted(d.name for d in LISTING_DIR.iterdir() if (d / "name.txt").exists())
@@ -280,6 +322,7 @@ def main():
         review_detail(asc, version, args.review_contact_from)
         if not args.skip_screenshots:
             screenshots(asc, localization_ids)
+            previews(asc, localization_ids)
     except AscError as error:
         sys.exit(f"App Store Connect API error: {error}")
     print("Listing filled in; next: scripts/testflight.py appstore")

@@ -10,11 +10,21 @@ Connect's media sections of the same name:
 | `screenshots/` | 1320×2868 | iPhone with Dynamic Island (large display), 6.9" |
 | `duo-inner-screenshots/` | 2007×2853 | iPhone Duo, inner display |
 | `duo-outer-screenshots/` | 1398×2034 | iPhone Duo, outer display |
-| `ipad-screenshots/` | 2064×2752 | iPad 13" |
+| `ipad-screenshots/` | 2064×2752, 2752×2064 | iPad 13" |
+| `watch-screenshots/` | 416×496 | Apple Watch (Series 10 and later, 46mm), no frame |
+| `app-previews/` | 886×1920 video | App previews, iPhone 6.9" |
+| `ipad-app-previews/` | 1600×1200 video | App previews, iPad 13" |
+
+The iPad set mixes portrait and landscape shots (a set holds at most 10): the eight portrait
+shots, with the landscape orbit timer (`5-orbit`) third and the landscape routine list
+(`2-list`) sixth.
 
 iPhone Duo screenshots put an "optimized for iPhone Duo" badge on the product page, and from
-April 2027 they are required for apps built with the iOS 27.1 SDK. The App Store Connect API has
-no documented display type for them yet, so they are uploaded by hand.
+April 2027 they are required for apps built with the iOS 27.1 SDK. App Store Connect has a single
+iPhone Duo set, which takes either display's size (at most 10 in all). Its API display type,
+`APP_IPHONE_DUO`, isn't documented yet, but `scripts/appstore_listing.py` uploads
+`duo-inner-screenshots/` with it (checked on 1.1.5). `duo-outer-screenshots/` isn't uploaded:
+the set has room for only a few of them next to the inner shots.
 
 Retake them after UI changes: `scripts/ios_screenshots.sh <raw-dir>` captures every line of
 `scripts/demo/shots.txt` with the demo routines in `scripts/demo/routines.json`, then
@@ -26,6 +36,23 @@ Retake them after UI changes: `scripts/ios_screenshots.sh <raw-dir>` captures ev
   Simulator.app: set the pose in Device Hub (Xcode → Open Developer Tool), as simctl can't.
 - `duo-outer-screenshots/`: `DEVICE_NAME="iPhone Duo" SCREEN=1`, folded.
 - `ipad-screenshots/`: `DEVICE_NAME="iPad Pro 13-inch (M5)"`.
+
+For landscape, turn the simulator first; simctl can't, but a UI test can
+(`XCUIDevice.shared.orientation = .landscapeLeft`), and the simulator stays turned afterwards.
+That doesn't turn the iPhone Duo, whose posture and rotation only Device Hub sets.
+Capture and frame each orientation into its own folder, then put the landscape shots into the
+set as described above.
+
+Apple Watch screenshots are required because the app includes the watch app. They are the bare
+watch screen: build the `SereneFlowWatch` scheme (Debug) for an "Apple Watch Series 12 (46mm)"
+simulator, install it there with `simctl install`, launch it with `-demoSnapshot`,
+`-demoSnapshotPaused` or `-demoSnapshotComplete` (debug-only, so no phone is needed) and take
+`simctl io <watch> screenshot`. The watch simulator can't override its status bar time.
+
+App previews: `scripts/ios_previews.sh <out.mp4>` records a scene per line of its `SCENES` (the
+same demo launches as the screenshots) and joins them into a 15–30 s preview at App Store
+Connect's size, with a silent audio track. Pick the simulator and orientation as for screenshots:
+the iPad preview is landscape, to show the side-by-side timer layout.
 
 `en-US/` also has the two images for the version page's "Header and Search Results" section, which
 the App Store shows on iOS 27 and iPadOS 27 and later. They are optional; without them, search
@@ -42,13 +69,14 @@ headline lives in that script), keeping key artwork inside the safe areas of App
 `scripts/appstore_listing.py --version X.Y.Z --review-contact-from com.foodbest.ios` (after
 `source ~/.config/sereneflow/store.env`) sets everything below that has an API: name, subtitle,
 privacy policy, categories, content rights, age rating, availability and price, the version's
-texts and copyright, the App Review contact (copied from BestBefore's) and notes, and the iPhone
-and iPad screenshots. `scripts/testflight.py appstore` then attaches the build and submits.
+texts and copyright, the App Review contact (copied from BestBefore's) and notes, and the iPhone,
+iPhone Duo and iPad screenshots and app previews. `scripts/testflight.py appstore` then
+attaches the build and submits.
 
 Only these are done by hand in App Store Connect, as they have no API:
 - **App Privacy** → Get Started → "No, we do not collect data from this app" → Publish.
 - **App Information** → the regulated medical device declaration: **No**.
-- The iPhone Duo screenshot sets and the Header and Search Results images (drag in from `en-US/`).
+- The Header and Search Results images (drag in from `en-US/`).
 
 ## 1. One-time setup (done)
 
@@ -113,11 +141,22 @@ To try it: tap "Begin Routine" on "Morning Awakening". Each step counts down wit
 visual timer, and a voice announces the steps (turn the volume up). Use "New Routine" to build one,
 and the gear button for themes, default sounds and reminders.
 
-Background audio: with "Follow routine with screen off" on (Settings, or the prompt after saving a
-routine), the app keeps its audio session active while a routine runs, so spoken step cues and
-chimes play on time with the screen locked. A Live Activity shows the current step and time left.
-The audio session is released when the routine is paused or ends.
+Background audio (UIBackgroundModes: audio): SereneFlow speaks each step's name aloud and plays
+chimes, a 3-2-1 countdown and a closing bell while a routine runs, including when the phone is
+locked or another app is in front. To test it:
+1. Tap "Begin Routine" on any routine.
+2. In the "Follow your routine with the screen off?" alert, tap "Yes, keep me posted" (it can
+   also be turned on in Settings > "Follow routine with screen off").
+3. Go to the Home Screen. Each step is announced aloud and chimes play until the routine ends.
+The first step of "Morning Awakening" is 2 minutes long, so its first background cue comes about
+a minute in; a short routine (+ button, e.g. three 20-second steps) shows the cues sooner. A Live
+Activity shows the current step and time left. The audio session is released when the routine is
+paused or ends.
 ```
+
+App Review once asked for a screen recording of the background audio on a physical device
+(guideline 2.5.4). Record one with the phone's own screen recording, sound on, and link it in
+the notes.
 
 ## 7. Version page
 
