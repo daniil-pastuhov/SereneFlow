@@ -95,11 +95,12 @@ final class WatchSessionModel: NSObject, ObservableObject, WCSessionDelegate {
     override init() {
         super.init()
         #if DEBUG
-        // Screenshots / UI checks without a paired phone: `-demoSnapshot` (running) or
-        // `-demoSnapshotPaused`.
+        // Screenshots / UI checks without a paired phone: `-demoSnapshot` (running),
+        // `-demoSnapshotPaused` or `-demoSnapshotComplete`.
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("-demoSnapshot") || arguments.contains("-demoSnapshotPaused") {
-            snapshot = .demo(paused: arguments.contains("-demoSnapshotPaused"))
+        if arguments.contains(where: { $0.hasPrefix("-demoSnapshot") }) {
+            snapshot = .demo(paused: arguments.contains("-demoSnapshotPaused"),
+                             completed: arguments.contains("-demoSnapshotComplete"))
             return
         }
         #endif
