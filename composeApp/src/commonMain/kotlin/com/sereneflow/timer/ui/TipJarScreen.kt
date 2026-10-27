@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sereneflow.timer.platform.TipProduct
 import com.sereneflow.timer.platform.TipResult
+import com.sereneflow.timer.platform.TipStore
 import com.sereneflow.timer.platform.rememberTipStore
 import com.sereneflow.timer.resources.*
 import com.sereneflow.timer.theme.LocalSereneColors
@@ -78,9 +79,8 @@ private sealed interface TipJarState {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TipJarScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun TipJarScreen(onBack: () -> Unit, modifier: Modifier = Modifier, store: TipStore = rememberTipStore()) {
     val colors = LocalSereneColors.current
-    val store = rememberTipStore()
     val scope = rememberCoroutineScope()
     var state by remember { mutableStateOf<TipJarState>(TipJarState.Loading) }
     var loadAttempt by remember { mutableIntStateOf(0) }

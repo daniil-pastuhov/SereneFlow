@@ -345,7 +345,8 @@ fun App(demoLaunch: DemoLaunch? = null) {
                     )
                 }
                 is AppScreen.TipJar -> {
-                    TipJarScreen(onBack = ::pop)
+                    if (demoLaunch == DemoLaunch.TipJar) TipJarScreen(onBack = ::pop, store = DemoTipStore)
+                    else TipJarScreen(onBack = ::pop)
                 }
                 is AppScreen.SoundPicker -> {
                     SoundPickerScreen(preferencesRepository = preferencesRepository, onBack = ::pop)
