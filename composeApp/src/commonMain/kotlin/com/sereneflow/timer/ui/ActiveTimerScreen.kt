@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -74,6 +75,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -257,6 +260,11 @@ fun ActiveTimerScreen(
         val onExtend: (() -> Unit)? = if (state.isCompleted) null else {
             { engine.extendStep(EXTEND_STEP_SECONDS * 1000L) }
         }
+        // The top bar (title and rail, not the pause tip) and the controls, as laid out: the dial
+        // keeps its step title and next step clear of both.
+        val density = LocalDensity.current
+        var topBarHeight by remember { mutableStateOf(0.dp) }
+        var controlsHeight by remember { mutableStateOf(0.dp) }
 
         Box(modifier = Modifier.fillMaxSize().padding(start = stageStartPadding, end = stageEndPadding).then(hiddenWhenCompleted)) {
             // 1. Full-screen animated backdrop. Decorative: the dial below says the same in words.
@@ -325,9 +333,13 @@ fun ActiveTimerScreen(
                 backdrop = backdrop,
                 onExtend = onExtend,
                 countdownOnly = sideLayout,
-                // The hourglass fills the height of a wide window, and a disc would hide its
-                // bulbs; a pill that just fits the digits leaves them, and the sand, in view.
-                pillGlass = sideLayout && session.cues.visualEffect == VisualEffectType.HOURGLASS,
+                // The hourglass and the bonsai draw their subject behind the centre, where a disc
+                // would hide the bulbs or the trunk; a pill that just fits the digits leaves them,
+                // and the sand or the tree, in view.
+                pillGlass = session.cues.visualEffect == VisualEffectType.HOURGLASS ||
+                    session.cues.visualEffect == VisualEffectType.BONSAI_TREE,
+                topInset = if (sideLayout) 0.dp else safePadding.calculateTopPadding() + 12.dp + topBarHeight + 8.dp,
+                bottomInset = if (sideLayout) 0.dp else safePadding.calculateBottomPadding() + 12.dp + controlsHeight + 8.dp,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -445,24 +457,30 @@ fun ActiveTimerScreen(
                     modifier = Modifier.align(Alignment.TopCenter).widthIn(max = 640.dp).fillMaxWidth().then(TopBarFirst),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.onSizeChanged { topBarHeight = with(density) { it.height.toDp() } },
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        closeButton()
-                        title(Alignment.CenterHorizontally)
-                        // Keeps the title centred when there is no sound to toggle.
-                        muteButton?.invoke() ?: Spacer(modifier = Modifier.size(MinTouchTarget))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            closeButton()
+                            title(Alignment.CenterHorizontally)
+                            // Keeps the title centred when there is no sound to toggle.
+                            muteButton?.invoke() ?: Spacer(modifier = Modifier.size(MinTouchTarget))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        StepRail(stepCount = routine.steps.size, currentIndex = railIndex)
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    StepRail(stepCount = routine.steps.size, currentIndex = railIndex)
                     pauseTip?.invoke()
                 }
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
+                        .onSizeChanged { controlsHeight = with(density) { it.height.toDp() } }
                         .padding(bottom = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(28.dp * controlScale, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
@@ -515,72 +533,126 @@ private fun TimerDial(
     /** Adds time to the current step; null hides the button. */
     onExtend: (() -> Unit)?,
     countdownOnly: Boolean,
-    /** Frosts a pill that just fits the digits instead of the round aura. */
+    /**
+     * Frosts a pill that just fits the digits instead of the round aura. The aura also gives way
+     * to the pill when there is no room for it between the top bar and the controls.
+     */
     pillGlass: Boolean,
+    /**
+     * Kept clear above and below for the top bar and the controls drawn over the dial. When the
+     * step title and next step wouldn't fit between them otherwise, the countdown shrinks, and
+     * past [MinCentredFit] moves off the centre as little as it must.
+     */
+    topInset: Dp,
+    bottomInset: Dp,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
     val pausedLabel = stringResource(Res.string.timer_paused)
-    val auraSize = 240.dp * scale
     val gap = 16.dp * scale
-    // The numerals fill a fixed-size dial, so they are sized in dp: a large font scale would
-    // otherwise clip them. They are already far larger than any text the font scale gives.
     val density = LocalDensity.current
-    val countdownSize = with(density) { (68.dp * scale).toSp() }
-    val countdownSpacing = with(density) { (3.dp * scale).toSp() }
     val countdownSemantics = Modifier.clearAndSetSemantics {
         contentDescription = remainingDescription
         progressBarRangeInfo = ProgressBarRangeInfo(stepProgress, 0f..1f)
         if (isPaused) stateDescription = pausedLabel
     }
-    val digits: @Composable (Modifier) -> Unit = { textModifier ->
-        Text(
-            text = remaining,
-            modifier = textModifier,
-            fontSize = countdownSize,
-            fontWeight = FontWeight.Light,
-            letterSpacing = countdownSpacing,
-            color = colors.onBackground,
-            softWrap = false
-        )
-    }
-    val countdown: @Composable () -> Unit = {
-        if (pillGlass) {
+    val countdown: @Composable (Float, Boolean) -> Unit = { countdownScale, pill ->
+        val auraSize = 240.dp * countdownScale
+        // The numerals fill a fixed-size dial, so they are sized in dp: a large font scale would
+        // otherwise clip them. They are already far larger than any text the font scale gives.
+        val digits: @Composable (Modifier) -> Unit = { textModifier ->
+            Text(
+                text = remaining,
+                modifier = textModifier,
+                fontSize = with(density) { (68.dp * countdownScale).toSp() },
+                fontWeight = FontWeight.Light,
+                letterSpacing = with(density) { (3.dp * countdownScale).toSp() },
+                color = colors.onBackground,
+                softWrap = false
+            )
+        }
+        if (pill) {
             digits(
                 countdownSemantics
-                    .countdownGlass(RoundedCornerShape(percent = 50), backdrop, scale)
-                    .padding(horizontal = 24.dp * scale, vertical = 4.dp * scale)
+                    .countdownGlass(RoundedCornerShape(percent = 50), backdrop, countdownScale)
+                    .padding(horizontal = 24.dp * countdownScale, vertical = 4.dp * countdownScale)
             )
         } else {
             Box(modifier = Modifier.size(auraSize).then(countdownSemantics), contentAlignment = Alignment.Center) {
-                Box(modifier = Modifier.size(auraSize * auraScale).countdownGlass(CircleShape, backdrop, scale))
+                Box(modifier = Modifier.size(auraSize * auraScale).countdownGlass(CircleShape, backdrop, countdownScale))
                 digits(Modifier)
             }
         }
     }
 
     if (countdownOnly) {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) { countdown() }
+        Box(modifier = modifier, contentAlignment = Alignment.Center) { countdown(scale, pillGlass) }
         return
     }
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier.weight(1f).padding(bottom = gap),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            StepTitlePill(stepTitle, scale)
+    SubcomposeLayout(modifier = modifier) { constraints ->
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val gapPx = gap.roundToPx()
+        val title = subcompose(DialSlot.Title) { StepTitlePill(stepTitle, scale) }.map { it.measure(loose) }
+        val status = subcompose(DialSlot.Status) {
+            StepStatus(isPaused, reminder, showReminder, next, nextDescription, scale, onExtend, Alignment.CenterHorizontally, inRow = true)
+        }.map { it.measure(loose) }
+        // Room is kept for the status as it is while paused, measured but not placed, so pausing
+        // doesn't move the countdown.
+        val pausedStatusHeight = subcompose(DialSlot.PausedStatus) {
+            StepStatus(true, null, false, next, nextDescription, scale, onExtend, Alignment.CenterHorizontally, inRow = true)
+        }.maxOfOrNull { it.measure(loose).height } ?: 0
+        val above = (title.maxOfOrNull { it.height } ?: 0) + gapPx
+        val below = maxOf(pausedStatusHeight, status.maxOfOrNull { it.height } ?: 0) + gapPx
+
+        // The free space between the top bar and the controls, and the canvases' centre in it.
+        val top = topInset.roundToPx()
+        val bottom = (height - bottomInset.roundToPx()).coerceAtLeast(top)
+        val centre = height / 2
+        // How much the countdown, as tall as this, may be shrunk to stay on the centre.
+        fun centredFit(dialHeight: Int) =
+            2f * minOf(centre - top - above, bottom - centre - below) / dialHeight.coerceAtLeast(1)
+
+        // A disc too big to stay on the centre gives way to the pill, which is far shorter.
+        val roundDial = if (pillGlass) null else {
+            subcompose(DialSlot.Countdown) { countdown(scale, false) }.map { it.measure(loose) }
         }
+        val pill = roundDial == null || centredFit(roundDial.maxOfOrNull { it.height } ?: 0) < MinCentredFit
+        val fullDial = if (!pill) roundDial!! else {
+            subcompose(DialSlot.PillCountdown) { countdown(scale, true) }.map { it.measure(loose) }
+        }
+        val fullHeight = fullDial.maxOfOrNull { it.height }?.coerceAtLeast(1) ?: 1
+        // Shrinks to stay on the centre, down to MinCentredFit; then moves off it, and only
+        // shrinks further when the whole column doesn't fit.
+        val fit = centredFit(fullHeight).let { centred ->
+            if (centred >= MinCentredFit) centred.coerceAtMost(1f) else {
+                ((bottom - top - above - below).toFloat() / fullHeight).coerceIn(MinCountdownFit, MinCentredFit)
+            }
+        }
+        val dial = if (fit >= 1f) fullDial else {
+            subcompose(DialSlot.FittedCountdown) { countdown(scale * fit, pill) }.map { it.measure(loose) }
+        }
+        val dialHeight = dial.maxOfOrNull { it.height } ?: 0
+        val dialTop = (centre - dialHeight / 2)
+            .coerceAtMost(bottom - below - dialHeight)
+            .coerceAtLeast(top + above)
 
-        countdown()
-
-        Box(
-            modifier = Modifier.weight(1f).padding(top = gap),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            StepStatus(isPaused, reminder, showReminder, next, nextDescription, scale, onExtend, Alignment.CenterHorizontally)
+        layout(width, height) {
+            dial.forEach { it.place((width - it.width) / 2, dialTop + (dialHeight - it.height) / 2) }
+            title.forEach { it.place((width - it.width) / 2, dialTop - gapPx - it.height) }
+            status.forEach { it.place((width - it.width) / 2, dialTop + dialHeight + gapPx) }
         }
     }
 }
+
+private enum class DialSlot { Title, Status, PausedStatus, Countdown, PillCountdown, FittedCountdown }
+
+/** The smallest the countdown shrinks to while it stays on the canvases' centre. */
+private const val MinCentredFit = 0.7f
+
+/** The smallest the countdown shrinks to at all, when even off the centre there is no room. */
+private const val MinCountdownFit = 0.5f
 
 /**
  * Frosted glass behind the countdown: the animation behind it is blurred and veiled, so the
@@ -644,7 +716,11 @@ private fun StepTitlePill(stepTitle: String, scale: Float) {
     }
 }
 
-/** Paused and reminder status, the next step and "+30s", under the countdown or beside it. */
+/**
+ * Paused and reminder status, the next step and "+30s", under the countdown or beside it. Under
+ * it, [inRow] lines them up side by side, wrapping when they don't fit, to leave the countdown
+ * room between the top bar and the controls.
+ */
 @Composable
 private fun StepStatus(
     isPaused: Boolean,
@@ -654,13 +730,23 @@ private fun StepStatus(
     nextDescription: String?,
     scale: Float,
     onExtend: (() -> Unit)?,
-    alignment: Alignment.Horizontal
+    alignment: Alignment.Horizontal,
+    inRow: Boolean = false
 ) {
     val colors = LocalSereneColors.current
-    Column(
-        horizontalAlignment = alignment,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    val spacing = Arrangement.spacedBy(10.dp, alignment)
+    val container: @Composable (@Composable () -> Unit) -> Unit = if (inRow) {
+        { content ->
+            FlowRow(
+                horizontalArrangement = spacing,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                itemVerticalAlignment = Alignment.CenterVertically
+            ) { content() }
+        }
+    } else {
+        { content -> Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(10.dp)) { content() } }
+    }
+    container {
         // Seen as well as heard: pausing, and each "% left" reminder.
         if (isPaused) {
             StatusPill(text = stringResource(Res.string.timer_paused), scale = scale)
