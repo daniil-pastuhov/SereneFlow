@@ -25,6 +25,7 @@ import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.repository.Repositories
 import com.sereneflow.timer.session.TimerSession
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
+import com.sereneflow.timer.platform.finishPendingTipPurchases
 import com.sereneflow.timer.platform.publishQuickStart
 import com.sereneflow.timer.platform.QuickStartItem
 import com.sereneflow.timer.platform.quickStartItems
@@ -39,6 +40,7 @@ import com.sereneflow.timer.ui.RoutineEditorScreen
 import com.sereneflow.timer.ui.RoutineListScreen
 import com.sereneflow.timer.ui.SettingsScreen
 import com.sereneflow.timer.ui.SoundPickerScreen
+import com.sereneflow.timer.ui.TipJarScreen
 import com.sereneflow.timer.ui.VoiceCommandsScreen
 import com.sereneflow.timer.ui.VoicePickerScreen
 import com.sereneflow.timer.ui.rememberPredictiveBackTransition
@@ -55,6 +57,7 @@ sealed class AppScreen {
     data object SoundPicker : AppScreen()
     data object VoicePicker : AppScreen()
     data object VoiceCommands : AppScreen()
+    data object TipJar : AppScreen()
 }
 
 @Composable
@@ -75,6 +78,7 @@ fun App(demoLaunch: DemoLaunch? = null) {
             when (demoLaunch) {
                 is DemoLaunch.Editor -> routineRepository.getRoutine(demoLaunch.routineId)?.let { add(AppScreen.Editor(it)) }
                 DemoLaunch.Settings -> add(AppScreen.Settings)
+                DemoLaunch.TipJar -> add(AppScreen.TipJar)
                 else -> {}
             }
         }
@@ -86,6 +90,10 @@ fun App(demoLaunch: DemoLaunch? = null) {
     // The voice applies to every spoken cue, so it is set on the shared controller.
     LaunchedEffect(preferences.voiceId) {
         TimerSession.audioController.setVoice(preferences.voiceId)
+    }
+
+    LaunchedEffect(Unit) {
+        finishPendingTipPurchases()
     }
 
     // The timer screen is pushed by the session effect below once the session is running.
@@ -280,7 +288,10 @@ fun App(demoLaunch: DemoLaunch? = null) {
                             routineRepository.deleteRoutines(ids)
                         },
                         revealRoutineId = revealRoutineId,
-                        onRevealed = { revealRoutineId = null }
+                        onRevealed = { revealRoutineId = null },
+                        showCoffeeBanner = preferences.showCoffeeBanner,
+                        onOpenTipJar = { push(AppScreen.TipJar) },
+                        onDismissCoffeeBanner = preferencesRepository::dismissCoffeeBanner
                     )
                 }
                 is AppScreen.Editor -> {
@@ -329,8 +340,12 @@ fun App(demoLaunch: DemoLaunch? = null) {
                                 RoutineTransfer.encode(routineRepository.routines.value)
                             )
                         },
+                        onOpenTipJar = { push(AppScreen.TipJar) },
                         onBack = ::pop
                     )
+                }
+                is AppScreen.TipJar -> {
+                    TipJarScreen(onBack = ::pop)
                 }
                 is AppScreen.SoundPicker -> {
                     SoundPickerScreen(preferencesRepository = preferencesRepository, onBack = ::pop)

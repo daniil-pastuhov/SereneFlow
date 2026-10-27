@@ -11,6 +11,8 @@ struct SereneFlowApp: App {
         LiveActivityRegistry.shared.bridge = LiveActivityManager()
         // Lets Settings → App icon switch the alternate app icons.
         AppIconRegistry.shared.bridge = AppIconManager()
+        // Lets the tip jar sell its coffees (in-app purchases) and finish late purchases.
+        TipStoreRegistry.shared.bridge = TipStoreManager()
         // Lets the session show on the Apple Watch app (SereneFlowWatch).
         let watch = WatchSessionManager()
         WatchRegistry.shared.bridge = watch

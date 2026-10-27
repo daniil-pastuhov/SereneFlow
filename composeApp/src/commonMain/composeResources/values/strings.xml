@@ -379,6 +379,9 @@
     <string name="settings_import_description">From a .sereneflow file</string>
     <string name="settings_voice_commands">VOICE COMMANDS</string>
     <string name="settings_voice_commands_description">Start and control routines hands-free</string>
+    <string name="settings_support">SUPPORT</string>
+    <string name="settings_tip_jar">Buy me a coffee</string>
+    <string name="settings_tip_jar_description">Tip the developer if you enjoy the app</string>
 
     <!-- Voice commands. The phrases must match iosApp's AppShortcuts.strings (Siri) and androidApp's
          shortcuts.xml (Google Assistant); %1$s: a routine's name -->
@@ -434,4 +437,22 @@
     <string name="voice_picker_note">Speaks the step announcements in every routine that uses voice. Tap a voice to hear it.</string>
     <string name="voice_picker_default_detail">The device's standard English voice</string>
     <string name="voice_picker_none_installed">No other English voices are installed. You can add some in the device's text-to-speech settings.</string>
+
+    <!-- Tip jar ("Buy me a coffee"): the routine list's banner and its screen; %1$s: a price -->
+    <string name="coffee_banner_title">Enjoying SereneFlow?</string>
+    <string name="coffee_banner_action">Buy the developer a coffee</string>
+    <string name="coffee_banner_close">Hide for now</string>
+    <string name="tip_title">Buy me a coffee</string>
+    <string name="tip_message">SereneFlow is made by one developer, with no ads and no subscriptions. If it helps your day, a coffee keeps it going.</string>
+    <plurals name="tip_cups">
+        <item quantity="one">%1$d coffee</item>
+        <item quantity="other">%1$d coffees</item>
+    </plurals>
+    <string name="tip_buy">Buy for %1$s</string>
+    <string name="tip_thanks">Thank you! Enjoy your routines.</string>
+    <string name="tip_pending">Thank you! Your purchase is waiting for approval.</string>
+    <string name="tip_unavailable">The store can't be reached right now.</string>
+    <string name="tip_retry">Try again</string>
+    <string name="tip_failed_title">Purchase didn't go through</string>
+    <string name="tip_failed_message">The store couldn't complete it. Please try again later.</string>
 </resources>

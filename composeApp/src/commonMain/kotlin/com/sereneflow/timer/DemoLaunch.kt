@@ -15,9 +15,10 @@ sealed class DemoLaunch {
     data class Timer(val routineId: String, val elapsedSeconds: Int, val backgroundMode: Boolean = false) : DemoLaunch()
     data class Editor(val routineId: String) : DemoLaunch()
     data object Settings : DemoLaunch()
+    data object TipJar : DemoLaunch()
 
     companion object {
-        /** `screen` is "timer", "editor" or "settings"; anything else opens the routine list. */
+        /** `screen` is "timer", "editor", "settings" or "tipjar"; anything else opens the routine list. */
         fun parse(
             screen: String?,
             routineId: String?,
@@ -27,6 +28,7 @@ sealed class DemoLaunch {
             "timer" -> routineId?.let { Timer(it, elapsedSeconds ?: 0, backgroundMode) }
             "editor" -> routineId?.let { Editor(it) }
             "settings" -> Settings
+            "tipjar" -> TipJar
             else -> null
         }
     }

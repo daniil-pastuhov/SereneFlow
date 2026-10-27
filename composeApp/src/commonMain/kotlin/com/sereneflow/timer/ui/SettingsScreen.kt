@@ -76,6 +76,7 @@ import com.sereneflow.timer.ExternalAction
 import com.sereneflow.timer.ExternalActions
 import com.sereneflow.timer.transfer.rememberRoutineFilePicker
 import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.LocalCafe
 import com.sereneflow.timer.session.rememberNotificationPermissionRequest
 import com.sereneflow.timer.theme.LocalSereneColors
 import com.sereneflow.timer.ui.platform.PlatformIcons
@@ -92,6 +93,7 @@ fun SettingsScreen(
     /** How many routines a backup would hold. */
     routineCount: Int,
     onExportRoutines: () -> Unit,
+    onOpenTipJar: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -450,6 +452,27 @@ fun SettingsScreen(
                             description = stringResource(Res.string.settings_import_description),
                             value = "",
                             onClick = pickRoutineFile
+                        )
+                    }
+                }
+
+                // Buy me a coffee: the tip jar, also offered by the routine list's banner
+                item {
+                    SectionHeader(title = stringResource(Res.string.settings_support), icon = Icons.Default.LocalCafe)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.cardBackground)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                            .padding(vertical = 6.dp)
+                    ) {
+                        NavigationRow(
+                            title = stringResource(Res.string.settings_tip_jar),
+                            description = stringResource(Res.string.settings_tip_jar_description),
+                            value = "",
+                            onClick = onOpenTipJar
                         )
                     }
                 }

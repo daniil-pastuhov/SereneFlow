@@ -10,6 +10,7 @@ import com.sereneflow.timer.model.AppPreferences
 import com.sereneflow.timer.model.Routine
 import com.sereneflow.timer.model.RoutineCues
 import com.sereneflow.timer.model.TimerState
+import com.sereneflow.timer.repository.Repositories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -18,8 +19,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 /** [cues] are the routine's look and sound with its Default choices filled in at start. */
 class ActiveSession(val routine: Routine, val cues: RoutineCues, val engine: TimerEngine)
@@ -41,6 +44,7 @@ object TimerSession {
     val audioController: AudioController by lazy { createAudioController() }
     private val presenter: SessionPresenter by lazy { createSessionPresenter() }
     private var mirrorJob: Job? = null
+    private var completionJob: Job? = null
 
     /**
      * @param backgroundMode mirror the session to the notification / Live Activity and keep it
@@ -80,6 +84,12 @@ object TimerSession {
             }
             .launchIn(scope)
 
+        // Counted here rather than by a screen, which could see the same completion twice after the
+        // UI is recreated. A routine that ended while the app was suspended counts once it catches up.
+        completionJob = scope.launchCompletionCount(engine, isCurrent = { _active.value === session }) {
+            Repositories.preferences.recordRoutineCompleted()
+        }
+
         return session
     }
 
@@ -89,6 +99,8 @@ object TimerSession {
         _active.value = null
         mirrorJob?.cancel()
         mirrorJob = null
+        completionJob?.cancel()
+        completionJob = null
         session.engine.stop()
         audioController.setSessionActive(false)
         presenter.end()
@@ -131,6 +143,19 @@ object TimerSession {
     }
 
     private const val PROGRESS_REFRESH_SECONDS = 5
+}
+
+/**
+ * Calls [onCompleted] once if [engine] runs to its end while [isCurrent]; a routine ended early never
+ * gets there. Cancel the job when the session stops.
+ */
+internal fun CoroutineScope.launchCompletionCount(
+    engine: TimerEngine,
+    isCurrent: () -> Boolean,
+    onCompleted: () -> Unit
+): Job = launch {
+    engine.timerState.first { it.isCompleted }
+    if (isCurrent()) onCompleted()
 }
 
 /** Platform-neutral view of the session for notifications and Live Activities. */
