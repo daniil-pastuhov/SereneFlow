@@ -1,0 +1,2 @@
+• Set a reminder for any routine: pick a time and the days of the week, and SereneFlow will remind you when it's time
+• Tap the reminder to start that routine right away
