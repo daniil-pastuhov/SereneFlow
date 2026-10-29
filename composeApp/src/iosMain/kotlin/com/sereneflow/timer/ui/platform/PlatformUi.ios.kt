@@ -9,6 +9,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import platform.Foundation.NSCalendar
+import platform.Foundation.NSCalendarUnitHour
+import platform.Foundation.NSCalendarUnitMinute
+import platform.Foundation.NSDate
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSOperationQueue
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
@@ -33,6 +37,10 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIBarButtonItem
 import platform.UIKit.UIBarButtonSystemItem
 import platform.UIKit.UIColor
+import platform.UIKit.UIDatePicker
+import platform.UIKit.UIDatePickerMode
+import platform.UIKit.UIDatePickerStyle
+import platform.UIKit.UIView
 import platform.UIKit.UINavigationController
 import platform.UIKit.UIPickerView
 import platform.UIKit.UIPickerViewDataSourceProtocol
@@ -49,6 +57,7 @@ import platform.UIKit.popoverPresentationController
 import platform.UIKit.presentationController
 import platform.darwin.NSInteger
 import platform.darwin.NSObject
+import com.sereneflow.timer.model.ReminderSchedule
 import com.sereneflow.timer.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -136,42 +145,93 @@ actual fun DurationPicker(
         picker.selectRow((initialSeconds / 60).coerceAtMost(MAX_PICKER_MINUTES).toLong(), inComponent = 0, animated = false)
         picker.selectRow((initialSeconds % 60).toLong(), inComponent = 1, animated = false)
 
-        val content = UIViewController()
-        content.title = title
-        content.view.backgroundColor = UIColor.systemBackgroundColor
-        picker.translatesAutoresizingMaskIntoConstraints = false
-        content.view.addSubview(picker)
-        NSLayoutConstraint.activateConstraints(
-            listOf(
-                picker.leadingAnchor.constraintEqualToAnchor(content.view.leadingAnchor),
-                picker.trailingAnchor.constraintEqualToAnchor(content.view.trailingAnchor),
-                picker.centerYAnchor.constraintEqualToAnchor(content.view.safeAreaLayoutGuide.centerYAnchor)
-            )
-        )
-        content.navigationItem.leftBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemCancel,
-            primaryAction = UIAction.actionWithHandler { currentOnDismiss() }
-        )
-        content.navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemDone,
-            primaryAction = UIAction.actionWithHandler {
-                currentOnConfirm(
-                    pickedDuration(
-                        minutes = picker.selectedRowInComponent(0).toInt(),
-                        seconds = picker.selectedRowInComponent(1).toInt()
-                    )
+        val sheet = presentPickerSheet(title, picker, wheels, onCancel = { currentOnDismiss() }) {
+            currentOnConfirm(
+                pickedDuration(
+                    minutes = picker.selectedRowInComponent(0).toInt(),
+                    seconds = picker.selectedRowInComponent(1).toInt()
                 )
-            }
-        )
-
-        val sheet = UINavigationController(rootViewController = content)
-        sheet.sheetPresentationController?.let {
-            it.detents = listOf(UISheetPresentationControllerDetent.mediumDetent())
-            it.prefersGrabberVisible = true
+            )
         }
-        sheet.presentationController?.delegate = wheels
-        present(sheet)
         onDispose { sheet.dismissIfPresented() }
+    }
+}
+
+@Composable
+actual fun ReminderTimePicker(
+    initial: ReminderSchedule,
+    onConfirm: (ReminderSchedule) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val currentOnConfirm by rememberUpdatedState(onConfirm)
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
+    val title = stringResource(Res.string.reminder_picker_title)
+    // Held here: UIKit keeps the sheet's delegate weakly.
+    val dismissal = remember { SheetDismissal { currentOnDismiss() } }
+
+    DisposableEffect(dismissal) {
+        val calendar = NSCalendar.currentCalendar
+        val picker = UIDatePicker()
+        picker.datePickerMode = UIDatePickerMode.UIDatePickerModeTime
+        picker.preferredDatePickerStyle = UIDatePickerStyle.UIDatePickerStyleWheels
+        calendar.dateBySettingHour(initial.hour.toLong(), minute = initial.minute.toLong(), second = 0, ofDate = NSDate(), options = 0u)
+            ?.let { picker.setDate(it, animated = false) }
+
+        val sheet = presentPickerSheet(title, picker, dismissal, onCancel = { currentOnDismiss() }) {
+            val picked = calendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, fromDate = picker.date)
+            currentOnConfirm(ReminderSchedule(picked.hour.toInt(), picked.minute.toInt()))
+        }
+        onDispose { sheet.dismissIfPresented() }
+    }
+}
+
+/**
+ * Presents a half-height sheet titled [title] with [picker] in the middle and Cancel and Done
+ * buttons; [delegate] hears a swipe-down dismissal. Returns it, for dismissing when composed out.
+ */
+private fun presentPickerSheet(
+    title: String,
+    picker: UIView,
+    delegate: UIAdaptivePresentationControllerDelegateProtocol,
+    onCancel: () -> Unit,
+    onDone: () -> Unit
+): UIViewController {
+    val content = UIViewController()
+    content.title = title
+    content.view.backgroundColor = UIColor.systemBackgroundColor
+    picker.translatesAutoresizingMaskIntoConstraints = false
+    content.view.addSubview(picker)
+    NSLayoutConstraint.activateConstraints(
+        listOf(
+            picker.leadingAnchor.constraintEqualToAnchor(content.view.leadingAnchor),
+            picker.trailingAnchor.constraintEqualToAnchor(content.view.trailingAnchor),
+            picker.centerYAnchor.constraintEqualToAnchor(content.view.safeAreaLayoutGuide.centerYAnchor)
+        )
+    )
+    content.navigationItem.leftBarButtonItem = UIBarButtonItem(
+        barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemCancel,
+        primaryAction = UIAction.actionWithHandler { onCancel() }
+    )
+    content.navigationItem.rightBarButtonItem = UIBarButtonItem(
+        barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemDone,
+        primaryAction = UIAction.actionWithHandler { onDone() }
+    )
+
+    val sheet = UINavigationController(rootViewController = content)
+    sheet.sheetPresentationController?.let {
+        it.detents = listOf(UISheetPresentationControllerDetent.mediumDetent())
+        it.prefersGrabberVisible = true
+    }
+    sheet.presentationController?.delegate = delegate
+    present(sheet)
+    return sheet
+}
+
+/** A picker sheet's swipe-to-dismiss. */
+private class SheetDismissal(private val onSwipeDismiss: () -> Unit) : NSObject(),
+    UIAdaptivePresentationControllerDelegateProtocol {
+    override fun presentationControllerDidDismiss(presentationController: UIPresentationController) {
+        onSwipeDismiss()
     }
 }
 

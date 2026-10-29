@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Android-only text of the shared module: the running routine's notification, launcher
+<!-- The Android-only text of the shared module: the running routine's notification, reminders, launcher
      shortcuts and Google Assistant's phrases. Android resources: apostrophes and quotes are escaped (\' and \"). -->
 <resources>
     <string name="notification_channel_name">Running routine</string>
@@ -22,6 +22,11 @@
     <!-- %1$s: "Step 2 of 5"; %2$s: the next step's name -->
     <string name="notification_status_next">%1$s · Up next: %2$s</string>
     <string name="notification_status_last">%1$s · Final step</string>
+
+    <!-- A routine's daily reminder; its title is the routine's name. -->
+    <string name="reminder_channel_name">Routine reminders</string>
+    <string name="reminder_channel_description">Reminds you to start a routine at the time you set for it</string>
+    <string name="reminder_notification_text">Time for your routine. Tap to begin.</string>
 
     <!-- A launcher shortcut's long label. %1$s: the routine's name -->
     <string name="shortcut_start_routine">Start %1$s</string>

@@ -3,6 +3,7 @@ package com.sereneflow.timer.text
 import androidx.compose.runtime.Composable
 import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.model.CueSound
+import com.sereneflow.timer.model.ReminderSchedule
 import com.sereneflow.timer.model.RoutineAccent
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.model.VoiceGuidance
@@ -117,3 +118,43 @@ fun AppThemeMode.displayName(): String = stringResource(nameRes)
 
 @Composable
 fun RoutineAccent.displayName(): String = stringResource(nameRes)
+
+private val WeekdayShortNames = listOf(
+    Res.string.weekday_short_1, Res.string.weekday_short_2, Res.string.weekday_short_3, Res.string.weekday_short_4,
+    Res.string.weekday_short_5, Res.string.weekday_short_6, Res.string.weekday_short_7
+)
+
+private val WeekdayNames = listOf(
+    Res.string.weekday_1, Res.string.weekday_2, Res.string.weekday_3, Res.string.weekday_4,
+    Res.string.weekday_5, Res.string.weekday_6, Res.string.weekday_7
+)
+
+/** "Mon" for ISO day 1 (Monday) … "Sun" for 7. */
+@Composable
+fun weekdayShortName(isoDay: Int): String = stringResource(WeekdayShortNames[isoDay - 1])
+
+/** "Monday" for ISO day 1 … "Sunday" for 7. */
+@Composable
+fun weekdayName(isoDay: Int): String = stringResource(WeekdayNames[isoDay - 1])
+
+/** The ISO days of a week that starts on [firstDay]: 7, 1, 2, … 6 for a week starting on Sunday. */
+fun weekStartingOn(firstDay: Int): List<Int> = (0..6).map { (firstDay - 1 + it) % 7 + 1 }
+
+/**
+ * When [schedule] reminds, with [time] already formatted: "Every day at 7:30 AM", "Weekdays at
+ * 7:30 AM", or its days in the order of a week starting on [firstDay]: "Mon, Wed, Fri at 7:30 AM".
+ */
+@Composable
+fun reminderScheduleText(schedule: ReminderSchedule, time: String, firstDay: Int): String {
+    val days = schedule.normalized().days
+    return when (days) {
+        ReminderSchedule.ALL_DAYS -> stringResource(Res.string.editor_reminder_on_detail, time)
+        ReminderSchedule.WEEKDAYS -> stringResource(Res.string.editor_reminder_weekdays, time)
+        ReminderSchedule.WEEKEND -> stringResource(Res.string.editor_reminder_weekends, time)
+        else -> stringResource(
+            Res.string.editor_reminder_days,
+            weekStartingOn(firstDay).filter { it in days }.map { weekdayShortName(it) }.joinToString(", "),
+            time
+        )
+    }
+}

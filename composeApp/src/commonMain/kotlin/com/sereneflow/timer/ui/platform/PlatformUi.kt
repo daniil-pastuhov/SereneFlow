@@ -2,6 +2,7 @@ package com.sereneflow.timer.ui.platform
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.sereneflow.timer.model.ReminderSchedule
 import com.sereneflow.timer.resources.Res
 import com.sereneflow.timer.resources.action_cancel
 import org.jetbrains.compose.resources.stringResource
@@ -49,6 +50,18 @@ expect fun ActionMenu(
 expect fun DurationPicker(
     initialSeconds: Int,
     onConfirm: (Int) -> Unit,
+    onDismiss: () -> Unit
+)
+
+/**
+ * Picks a routine's reminder time, shown while this composable is in the composition, in the
+ * device's 12- or 24-hour style. iOS presents a `UIDatePicker` in a sheet; Android Material's
+ * time picker in a dialog.
+ */
+@Composable
+expect fun ReminderTimePicker(
+    initial: ReminderSchedule,
+    onConfirm: (ReminderSchedule) -> Unit,
     onDismiss: () -> Unit
 )
 

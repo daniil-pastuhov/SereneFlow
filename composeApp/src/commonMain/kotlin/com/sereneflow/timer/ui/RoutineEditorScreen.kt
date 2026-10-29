@@ -91,6 +91,15 @@ import com.sereneflow.timer.model.RoutineStep
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.model.RoutineAccent
 import com.sereneflow.timer.model.VoiceGuidance
+import com.sereneflow.timer.model.ReminderSchedule
+import com.sereneflow.timer.platform.firstDayOfWeek
+import com.sereneflow.timer.platform.formatTimeOfDay
+import androidx.compose.foundation.selection.toggleable
+import com.sereneflow.timer.platform.openExactReminderSettings
+import com.sereneflow.timer.platform.remindersAreExact
+import com.sereneflow.timer.session.rememberNotificationPermissionRequest
+import com.sereneflow.timer.ui.platform.ReminderTimePicker
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.selection.selectable
@@ -145,6 +154,16 @@ fun RoutineEditorScreen(
     var selectedAccent by remember { mutableStateOf(routine?.accentColorHex) }
     var rounds by remember { mutableStateOf(routine?.roundCount ?: 1) }
     var restBetweenRounds by remember { mutableStateOf(routine?.restBetweenRoundsSeconds ?: 0) }
+    // null: no reminder.
+    var reminder by remember { mutableStateOf(routine?.reminder) }
+    var showReminderPicker by remember { mutableStateOf(false) }
+    val requestNotificationPermission = rememberNotificationPermissionRequest()
+    // Read again on return from the system page that allows exact alarms.
+    var remindersExact by remember { mutableStateOf(remindersAreExact()) }
+    LifecycleResumeEffect(Unit) {
+        remindersExact = remindersAreExact()
+        onPauseOrDispose {}
+    }
 
     var steps by remember {
         mutableStateOf(
@@ -176,7 +195,8 @@ fun RoutineEditorScreen(
         rounds = rounds,
         // A rest only means something between rounds.
         restBetweenRoundsSeconds = if (rounds > 1) restBetweenRounds else 0,
-        steps = steps
+        steps = steps,
+        reminder = reminder
     )
 
     var openPicker by remember { mutableStateOf<EditorPicker?>(null) }
@@ -204,6 +224,18 @@ fun RoutineEditorScreen(
         navigationState = pickerBackState,
         label = "editorPicker"
     )
+
+    if (showReminderPicker) {
+        ReminderTimePicker(
+            initial = reminder ?: ReminderSchedule.Default,
+            onConfirm = { picked ->
+                showReminderPicker = false
+                // The days stay as chosen.
+                reminder = (reminder ?: ReminderSchedule.Default).copy(hour = picked.hour, minute = picked.minute)
+            },
+            onDismiss = { showReminderPicker = false }
+        )
+    }
 
     if (showDiscardDialog) {
         ConfirmDialog(
@@ -606,6 +638,68 @@ fun RoutineEditorScreen(
                                 }
                             }
                         }
+                    }
+
+                    // Reminder: a notification at a set time on chosen days, which starts the routine when tapped
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(colors.cardBackground)
+                                .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                                .padding(vertical = 6.dp)
+                        ) {
+                            SwitchRow(
+                                title = stringResource(Res.string.editor_reminder),
+                                description = stringResource(Res.string.editor_reminder_off_detail),
+                                checked = reminder != null,
+                                onCheckedChange = { on ->
+                                    reminder = if (on) ReminderSchedule.Default else null
+                                    if (on) {
+                                        requestNotificationPermission()
+                                        showReminderPicker = true
+                                    }
+                                }
+                            )
+                            reminder?.let { schedule ->
+                                val formatted = formatTimeOfDay(schedule)
+                                val firstDay = remember { firstDayOfWeek() }
+                                NavigationRow(
+                                    title = stringResource(Res.string.editor_reminder_time),
+                                    description = reminderScheduleText(schedule, formatted, firstDay),
+                                    value = formatted,
+                                    onClick = { showReminderPicker = true }
+                                )
+                                Text(
+                                    text = stringResource(Res.string.editor_reminder_repeat),
+                                    fontSize = 13.sp,
+                                    color = colors.onSurfaceVariant,
+                                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp)
+                                )
+                                WeekdayToggles(
+                                    selected = schedule.days,
+                                    firstDay = firstDay,
+                                    // At least one day stays on; switching the reminder off is the switch's job.
+                                    onToggle = { day ->
+                                        val days = if (day in schedule.days) schedule.days - day else schedule.days + day
+                                        if (days.isNotEmpty()) reminder = schedule.copy(days = days)
+                                    },
+                                    modifier = Modifier.padding(horizontal = 14.dp)
+                                )
+                                if (!remindersExact) {
+                                    Text(
+                                        text = stringResource(Res.string.editor_reminder_inexact),
+                                        fontSize = 12.sp,
+                                        color = colors.primary,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable(role = Role.Button, onClick = ::openExactReminderSettings)
+                                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                                    )
+                                }
+                            }
+                        }
                         Spacer(modifier = Modifier.height(30.dp))
                     }
                 }
@@ -710,6 +804,46 @@ private fun AccentSwatches(selected: Long?, onSelect: (Long?) -> Unit) {
                         // Marks the theme swatch, which changes with the theme.
                         argb == null -> Icon(Icons.Default.Palette, contentDescription = null, tint = colors.onPrimary, modifier = Modifier.size(16.dp))
                     }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One round toggle per day of the week, in the order of a week starting on [firstDay], sharing
+ * the row's width; each is a checkbox to screen readers, named in full ("Monday").
+ */
+@Composable
+private fun WeekdayToggles(selected: Set<Int>, firstDay: Int, onToggle: (Int) -> Unit, modifier: Modifier = Modifier) {
+    val colors = LocalSereneColors.current
+    Row(modifier = modifier.fillMaxWidth()) {
+        weekStartingOn(firstDay).forEach { day ->
+            val isSelected = day in selected
+            val name = weekdayName(day)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+                    .toggleable(value = isSelected, role = Role.Checkbox, onValueChange = { onToggle(day) })
+                    .semantics { contentDescription = name },
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.6f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = weekdayShortName(day),
+                        modifier = Modifier.clearAndSetSemantics {},
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                        maxLines = 1
+                    )
                 }
             }
         }
