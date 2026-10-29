@@ -467,7 +467,7 @@ private val AppThemeMode.previewIcon: DrawableResource
     }
 
 @Composable
-private fun SwitchRow(
+internal fun SwitchRow(
     title: String,
     description: String,
     checked: Boolean,

@@ -11,6 +11,10 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Haptic cues on step changes, the 3-2-1 countdown and completion (Settings > Vibration). -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Routine reminders at their exact minute (Alarms & reminders; inexact without it), and set
+         again after a reboot, which clears alarms. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application>
         <service
@@ -25,6 +29,20 @@
         <receiver
             android:name="com.sereneflow.timer.session.TimerActionReceiver"
             android:exported="false" />
+
+        <!-- A routine's daily reminder fires, or the alarms need setting again
+             (platform/RoutineReminders.android.kt). The system's broadcasts reach it unexported. -->
+        <receiver
+            android:name="com.sereneflow.timer.platform.RoutineReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Google Assistant's pause / resume / skip / end (androidApp res/xml/shortcuts.xml):
              no window and a task of its own, so the command doesn't bring the app forward.
