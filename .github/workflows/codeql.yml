@@ -1,0 +1,105 @@
+name: CodeQL
+
+# Code scanning for security problems, results under Security → Code scanning.
+# An advanced setup, not GitHub's default one, because CodeQL only reads Kotlin and Swift while
+# they compile: its own guess at a build (autobuild) runs the whole Android build, which fails on
+# debug signing, and builds iOS on macos-latest, which lacks the Xcode 27.1 SDK. So each language
+# builds here the way ci.yml does.
+# - actions, python (the scripts) and java-kotlin run on every pull request and push to main;
+#   they need only Linux.
+# - swift needs the Xcode 27 image and a Kotlin/Native build of the shared framework, which takes
+#   a long time, so it runs on pushes to main and weekly, not on pull requests.
+# All of them also run weekly, so new CodeQL queries reach code that hasn't changed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          - language: python
+            build-mode: none
+          - language: java-kotlin
+            build-mode: manual
+    steps:
+      - uses: actions/checkout@v7
+      - if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+      - if: matrix.language == 'java-kotlin'
+        uses: gradle/actions/setup-gradle@v6
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+      # CodeQL reads Kotlin from compiler runs it sees, so the compile tasks must really run: no
+      # build cache (gradle.properties turns it on) and no daemon left from an earlier step.
+      # Compiling, not assembling, avoids the debug signing a full build needs.
+      - if: matrix.language == 'java-kotlin'
+        name: Compile Kotlin
+        run: |
+          ./gradlew --no-daemon --no-build-cache \
+            :composeApp:compileAndroidMain :androidApp:compileDebugKotlin
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
+
+  analyze-swift:
+    name: Analyze (swift)
+    if: github.event_name != 'pull_request'
+    # Same image and Xcode as the ios job in ci.yml.
+    runs-on: xcode-27
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Cache Kotlin/Native
+        uses: actions/cache@v6
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: swift
+          build-mode: manual
+      - name: Build iOS app
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
+            -destination 'generic/platform=iOS Simulator' build
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:swift
