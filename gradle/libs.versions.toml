@@ -1,16 +1,16 @@
 [versions]
-androidGradlePlugin = "9.4.1"
+androidGradlePlugin = "9.5.0"
 kotlin = "2.4.21"
 composeMultiplatform = "1.12.2"
-composeMaterial3 = "1.12.0-alpha03"
+composeMaterial3 = "1.13.0-beta01"
 composeMaterialIcons = "1.7.3"
 coroutines = "1.11.0"
 kotlinxSerialization = "1.12.0"
 kotlinxDatetime = "0.8.0"
 androidxActivity = "1.13.0"
-androidxCore = "1.19.0"
+androidxCore = "1.19.1"
 junit = "4.13.2"
-navigationEvent = "1.1.1"
+navigationEvent = "1.2.0"
 playBilling = "9.1.0"
 
 [libraries]

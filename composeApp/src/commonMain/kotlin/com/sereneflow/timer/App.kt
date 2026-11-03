@@ -30,6 +30,8 @@ import com.sereneflow.timer.platform.publishQuickStart
 import com.sereneflow.timer.platform.QuickStartItem
 import com.sereneflow.timer.platform.quickStartItems
 import com.sereneflow.timer.platform.quickStartRoutines
+import com.sereneflow.timer.platform.routineReminders
+import com.sereneflow.timer.platform.scheduleRoutineReminders
 import com.sereneflow.timer.transfer.RoutineTransfer
 import com.sereneflow.timer.transfer.shareFile
 import com.sereneflow.timer.ui.platform.ConfirmDialog
@@ -117,6 +119,14 @@ fun App(demoLaunch: DemoLaunch? = null) {
         if (items == publishedQuickStart) return@LaunchedEffect
         publishedQuickStart = items
         publishQuickStart(items)
+    }
+
+    // Each routine's daily reminder. Scheduled again when one is set, changed or removed, or its
+    // routine renamed (the notification names it), and at each launch, which brings back Android
+    // alarms a force stop cleared.
+    val reminders = routineReminders(routines)
+    LaunchedEffect(reminders) {
+        scheduleRoutineReminders(reminders)
     }
 
     // A routine started from outside the app (shortcut, widget, link). The session effect below

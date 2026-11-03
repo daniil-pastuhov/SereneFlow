@@ -134,7 +134,7 @@ release goes out in steps:
 3. **Play closed testing and the App Store**: merging the PR promotes the newest internal Play
    build of that version to closed testing (`alpha`). It also puts the newest TestFlight build of
    the version on its App Store version, with the notes as "What's New", and submits it for App
-   Review; it goes live as soon as Apple approves it (set the repository variable
+   Review, along with any in-app purchases that are ready to submit; it goes live as soon as Apple approves it (set the repository variable
    `APP_STORE_RELEASE_TYPE` to `MANUAL` to release it from App Store Connect yourself). Then it
    tags `vX.Y.Z` and creates a GitHub release.
 

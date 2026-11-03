@@ -23,6 +23,7 @@
 		6EDBDEF57087535AE16C26D6 /* TimerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09A8B87794DF76A2697A309 /* TimerLiveActivity.swift */; };
 		700CBD72B671F1FE45C9C771 /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */; };
 		83DEA7DF45BB0B54FC8837EE /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = BBD5F3B43FE3C04AF6B0CE5C /* Localizable.xcstrings */; };
+		8BBF6FA6B8BE7FB673A4BBB4 /* ReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E29464D664F748CD0456BF1 /* ReminderNotifications.swift */; };
 		A4020294DADC227342BD3416 /* SereneFlowWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2BE9B6904DB262B81C91CA6F /* SereneFlowWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A4C11C73AB9F3050DF1DC273 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FBB13DD6FE282D7D1F2D8FB1 /* Localizable.xcstrings */; };
 		ABA7E9D6494CAB45C28BBC28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4BAB7F95778EE0543A49C0CE /* Assets.xcassets */; };
@@ -79,6 +80,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0E29464D664F748CD0456BF1 /* ReminderNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderNotifications.swift; sourceTree = "<group>"; };
 		12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SereneFlowWidgetBundle.swift; sourceTree = "<group>"; };
 		13460834AD319CDAB0309B74 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		1405A1434510C5F0CBFB7F9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 				6A8D1EB5C724332B1C0F728D /* Localizable.xcstrings */,
 				C6D2DD7FE2E0BF5DB2A96B4B /* PrivacyInfo.xcprivacy */,
 				CDC983C9182807BB46198B3F /* QuickActions.swift */,
+				0E29464D664F748CD0456BF1 /* ReminderNotifications.swift */,
 				90DEFB19023F56EE03E51342 /* RoutineIntents.swift */,
 				D7B0EDC806ECB9580171D3E8 /* TipStoreManager.swift */,
 				D3E93DA1FF128B6CF42FE73C /* WatchSessionManager.swift */,
@@ -364,6 +367,7 @@
 				56B0305B5D3847FC6B326502 /* ContentView.swift in Sources */,
 				5B9E263BAEE021053101FA23 /* LiveActivityManager.swift in Sources */,
 				5C5CCEF6FC29EAAD81B63C2B /* QuickActions.swift in Sources */,
+				8BBF6FA6B8BE7FB673A4BBB4 /* ReminderNotifications.swift in Sources */,
 				42ED48A4498491AA3E211076 /* RoutineIntents.swift in Sources */,
 				286BA5B2656DC8914398C0CC /* TimerActivityAttributes.swift in Sources */,
 				D08086F801A885C1C84FB588 /* TimerControlIntents.swift in Sources */,

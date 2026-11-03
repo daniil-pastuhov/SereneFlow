@@ -4,7 +4,15 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import kotlin.random.Random
+import kotlin.time.Instant
 
 // The names people see for these choices are string resources (text/ModelText.kt).
 
@@ -143,6 +151,8 @@ data class Routine(
     val rounds: Int = 1,
     /** A rest between rounds, in seconds; 0 = none. */
     val restBetweenRoundsSeconds: Int = 0,
+    /** When the routine sends its daily notification; null = no reminder. */
+    val reminder: ReminderSchedule? = null,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @SerialName("soundMode") val legacySoundMode: LegacySoundMode? = null
@@ -217,6 +227,53 @@ data class Routine(
 
     companion object {
         const val MAX_ROUNDS = 99
+    }
+}
+
+/**
+ * When a routine reminds the user: a time of day on the device's clock, on some days of the week
+ * ([days] as ISO numbers, 1 = Monday … 7 = Sunday).
+ */
+@Serializable
+data class ReminderSchedule(
+    val hour: Int,
+    val minute: Int,
+    val days: Set<Int> = ALL_DAYS
+) {
+    /**
+     * This schedule kept to a real time of day and real days (a hand-edited file could hold
+     * anything). Its [days] may come out empty: such a schedule never fires.
+     */
+    fun normalized(): ReminderSchedule =
+        ReminderSchedule(hour.coerceIn(0, 23), minute.coerceIn(0, 59), days.filter { it in ALL_DAYS }.toSet())
+
+    val isEveryDay: Boolean
+        get() = days.containsAll(ALL_DAYS)
+
+    /**
+     * The next moment, strictly after [afterEpochMs], that the clock in [zone] shows this time on
+     * one of [days]; null when there are no days.
+     */
+    fun nextAfter(afterEpochMs: Long, zone: TimeZone = TimeZone.currentSystemDefault()): Long? {
+        val schedule = normalized()
+        if (schedule.days.isEmpty()) return null
+        val today = Instant.fromEpochMilliseconds(afterEpochMs).toLocalDateTime(zone).date
+        // Within the next 8 days: today's may have passed, and the same weekday comes back a week on.
+        // A time a daylight-saving jump skips resolves to just after it.
+        return generateSequence(today) { it.plus(1, DateTimeUnit.DAY) }
+            .take(8)
+            .filter { it.dayOfWeek.isoDayNumber in schedule.days }
+            .map { it.atTime(schedule.hour, schedule.minute).toInstant(zone).toEpochMilliseconds() }
+            .firstOrNull { it > afterEpochMs }
+    }
+
+    companion object {
+        val ALL_DAYS: Set<Int> = (1..7).toSet()
+        val WEEKDAYS: Set<Int> = (1..5).toSet()
+        val WEEKEND: Set<Int> = setOf(6, 7)
+
+        /** What a newly switched-on reminder starts at: every day at 8:00. */
+        val Default = ReminderSchedule(8, 0)
     }
 }
 

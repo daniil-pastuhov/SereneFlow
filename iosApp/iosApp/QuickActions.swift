@@ -1,5 +1,6 @@
 import ComposeApp
 import UIKit
+import UserNotifications
 import WidgetKit
 
 /// Routes Home Screen quick actions (long-press the app icon) to the shared code, which starts
@@ -21,6 +22,18 @@ enum IncomingURL {
 }
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
+    /// Held here: the notification center keeps its delegate weakly.
+    private let reminders = ReminderNotifications()
+
+    /// Set before launch finishes, so a tap on a reminder that launches the app reaches it.
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        UNUserNotificationCenter.current().delegate = reminders
+        return true
+    }
+
     func application(
         _ application: UIApplication,
         configurationForConnecting connectingSceneSession: UISceneSession,

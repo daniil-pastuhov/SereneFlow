@@ -295,6 +295,19 @@
     <string name="editor_new_step">New Step %1$d</string>
     <string name="editor_add_step">Add Next Step</string>
     <string name="editor_rounds_section">ROUNDS</string>
+    <string name="editor_reminder">Reminder</string>
+    <string name="editor_reminder_off_detail">A notification to start this routine at a set time</string>
+    <!-- %1$s: the time of day, e.g. "7:30 AM" -->
+    <string name="editor_reminder_on_detail">Every day at %1$s</string>
+    <string name="editor_reminder_weekdays">Weekdays at %1$s</string>
+    <string name="editor_reminder_weekends">Weekends at %1$s</string>
+    <!-- %1$s: the days, e.g. "Mon, Wed, Fri"; %2$s: the time of day -->
+    <string name="editor_reminder_days">%1$s at %2$s</string>
+    <!-- Above the day-of-week toggles -->
+    <string name="editor_reminder_repeat">Repeat on</string>
+    <string name="editor_reminder_time">Time</string>
+    <!-- Android 12+ without the Alarms & reminders permission; tapping opens that setting -->
+    <string name="editor_reminder_inexact">Reminders may come a few minutes late. Tap to allow exact alarms.</string>
     <string name="editor_rounds_once">The steps run once</string>
     <plurals name="editor_rounds_many">
         <item quantity="one">All steps run %1$d time</item>
@@ -335,6 +348,23 @@
 
     <!-- Duration picker -->
     <string name="picker_title">Duration</string>
+    <string name="reminder_picker_title">Reminder time</string>
+
+    <!-- Days of the week, Monday first -->
+    <string name="weekday_short_1">Mon</string>
+    <string name="weekday_short_2">Tue</string>
+    <string name="weekday_short_3">Wed</string>
+    <string name="weekday_short_4">Thu</string>
+    <string name="weekday_short_5">Fri</string>
+    <string name="weekday_short_6">Sat</string>
+    <string name="weekday_short_7">Sun</string>
+    <string name="weekday_1">Monday</string>
+    <string name="weekday_2">Tuesday</string>
+    <string name="weekday_3">Wednesday</string>
+    <string name="weekday_4">Thursday</string>
+    <string name="weekday_5">Friday</string>
+    <string name="weekday_6">Saturday</string>
+    <string name="weekday_7">Sunday</string>
     <string name="picker_minutes">Minutes</string>
     <string name="picker_seconds">Seconds</string>
     <string name="picker_minutes_unit">min</string>
@@ -421,6 +451,9 @@
     <!-- %1$s: step name; %2$d: percent of the step left -->
     <string name="speech_reminder">%1$s, %2$d percent left</string>
     <string name="speech_routine_complete">Routine complete. Well done.</string>
+
+    <!-- An iOS routine reminder's text, under the routine's name -->
+    <string name="reminder_notification_body">Time for your routine. Tap to begin.</string>
 
     <!-- iOS banners while the app is in the background -->
     <string name="banner_complete_title">Routine complete</string>

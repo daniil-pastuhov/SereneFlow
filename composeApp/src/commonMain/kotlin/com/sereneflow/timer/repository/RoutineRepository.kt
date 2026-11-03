@@ -89,7 +89,8 @@ class RoutineRepository(
     /**
      * Adds the routines in a `.sereneflow` file ([RoutineTransfer.decode]) at the end of the list,
      * in the file's order, each with a fresh id and fresh step ids so they never replace a routine
-     * already here (importing the same file twice gives two copies).
+     * already here (importing the same file twice gives two copies), and without a reminder: the
+     * sender's daily schedule isn't the user's.
      *
      * @throws IllegalArgumentException when [json] isn't SereneFlow routines.
      */
@@ -97,7 +98,8 @@ class RoutineRepository(
         val imported = RoutineTransfer.decode(json).map { routine ->
             routine.copy(
                 id = "routine_${Random.nextLong(Long.MAX_VALUE)}",
-                steps = routine.steps.map { it.copy(id = newStepId()) }
+                steps = routine.steps.map { it.copy(id = newStepId()) },
+                reminder = null
             )
         }
         _routines.update { it + imported }
@@ -127,14 +129,16 @@ class RoutineRepository(
 
     /**
      * Saves a copy of [original] (which may contain unsaved edits) under a new id, at the end,
-     * called [title] ("Morning Awakening (Copy)", from resources).
+     * called [title] ("Morning Awakening (Copy)", from resources). The copy has no reminder, so the
+     * two don't both notify at the same time.
      */
     fun duplicateRoutine(original: Routine, title: String): Routine {
         val rand = kotlin.random.Random.nextLong().let { if (it < 0) -it else it }
         val duplicate = original.copy(
             id = "routine_$rand",
             title = title,
-            steps = original.steps.mapIndexed { idx, it -> it.copy(id = "step_${rand}_$idx") }
+            steps = original.steps.mapIndexed { idx, it -> it.copy(id = "step_${rand}_$idx") },
+            reminder = null
         )
         saveRoutine(duplicate)
         return duplicate
