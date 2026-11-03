@@ -183,3 +183,14 @@ Screenshots come from the running debug app: `scripts/ios_screenshots.sh` and
 routines in `scripts/demo/routines.json` (through debug-only launch arguments, see `DemoLaunch.kt`),
 `scripts/frame_screenshots.py` adds captions and a device frame, and `scripts/store_art.py` makes
 the Play feature graphic and the App Store header images.
+
+---
+
+## 📄 License
+
+SereneFlow's source code is licensed under the [Apache License 2.0](LICENSE). Contributions are
+welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+The name **SereneFlow**, its app icons and the store listing artwork are trademarks and are **not**
+covered by that license (see [NOTICE](NOTICE)). You are welcome to build and change the app, but if
+you publish it, for example on an app store, use your own name, icon and app ID.

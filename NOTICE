@@ -1,0 +1,18 @@
+SereneFlow
+Copyright 2026 Daniil Pastuhov
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Trademarks
+----------
+The name "SereneFlow" and the SereneFlow app icons are trademarks of Daniil Pastuhov and are not
+licensed under the Apache License (see its section 6). This covers the generated icon images in
+androidApp/src/main/res/mipmap-*, iosApp/iosApp/Assets.xcassets/AppIcon*.appiconset,
+iosApp/SereneFlowWatch/Assets.xcassets/AppIcon.appiconset and
+composeApp/src/commonMain/composeResources/drawable, and the store listing artwork and texts in
+store-listing/app-store and store-listing/google-play. tools/generate_icons.swift itself is code
+and is covered by the Apache License.
+
+You may build and modify the app for your own use. If you distribute it, for example on an app
+store, give it a different name and icon, and use a different application ID and bundle
+identifier.
