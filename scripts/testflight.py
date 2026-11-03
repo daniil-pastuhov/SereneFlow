@@ -8,7 +8,8 @@ Used by .github/workflows/ci.yml as part of the release flow (see "Releasing" in
     python3 scripts/testflight.py notes --version 1.3.0 --build N --notes-dir release-notes/v1.3.0
 
     # After the release PR is merged: put the newest build of that version on its App Store
-    # version, with the notes as "What's New", and submit it for App Review.
+    # version, with the notes as "What's New", and submit it for App Review, together with any
+    # in-app purchases that are ready to submit.
     python3 scripts/testflight.py appstore --version 1.3.0 --notes-dir release-notes/v1.3.0
 
     # Read-only overview of the app's builds and groups.
@@ -199,6 +200,21 @@ def version_state(version):
     return attrs.get("appVersionState") or attrs.get("appStoreState")
 
 
+def submit_ready_purchases(asc, app_id):
+    """Adds the in-app purchases that are ready for review to the version's submission.
+
+    An app's first in-app purchase of each type can only be reviewed together with a version, and
+    a later one sent alone would wait for a review of its own, so they all go in with it.
+    """
+    purchases = asc.call("GET", f"/apps/{app_id}/inAppPurchasesV2",
+                         {"filter[state]": "READY_TO_SUBMIT", "limit": 200})["data"]
+    for purchase in purchases:
+        asc.call("POST", "/inAppPurchaseSubmissions", body={"data": {
+            "type": "inAppPurchaseSubmissions", "relationships": {
+                "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": purchase["id"]}}}}})
+        print(f"Added in-app purchase {purchase['attributes']['productId']} to the submission")
+
+
 def submit_for_review(asc, app_id, version, release_type):
     try:
         # An open submission (not sent yet, or sent back by App Review) is reused: an app can
@@ -222,6 +238,7 @@ def submit_for_review(asc, app_id, version, release_type):
                                                   "id": submission["id"]}},
                     "appStoreVersion": {"data": {"type": "appStoreVersions",
                                                  "id": version["id"]}}}}})
+        submit_ready_purchases(asc, app_id)
         asc.call("PATCH", f"/reviewSubmissions/{submission['id']}", body={"data": {
             "type": "reviewSubmissions", "id": submission["id"],
             "attributes": {"submitted": True}}})
