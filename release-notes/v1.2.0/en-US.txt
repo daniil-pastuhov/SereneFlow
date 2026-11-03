@@ -1,0 +1,2 @@
+• Routine reminders: pick a time and the days of the week, and SereneFlow reminds you when it's time for your routine. Tap the notification to start it
+• New "Buy me a coffee" tip jar in Settings, if you'd like to support SereneFlow
