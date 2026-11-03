@@ -24,7 +24,10 @@ val appVersion: String = providers.fileContents(rootProject.layout.projectDirect
 
 android {
     namespace = "com.sereneflow.timer"
-    compileSdk = 37
+    compileSdk {
+        // 37.1+: Compose 1.13 requires it.
+        version = release(37) { minorApiLevel = 2 }
+    }
 
     defaultConfig {
         applicationId = "com.sereneflow.timer"

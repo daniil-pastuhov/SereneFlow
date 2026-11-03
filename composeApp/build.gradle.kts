@@ -13,7 +13,10 @@ kotlin {
 
     android {
         namespace = "com.sereneflow.timer.composeApp"
-        compileSdk = 37
+        compileSdk {
+            // 37.1+: Compose 1.13 requires it.
+            version = release(37) { minorApiLevel = 2 }
+        }
         minSdk = 24
         withHostTest {}
         // Needed for the notification icon in androidMain/res.
