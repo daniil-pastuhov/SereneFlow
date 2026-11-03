@@ -1,5 +1,14 @@
 SereneFlow turns your daily rituals into calm, guided routines. Build a sequence of timed steps (a morning stretch, a focus block, a tea break, a wind-down before bed) and let the app carry you from one step to the next, so you can stop watching the clock.
 
+<b>Friendly for ADHD and time blindness</b>
+If time tends to slip away from you, whether through ADHD, time blindness or a neurodivergent (neuroatypical) brain, SereneFlow makes time visible and audible:
+• See time pass: every step's timer drains, grows or fills, so you can tell at a glance how much is left
+• Hear what's next: a calm voice names each step, so you don't have to hold the plan in your head
+• Gentle check-ins at 75%, 50%, 25% and 10% left, before time runs out
+• One step at a time on a calm, uncluttered screen
+• Reminders at the time and on the days you choose start a routine with one tap
+SereneFlow is a timer and routine tool, not a medical device or treatment.
+
 <b>Five living, animated timers</b>
 • Serene Water drains gently as the step runs out
 • Living Bonsai grows and blossoms, petals drifting in the wind
