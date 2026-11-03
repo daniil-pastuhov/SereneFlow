@@ -96,10 +96,13 @@ jobs:
         with:
           languages: swift
           build-mode: manual
+      # arm64 only: a generic simulator build also compiles for x86_64, and under CodeQL that
+      # compile can't start Xcode's macro plugin ("Bad CPU type"), so the watch app's #Preview
+      # macros fail. One architecture is all the analysis needs.
       - name: Build iOS app
         run: |
           xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
-            -destination 'generic/platform=iOS Simulator' build
+            -destination 'generic/platform=iOS Simulator' ARCHS=arm64 build
       - uses: github/codeql-action/analyze@v4
         with:
           category: /language:swift
