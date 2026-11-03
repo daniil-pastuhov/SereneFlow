@@ -96,12 +96,13 @@ jobs:
         with:
           languages: swift
           build-mode: manual
-      # arm64 only: a generic simulator build also compiles for x86_64, and under CodeQL that
-      # compile can't start Xcode's macro plugin ("Bad CPU type"), so the watch app's #Preview
-      # macros fail. One architecture is all the analysis needs.
+      # Release, because under CodeQL the watchOS SDK's macro plugin won't start ("Bad CPU type in
+      # executable"), so the watch app's #Preview macros fail to compile; they are Debug only.
+      # Release is also the code that ships. One architecture (arm64, not x86_64 as well) is all
+      # the analysis needs, and halves the build.
       - name: Build iOS app
         run: |
-          xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
+          xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Release \
             -destination 'generic/platform=iOS Simulator' ARCHS=arm64 build
       - uses: github/codeql-action/analyze@v4
         with:
