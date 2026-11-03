@@ -110,10 +110,15 @@ internal object TimerNotifications {
     }
 
     private fun openAppIntent(context: Context): PendingIntent {
-        // Same flags as the launcher: brings the existing task to the front instead of a new one.
-        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-        } ?: Intent()
+        // The launcher's intent, whichever theme's icon alias is enabled, with the launcher's flags:
+        // brings the existing task to the front instead of a new one. Pinned to this package so it
+        // can never resolve to another app.
+        val intent = (
+            context.packageManager.getLaunchIntentForPackage(context.packageName)
+                ?: Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            )
+            .setPackage(context.packageName)
+            .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED }
         return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
