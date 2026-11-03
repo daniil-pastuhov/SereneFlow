@@ -311,6 +311,10 @@ data class AppPreferences(
     val lastRoutineId: String? = null,
     /** Whether the timer has shown its one-time tip about voice commands (Siri, Google Assistant). */
     val voiceTipShown: Boolean = false,
+    /** Routines completed since the coffee banner was last closed (stops at [COFFEE_PROMPT_ROUTINES]). */
+    val routinesSinceCoffeePrompt: Int = 0,
+    /** Whether the user has bought the developer a coffee; the banner then never shows again. */
+    val hasDonated: Boolean = false,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @SerialName("defaultSoundMode") val legacyDefaultSoundMode: LegacySoundMode? = null
@@ -321,8 +325,15 @@ data class AppPreferences(
         return copy(defaultSound = legacy.sound, defaultVoice = legacy.voice, legacyDefaultSoundMode = null)
     }
 
+    /** Whether the routine list offers the tip jar ("Buy the developer a coffee"). */
+    val showCoffeeBanner: Boolean
+        get() = !hasDonated && routinesSinceCoffeePrompt >= COFFEE_PROMPT_ROUTINES
+
     companion object {
         val ReminderOptions = listOf(75, 50, 25, 10)
+
+        /** Completed routines before the coffee banner shows, and again after each close. */
+        const val COFFEE_PROMPT_ROUTINES = 5
     }
 }
 

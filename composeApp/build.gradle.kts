@@ -51,6 +51,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.play.billing.ktx)
         }
 
         commonTest.dependencies {

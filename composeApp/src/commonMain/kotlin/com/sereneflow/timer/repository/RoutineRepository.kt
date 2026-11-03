@@ -207,6 +207,23 @@ class PreferencesRepository(
         _preferences.update { if (it.voiceTipShown) it else it.copy(voiceTipShown = true) }
     }
 
+    /** Counts a routine run to its end towards the coffee banner. */
+    fun recordRoutineCompleted() {
+        _preferences.update {
+            if (it.hasDonated || it.routinesSinceCoffeePrompt >= AppPreferences.COFFEE_PROMPT_ROUTINES) it
+            else it.copy(routinesSinceCoffeePrompt = it.routinesSinceCoffeePrompt + 1)
+        }
+    }
+
+    /** Closes the coffee banner until another [AppPreferences.COFFEE_PROMPT_ROUTINES] routines are completed. */
+    fun dismissCoffeeBanner() {
+        _preferences.update { it.copy(routinesSinceCoffeePrompt = 0) }
+    }
+
+    fun recordDonation() {
+        _preferences.update { if (it.hasDonated) it else it.copy(hasDonated = true) }
+    }
+
     fun toggleReminderThreshold(percent: Int) {
         _preferences.update {
             val current = it.reminderThresholds

@@ -1,0 +1,59 @@
+{
+  "identifier": "54840D18-7B80-4EEF-B124-F2399ADFDBCC",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6678877434",
+      "localizations": [
+        {
+          "description": "Buy the developer a coffee.",
+          "displayName": "A coffee",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "coffee_1",
+      "referenceName": "A coffee",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "5.99",
+      "familyShareable": false,
+      "internalID": "2207140093",
+      "localizations": [
+        {
+          "description": "Buy the developer three coffees.",
+          "displayName": "Three coffees",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "coffee_3",
+      "referenceName": "Three coffees",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "3020258988",
+      "localizations": [
+        {
+          "description": "Buy the developer five coffees.",
+          "displayName": "Five coffees",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "coffee_5",
+      "referenceName": "Five coffees",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_storefront": "DEU"
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

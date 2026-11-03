@@ -11,6 +11,7 @@ androidxActivity = "1.13.0"
 androidxCore = "1.19.1"
 junit = "4.13.2"
 navigationEvent = "1.2.0"
+playBilling = "9.1.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
@@ -27,6 +28,7 @@ compose-mp-material-icons-extended = { module = "org.jetbrains.compose.material:
 compose-mp-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
 junit = { module = "junit:junit", version.ref = "junit" }
 androidx-navigationevent-compose = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "navigationEvent" }
+play-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "playBilling" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

@@ -18,6 +18,12 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.ui.draw.alpha
@@ -148,6 +154,10 @@ fun RoutineListScreen(
     /** A routine just added (at the end of the list) to scroll into view, then [onRevealed]. */
     revealRoutineId: String? = null,
     onRevealed: () -> Unit = {},
+    /** Offer the tip jar in a banner beside the New Routine button (see AppPreferences.showCoffeeBanner). */
+    showCoffeeBanner: Boolean = false,
+    onOpenTipJar: () -> Unit = {},
+    onDismissCoffeeBanner: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSereneColors.current
@@ -357,6 +367,16 @@ fun RoutineListScreen(
             )
         }
 
+        // Beside the New Routine button rather than over it, in the space the list keeps clear for it.
+        AnimatedVisibility(
+            visible = showCoffeeBanner && !selecting && !newMenuExpanded,
+            modifier = Modifier.align(Alignment.BottomStart).windowInsetsPadding(WindowInsets.safeDrawing),
+            enter = fadeIn() + slideInVertically { it },
+            exit = fadeOut() + slideOutVertically { it }
+        ) {
+            CoffeeBanner(onOpen = onOpenTipJar, onDismiss = onDismissCoffeeBanner)
+        }
+
         AnimatedVisibility(
             visible = !selecting,
             modifier = Modifier.align(Alignment.BottomEnd).windowInsetsPadding(WindowInsets.safeDrawing),
@@ -368,6 +388,55 @@ fun RoutineListScreen(
                 onExpandedChange = { newMenuExpanded = it },
                 onBlank = onCreateNewRoutine,
                 onTemplate = { template -> addedHere = routineRepository.addFromTemplate(template).id }
+            )
+        }
+    }
+}
+
+/** "Enjoying SereneFlow? Buy the developer a coffee": opens the tip jar, or closes for a while. */
+@Composable
+private fun CoffeeBanner(onOpen: () -> Unit, onDismiss: () -> Unit) {
+    val colors = LocalSereneColors.current
+    Row(
+        modifier = Modifier
+            // Clear of the New Routine button: its 16dp margins and 56dp width, and a gap.
+            .padding(start = 16.dp, end = 96.dp, bottom = 16.dp)
+            .widthIn(max = 480.dp)
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.cardBackground)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(18.dp))
+            .clickable(onClick = onOpen)
+            .padding(start = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.LocalCafe,
+            contentDescription = null,
+            tint = colors.primary,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f).padding(vertical = 8.dp)) {
+            Text(
+                text = stringResource(Res.string.coffee_banner_title),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurface
+            )
+            Text(
+                text = stringResource(Res.string.coffee_banner_action),
+                fontSize = 13.sp,
+                color = colors.primary
+            )
+        }
+        IconButton(onClick = onDismiss) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = stringResource(Res.string.coffee_banner_close),
+                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
             )
         }
     }

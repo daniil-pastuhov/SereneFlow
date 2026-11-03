@@ -25,7 +25,14 @@ targets:
     platform: iOS
     sources:
       - path: iosApp
+        # Only the Run scheme uses it, for testing the tip jar without App Store Connect.
+        excludes:
+          - "Tips.storekit"
       - path: Shared
+    scheme:
+      # Runs from Xcode sell the tip jar's coffees from this local StoreKit configuration;
+      # TestFlight and App Store builds use the products in App Store Connect.
+      storeKitConfiguration: iosApp/Tips.storekit
     dependencies:
       - target: SereneFlowWidget
       # Embedded as the companion watch app (Watch/), installed on a paired Apple Watch.
