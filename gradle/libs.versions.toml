@@ -1,5 +1,5 @@
 [versions]
-androidGradlePlugin = "9.5.0"
+androidGradlePlugin = "9.5.1"
 kotlin = "2.4.21"
 composeMultiplatform = "1.12.2"
 composeMaterial3 = "1.13.0-beta01"
