@@ -61,6 +61,11 @@ import com.sereneflow.timer.model.AppThemeMode
 import com.sereneflow.timer.audio.VoiceOption
 import com.sereneflow.timer.platform.AppIconSwitcher
 import com.sereneflow.timer.platform.voiceAssistant
+import com.sereneflow.timer.platform.Feedback
+import com.sereneflow.timer.platform.appEnvironment
+import com.sereneflow.timer.platform.rateAppUrl
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalUriHandler
 import com.sereneflow.timer.model.VisualEffectType
 import com.sereneflow.timer.repository.PreferencesRepository
 import com.sereneflow.timer.resources.*
@@ -117,6 +122,19 @@ fun SettingsScreen(
     val currentTheme = preferences.themeMode
     val defaultVisual = preferences.defaultVisualEffect
     val defaultSound = preferences.defaultSound
+    val uriHandler = LocalUriHandler.current
+    // Android throws when nothing handles the link (no mail app); there's nothing better to do then.
+    val openUri: (String) -> Unit = { uri -> runCatching { uriHandler.openUri(uri) } }
+    val environment = remember { appEnvironment() }
+    val feedbackUrl = Feedback.mailtoUrl(
+        subject = stringResource(Res.string.feedback_email_subject),
+        body = stringResource(
+            Res.string.feedback_email_body,
+            environment.appVersion,
+            environment.osName,
+            environment.osVersion
+        )
+    )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -456,7 +474,7 @@ fun SettingsScreen(
                     }
                 }
 
-                // Buy me a coffee: the tip jar, also offered by the routine list's banner
+                // Support: the tip jar (also offered by the routine list's banner), a store review, feedback by email
                 item {
                     SectionHeader(title = stringResource(Res.string.settings_support), icon = Icons.Default.LocalCafe)
                     Spacer(modifier = Modifier.height(10.dp))
@@ -473,6 +491,18 @@ fun SettingsScreen(
                             description = stringResource(Res.string.settings_tip_jar_description),
                             value = "",
                             onClick = onOpenTipJar
+                        )
+                        NavigationRow(
+                            title = stringResource(Res.string.settings_rate_app),
+                            description = stringResource(Res.string.settings_rate_app_description),
+                            value = "",
+                            onClick = { openUri(rateAppUrl) }
+                        )
+                        NavigationRow(
+                            title = stringResource(Res.string.settings_feedback),
+                            description = stringResource(Res.string.settings_feedback_description),
+                            value = "",
+                            onClick = { openUri(feedbackUrl) }
                         )
                     }
                 }
