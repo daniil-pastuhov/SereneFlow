@@ -274,6 +274,17 @@ jobs:
         run: |
           if [ -z "$DEVELOPMENT_TEAM" ]; then echo "::error::Missing secret DEVELOPMENT_TEAM"; exit 1; fi
           printf 'TEAM_ID = %s\nDEVELOPMENT_TEAM = $(TEAM_ID)\n' "$DEVELOPMENT_TEAM" > Secrets.xcconfig
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install App Store Connect API dependencies
+        run: pip install --quiet cryptography
+      # Each archive leaves an Apple Development certificate behind (see testflight.py).
+      - name: Revoke certificates left by earlier runs
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" python scripts/testflight.py revoke-ci-certs
       - name: Archive and upload
         id: upload
         env:
