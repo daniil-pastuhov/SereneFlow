@@ -200,19 +200,40 @@ def version_state(version):
     return attrs.get("appVersionState") or attrs.get("appStoreState")
 
 
-def submit_ready_purchases(asc, app_id):
+def submit_ready_purchases(asc, app_id, submission_id):
     """Adds the in-app purchases that are ready for review to the version's submission.
 
     An app's first in-app purchase of each type can only be reviewed together with a version, and
     a later one sent alone would wait for a review of its own, so they all go in with it.
+
+    Since App Store Connect API 4.4.1 a purchase goes to App Review as an In-App Purchase version,
+    added to the review submission as an item; /v1/inAppPurchaseSubmissions is deprecated and
+    goes away in 2027.
     """
     purchases = asc.call("GET", f"/apps/{app_id}/inAppPurchasesV2",
                          {"filter[state]": "READY_TO_SUBMIT", "limit": 200})["data"]
     for purchase in purchases:
-        asc.call("POST", "/inAppPurchaseSubmissions", body={"data": {
-            "type": "inAppPurchaseSubmissions", "relationships": {
-                "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": purchase["id"]}}}}})
-        print(f"Added in-app purchase {purchase['attributes']['productId']} to the submission")
+        product = purchase["attributes"]["productId"]
+        versions = asc.call("GET", f"/v2/inAppPurchases/{purchase['id']}/versions", {
+            "filter[state]": "PREPARE_FOR_SUBMISSION,READY_FOR_REVIEW"})["data"]
+        if any(v["attributes"]["state"] == "READY_FOR_REVIEW" for v in versions):
+            # Added by an earlier run whose submission was never sent.
+            print(f"In-app purchase {product} is already in the submission")
+            continue
+        if versions:
+            version_id = versions[0]["id"]
+        else:
+            # A new version captures the purchase's current metadata.
+            version_id = asc.call("POST", "/inAppPurchaseVersions", body={"data": {
+                "type": "inAppPurchaseVersions", "relationships": {
+                    "inAppPurchase": {"data": {"type": "inAppPurchases",
+                                               "id": purchase["id"]}}}}})["data"]["id"]
+        asc.call("POST", "/reviewSubmissionItems", body={"data": {
+            "type": "reviewSubmissionItems", "relationships": {
+                "reviewSubmission": {"data": {"type": "reviewSubmissions", "id": submission_id}},
+                "inAppPurchaseVersion": {"data": {"type": "inAppPurchaseVersions",
+                                                  "id": version_id}}}}})
+        print(f"Added in-app purchase {product} to the submission")
 
 
 def submit_for_review(asc, app_id, version, release_type):
@@ -238,7 +259,7 @@ def submit_for_review(asc, app_id, version, release_type):
                                                   "id": submission["id"]}},
                     "appStoreVersion": {"data": {"type": "appStoreVersions",
                                                  "id": version["id"]}}}}})
-        submit_ready_purchases(asc, app_id)
+        submit_ready_purchases(asc, app_id, submission["id"])
         asc.call("PATCH", f"/reviewSubmissions/{submission['id']}", body={"data": {
             "type": "reviewSubmissions", "id": submission["id"],
             "attributes": {"submitted": True}}})
