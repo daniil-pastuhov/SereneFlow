@@ -64,6 +64,25 @@ headline lives in that script), keeping key artwork inside the safe areas of App
 | `header.png` | 3840×1646 (21:9) | Product page header: three timers, no text |
 | `search-result.png` | 3840×2560 (3:2) | Search results: a headline and the lotus timer |
 
+## Search visibility
+
+- **Name, subtitle, keywords** share no words: Apple indexes each word once, and the name and
+  subtitle weigh most. The keyword field holds single words, no plurals, no spaces after commas.
+  Leave "kids" and "children" out of all of them: Apple keeps those for the Kids category.
+- **A second keyword set** (`es-MX/`): the U.S. App Store also indexes the Spanish (Mexico)
+  localization, so its subtitle and keywords are 130 more characters of English search terms.
+  The folder holds only `name.txt`, `subtitle.txt` and `keywords.txt`; the scripts fill in the
+  rest (description, promotional text, What's New) from `en-US/`, and without screenshots of its
+  own it shows the `en-US` ones. People whose App Store is in Mexican Spanish see that subtitle.
+- **Custom product pages** (`custom-pages/<page>/`): pages with their own screenshots and
+  promotional text that search shows in place of the default page for the keywords in the page's
+  `page.json`. Those must be keywords of the live version's keyword field (not words of the name
+  or subtitle), which is why the pages are for the app's other uses (focus, stretching) and the
+  default page is the ADHD one. `scripts/frame_screenshots.py build/raw-iphone --page
+  custom-pages/<page>` frames a page's screenshots; `scripts/appstore_custom_pages.py` creates
+  or updates the pages as drafts and `--submit` sends them to App Review. Run it again after a
+  version that changes the keyword field goes live.
+
 ## 0. Filling it in through the API
 
 `scripts/appstore_listing.py --version X.Y.Z --review-contact-from com.foodbest.ios` (after
@@ -110,7 +129,7 @@ From CI, on every push to a `release/v*` branch (see "Releasing" in the top-leve
 | Privacy Policy URL | https://daniil-pastuhov.github.io/sereneflow-privacy/ |
 | Support URL | https://daniil-pastuhov.github.io/sereneflow-privacy/support.html |
 | Marketing URL | leave empty |
-| Category | Primary: **Health & Fitness**. Secondary: **Productivity** |
+| Category | Primary: **Productivity**. Secondary: **Health & Fitness** |
 | Copyright | `2026 Daniil Pastuhov` |
 | Content rights | Does not contain, show or access third-party content |
 | Price | Free. Availability: all countries |

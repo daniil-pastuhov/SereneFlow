@@ -13,9 +13,17 @@ reads <raw>/<n>-<name>.png (as the capture scripts write them, one per line of
 scripts/demo/shots.txt) and writes <out>/<n>.png. Without --size each image keeps the raw
 screenshot's size, which is the size App Store Connect wants for that device; Google Play wants
 an aspect ratio of at most 2:1, which a modern phone's raw screenshot exceeds, hence 1080x1920
-there. Needs Pillow; the captions are set in Helvetica Neue Bold from macOS.
+there.
+
+    scripts/frame_screenshots.py build/raw-iphone --page store-listing/app-store/custom-pages/focus
+
+frames a custom product page's screenshots into <page>/en-US/screenshots: the shots its page.json
+lists under "shots", in that order, with its "captions" in place of the ones here.
+
+Needs Pillow; the captions are set in Helvetica Neue Bold from macOS.
 """
 import argparse
+import json
 import re
 from pathlib import Path
 
@@ -27,12 +35,12 @@ FONT_BOLD_INDEX = 1
 # One caption per shot name in scripts/demo/shots.txt. "\n" is where a caption breaks on a
 # narrow (phone-shaped) canvas; wider ones put it on one line if it fits.
 CAPTIONS = {
-    "water": "Routines that\nflow by themselves",
-    "list": "Morning, focus,\nwind-down & more",
-    "bonsai": "Five living,\nanimated timers",
+    "water": "See time pass.\nHear what's next.",
+    "list": "Visual timers for\nevery routine",
+    "bonsai": "For ADHD &\ntime blindness",
     "editor": "Build a routine\nin seconds",
     "orbit": "Stay in\ndeep focus",
-    "lotus": "Spoken cues for\nevery step",
+    "lotus": "A calm voice\nnames every step",
     "hourglass": "Glance,\ndon't count",
     "settings": "Four calming\nthemes",
 }
@@ -133,17 +141,27 @@ def raw_shots(raw_dir):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("raw_dir", type=Path)
-    parser.add_argument("out_dir", type=Path)
+    parser.add_argument("out_dir", type=Path, nargs="?")
+    parser.add_argument("--page", type=Path, help="a custom product page's folder, instead of out_dir")
     parser.add_argument("--size", help="canvas WxH; defaults to each raw screenshot's size")
     args = parser.parse_args()
     size = tuple(int(n) for n in args.size.split("x")) if args.size else None
-    for old in args.out_dir.glob("*.png"):
+    if (args.out_dir is None) == (args.page is None):
+        parser.error("give either out_dir or --page")
+    shots, captions, out_dir = raw_shots(args.raw_dir), CAPTIONS, args.out_dir
+    if args.page:
+        page = json.loads((args.page / "page.json").read_text(encoding="utf-8"))
+        by_name = {name: path for _, name, path in shots}
+        shots = [(n, name, by_name[name]) for n, name in enumerate(page["shots"], start=1)]
+        captions = {**CAPTIONS, **page.get("captions", {})}
+        out_dir = args.page / "en-US" / "screenshots"
+    for old in out_dir.glob("*.png"):
         old.unlink()
-    for n, name, path in raw_shots(args.raw_dir):
-        if name not in CAPTIONS:
+    for n, name, path in shots:
+        if name not in captions:
             raise SystemExit(f"no caption for '{name}'; add it to CAPTIONS in {Path(__file__).name}")
-        out = args.out_dir / f"{n}.png"
-        frame(path, CAPTIONS[name], out, size)
+        out = out_dir / f"{n}.png"
+        frame(path, captions[name], out, size)
         print(out)
 
 

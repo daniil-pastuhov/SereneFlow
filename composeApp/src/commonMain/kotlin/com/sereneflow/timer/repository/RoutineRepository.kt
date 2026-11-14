@@ -207,11 +207,21 @@ class PreferencesRepository(
         _preferences.update { if (it.voiceTipShown) it else it.copy(voiceTipShown = true) }
     }
 
-    /** Counts a routine run to its end towards the coffee banner. */
+    /** Counts a routine run to its end towards the coffee banner and the rating prompt. */
     fun recordRoutineCompleted() {
         _preferences.update {
-            if (it.hasDonated || it.routinesSinceCoffeePrompt >= AppPreferences.COFFEE_PROMPT_ROUTINES) it
-            else it.copy(routinesSinceCoffeePrompt = it.routinesSinceCoffeePrompt + 1)
+            val sinceCoffee = if (it.hasDonated) it.routinesSinceCoffeePrompt
+                else (it.routinesSinceCoffeePrompt + 1).coerceAtMost(AppPreferences.COFFEE_PROMPT_ROUTINES)
+            val completed = (it.routinesCompleted + 1).coerceAtMost(AppPreferences.REVIEW_PROMPT_ROUTINES.last())
+            if (sinceCoffee == it.routinesSinceCoffeePrompt && completed == it.routinesCompleted) it
+            else it.copy(routinesSinceCoffeePrompt = sinceCoffee, routinesCompleted = completed)
+        }
+    }
+
+    /** The store's rating prompt was asked for; it isn't again until the next count in [AppPreferences.REVIEW_PROMPT_ROUTINES]. */
+    fun recordReviewAsked() {
+        _preferences.update {
+            if (it.reviewAskedAt == it.routinesCompleted) it else it.copy(reviewAskedAt = it.routinesCompleted)
         }
     }
 

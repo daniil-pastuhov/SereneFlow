@@ -1,10 +1,21 @@
 package com.sereneflow.timer.platform
 
+import androidx.compose.runtime.Composable
+
 /**
  * The store page where the user writes a review: Google Play's listing (the Play Store app opens
  * it), or the App Store's write-review sheet.
  */
 expect val rateAppUrl: String
+
+/**
+ * A function that asks the store for its in-app rating prompt (Google Play's in-app review, the
+ * App Store's review request). The store decides whether to show it (iOS: at most three times a
+ * year, never after a rating of this version), so nothing is reported back and the call must not
+ * follow a button: "Rate SereneFlow" in Settings opens [rateAppUrl] instead.
+ */
+@Composable
+expect fun rememberStoreReviewRequest(): () -> Unit
 
 /** The app's version and the OS it runs on, e.g. ("1.3", "Android", "16"), for feedback emails. */
 expect fun appEnvironment(): AppEnvironment

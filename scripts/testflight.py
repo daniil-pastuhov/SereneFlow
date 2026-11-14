@@ -43,6 +43,9 @@ API = API_HOST + "/v1"
 # Release notes are stored under Play's locale codes; App Store Connect names the same
 # languages as in store-listing/app-store/.
 ASC_LOCALES = {"en-US": "en-US"}
+# The listing's primary locale. A localization without texts of its own (es-MX, which is there
+# for its keywords) gets this one's What's New and promotional text.
+PRIMARY_LOCALE = "en-US"
 # One folder per App Store Connect locale, holding promotional_text.txt among others.
 LISTING_DIR = pathlib.Path(__file__).resolve().parent.parent / "store-listing" / "app-store"
 # "What to Test" is limited to 4000 characters; the notes are much shorter (Play allows 500).
@@ -284,6 +287,8 @@ def set_promotional_text(asc, localizations):
     for locale, localization_id in localizations.items():
         path = LISTING_DIR / locale / "promotional_text.txt"
         if not path.exists():
+            path = LISTING_DIR / PRIMARY_LOCALE / "promotional_text.txt"
+        if not path.exists():
             print(f"::warning::{path.relative_to(LISTING_DIR.parent.parent)} is missing; "
                   f"the {locale} promotional text was not set")
             continue
@@ -333,10 +338,15 @@ def cmd_appstore(args):
         "GET", f"/appStoreVersions/{version['id']}/appStoreVersionLocalizations",
         {"limit": 50})["data"]}
     set_promotional_text(asc, localizations)
-    for locale, text in notes.items():
+    for locale in notes:
         if locale not in localizations:
             print(f"::warning::The App Store listing has no {locale} localization; "
                   f"its What's New was not set")
+    for locale in localizations:
+        # Every localization needs a What's New to be submitted.
+        text = notes.get(locale) or notes.get(PRIMARY_LOCALE)
+        if not text:
+            print(f"::warning::No release notes for {locale}; its What's New was not set")
             continue
         try:
             asc.call("PATCH", f"/appStoreVersionLocalizations/{localizations[locale]}", body={"data": {

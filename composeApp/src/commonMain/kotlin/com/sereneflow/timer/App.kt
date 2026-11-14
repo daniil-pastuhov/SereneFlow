@@ -30,6 +30,7 @@ import com.sereneflow.timer.platform.publishQuickStart
 import com.sereneflow.timer.platform.QuickStartItem
 import com.sereneflow.timer.platform.quickStartItems
 import com.sereneflow.timer.platform.quickStartRoutines
+import com.sereneflow.timer.platform.rememberStoreReviewRequest
 import com.sereneflow.timer.platform.routineReminders
 import com.sereneflow.timer.platform.scheduleRoutineReminders
 import com.sereneflow.timer.transfer.RoutineTransfer
@@ -48,6 +49,7 @@ import com.sereneflow.timer.ui.VoicePickerScreen
 import com.sereneflow.timer.ui.rememberPredictiveBackTransition
 import com.sereneflow.timer.resources.*
 import com.sereneflow.timer.text.*
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -61,6 +63,8 @@ sealed class AppScreen {
     data object VoiceCommands : AppScreen()
     data object TipJar : AppScreen()
 }
+
+private const val REVIEW_PROMPT_DELAY_MS = 1200L
 
 @Composable
 fun App(demoLaunch: DemoLaunch? = null) {
@@ -177,6 +181,18 @@ fun App(demoLaunch: DemoLaunch? = null) {
         val showingTimer = backStack.last() is AppScreen.Timer
         if (session != null && !showingTimer) backStack.add(AppScreen.Timer(session.routine))
         if (session == null && showingTimer) backStack.removeAt(backStack.lastIndex)
+    }
+
+    // The store's rating prompt, asked for once the routine list is back after the routine that
+    // reached a count in AppPreferences.REVIEW_PROMPT_ROUTINES: never over a running timer.
+    val requestStoreReview = rememberStoreReviewRequest()
+    val reviewDue = preferences.reviewDue && currentScreen is AppScreen.List && activeSession == null && demoLaunch == null
+    LaunchedEffect(reviewDue) {
+        if (!reviewDue) return@LaunchedEffect
+        // After the timer screen has slid away.
+        delay(REVIEW_PROMPT_DELAY_MS)
+        preferencesRepository.recordReviewAsked()
+        requestStoreReview()
     }
 
     // System back (Android) and the edge swipe (iOS) pop the stack. Screens with unsaved state

@@ -13,10 +13,11 @@ name: CI
 # that doesn't need a Mac runs on Linux.
 #
 # Release flow (scripts/release starts it; see "Releasing" in README.md):
-# - Each push to a release/vX.Y.Z branch publishes a signed bundle to the Google Play internal
-#   track and, with the IOS_PUBLISH repository variable set to "true", a build to the internal
-#   TestFlight testers, both with the notes in release-notes/vX.Y.Z/.
-# - Merging that branch's PR promotes the same Play build to closed testing (alpha), submits the
+# - Each push to a release/vX.Y.Z branch (the first is its creation) publishes a signed bundle to
+#   the Google Play internal track and promotes it to closed testing (alpha) and, with the
+#   IOS_PUBLISH repository variable set to "true", publishes a build to the internal TestFlight
+#   testers, all with the notes in release-notes/vX.Y.Z/.
+# - Merging that branch's PR releases the same Play build to everyone (production), submits the
 #   newest TestFlight build of the version for App Store review, and tags vX.Y.Z.
 # Main itself publishes nothing. The release jobs live in this workflow, not a separate one,
 # because the Play version code is derived from this workflow's run number.
@@ -160,7 +161,7 @@ jobs:
             -destination 'generic/platform=iOS Simulator' build
 
   publish-play:
-    name: Publish to Google Play (internal)
+    name: Publish to Google Play (internal and closed testing)
     needs: android
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/v')
     runs-on: ubuntu-latest
@@ -222,6 +223,16 @@ jobs:
             --status "$PLAY_RELEASE_STATUS" \
             --release-notes-dir "release-notes/v$RELEASE_VERSION" \
             --release-name "$RELEASE_VERSION ($VERSION_CODE)"
+      # The same build goes on to the closed testers straight away; production waits for the merge.
+      - name: Promote internal to closed testing
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          python scripts/play_upload.py \
+            --promote-from internal --version "$RELEASE_VERSION" \
+            --track alpha \
+            --status "$PLAY_RELEASE_STATUS" \
+            --release-notes-dir "release-notes/v$RELEASE_VERSION"
       - name: Keep the bundle
         uses: actions/upload-artifact@v7
         with:
@@ -326,10 +337,10 @@ jobs:
           ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" python scripts/testflight.py notes \
             --version "$VERSION" --build "$BUILD_NUMBER" --notes-dir "release-notes/v$VERSION"
 
-  # --- Merged release PR: move the tested builds on to Play closed testing and the App Store ----
+  # --- Merged release PR: release the tested builds on Google Play and the App Store ----
 
   promote-play:
-    name: Promote to Google Play closed testing
+    name: Release on Google Play
     if: >-
       github.event_name == 'pull_request' && github.event.action == 'closed' &&
       github.event.pull_request.merged && startsWith(github.head_ref, 'release/v')
@@ -351,15 +362,16 @@ jobs:
           python-version: "3.12"
       - name: Install upload dependencies
         run: pip install --quiet google-api-python-client google-auth-httplib2
-      # The newest internal release of this version is the build testers have been trying; it is
-      # promoted as is rather than rebuilt from the merge commit.
-      - name: Promote internal to closed testing
+      # The newest closed-testing release of this version is the build testers have been trying; it
+      # is released as is rather than rebuilt from the merge commit. "completed" rolls it out to
+      # everyone once Google has reviewed it.
+      - name: Promote closed testing to production
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           python scripts/play_upload.py \
-            --promote-from internal --version "$RELEASE_VERSION" \
-            --track alpha \
+            --promote-from alpha --version "$RELEASE_VERSION" \
+            --track production \
             --status "$PLAY_RELEASE_STATUS" \
             --release-notes-dir "release-notes/v$RELEASE_VERSION"
 

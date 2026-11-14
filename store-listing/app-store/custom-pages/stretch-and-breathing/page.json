@@ -1,0 +1,9 @@
+{
+  "name": "Stretch & breathing",
+  "keywords": ["stretch", "morning", "sequence", "interval", "voice"],
+  "shots": ["bonsai", "lotus", "water", "list", "editor", "hourglass", "orbit", "settings"],
+  "captions": {
+    "bonsai": "Stretch, breathe,\nunwind",
+    "list": "Morning stretch,\nevening wind-down"
+  }
+}
