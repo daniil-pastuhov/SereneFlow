@@ -56,7 +56,7 @@ AGE_RATING = {
     "userGeneratedContent": False, "violenceCartoonOrFantasy": "NONE",
     "violenceRealistic": "NONE", "violenceRealisticProlongedGraphicOrSadistic": "NONE",
 }
-REVIEW_NOTES = """SereneFlow has no account or login, and no network access; everything stays on the device.
+REVIEW_NOTES = """SereneFlow has no account or login and works fully offline; everything stays on the device.
 
 To try it: tap "Begin Routine" on "Morning Awakening". Each step counts down with an animated visual timer, and a voice announces the steps (turn the volume up). Use "New Routine" to build one, and the gear button for themes, default sounds and reminders.
 

@@ -141,8 +141,9 @@ Answer **None / No** to every question. The result is **4+**.
 
 ## 5. App Privacy ("nutrition label")
 
-- **Data collection: "No, we do not collect data from this app."** SereneFlow has no internet
-  access, no account, analytics, ads or crash reporting; routines stay on the device.
+- **Data collection: "No, we do not collect data from this app."** SereneFlow works fully
+  offline and has no account, analytics, ads or crash reporting; routines stay on the device. Only
+  the tip jar's purchase, which the App Store handles, uses a connection.
 - **Tracking: No.**
 - `iosApp/iosApp/PrivacyInfo.xcprivacy` says the same, and declares the required-reason APIs the
   Kotlin/Native runtime links (file timestamps, system boot time, disk space).
@@ -154,7 +155,7 @@ Answer **None / No** to every question. The result is **4+**.
 - Notes (paste as is):
 
 ```
-SereneFlow has no account or login, and no network access; everything stays on the device.
+SereneFlow has no account or login and works fully offline; everything stays on the device.
 
 To try it: tap "Begin Routine" on "Morning Awakening". Each step counts down with an animated
 visual timer, and a voice announces the steps (turn the volume up). Use "New Routine" to build one,
