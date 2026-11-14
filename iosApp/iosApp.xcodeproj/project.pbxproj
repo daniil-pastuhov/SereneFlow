@@ -27,6 +27,7 @@
 		A4020294DADC227342BD3416 /* SereneFlowWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2BE9B6904DB262B81C91CA6F /* SereneFlowWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A4C11C73AB9F3050DF1DC273 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FBB13DD6FE282D7D1F2D8FB1 /* Localizable.xcstrings */; };
 		ABA7E9D6494CAB45C28BBC28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4BAB7F95778EE0543A49C0CE /* Assets.xcassets */; };
+		ACCEE83A65F1CDBB0136CD80 /* StoreReviewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158F9EC86CEA38687678A076 /* StoreReviewManager.swift */; };
 		ADC2E278927F82CB778C5BC9 /* TipStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B0EDC806ECB9580171D3E8 /* TipStoreManager.swift */; };
 		D08086F801A885C1C84FB588 /* TimerControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5079ED09904627029AFE433 /* TimerControlIntents.swift */; };
 		D93BD5B69D2EE684C4885351 /* SereneFlowWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */; };
@@ -84,6 +85,7 @@
 		12E6F311AB2C1ACE73A76368 /* SereneFlowWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SereneFlowWidgetBundle.swift; sourceTree = "<group>"; };
 		13460834AD319CDAB0309B74 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		1405A1434510C5F0CBFB7F9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		158F9EC86CEA38687678A076 /* StoreReviewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreReviewManager.swift; sourceTree = "<group>"; };
 		1E7A15CEE48602CC8CACA4D9 /* TimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerActivityAttributes.swift; sourceTree = "<group>"; };
 		1FF388058C0075ADD6A0299E /* WatchTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTimerView.swift; sourceTree = "<group>"; };
 		20C8D999D5F6A6674705005F /* AppIconManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconManager.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 				CDC983C9182807BB46198B3F /* QuickActions.swift */,
 				0E29464D664F748CD0456BF1 /* ReminderNotifications.swift */,
 				90DEFB19023F56EE03E51342 /* RoutineIntents.swift */,
+				158F9EC86CEA38687678A076 /* StoreReviewManager.swift */,
 				D7B0EDC806ECB9580171D3E8 /* TipStoreManager.swift */,
 				D3E93DA1FF128B6CF42FE73C /* WatchSessionManager.swift */,
 				DED174F20CCA6C76C0437524 /* AppShortcuts.strings */,
@@ -369,6 +372,7 @@
 				5C5CCEF6FC29EAAD81B63C2B /* QuickActions.swift in Sources */,
 				8BBF6FA6B8BE7FB673A4BBB4 /* ReminderNotifications.swift in Sources */,
 				42ED48A4498491AA3E211076 /* RoutineIntents.swift in Sources */,
+				ACCEE83A65F1CDBB0136CD80 /* StoreReviewManager.swift in Sources */,
 				286BA5B2656DC8914398C0CC /* TimerActivityAttributes.swift in Sources */,
 				D08086F801A885C1C84FB588 /* TimerControlIntents.swift in Sources */,
 				ADC2E278927F82CB778C5BC9 /* TipStoreManager.swift in Sources */,

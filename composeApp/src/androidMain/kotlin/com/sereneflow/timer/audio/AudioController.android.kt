@@ -229,7 +229,7 @@ private const val NOT_APPLIED = "\u0000not applied"
 private val COMPLETE_PATTERN = longArrayOf(0, 80, 120, 80, 120, 160)
 
 /**
- * Synthesised on the device, without the engine's servers. The app has no INTERNET permission, but
+ * Synthesised on the device, without the engine's servers. The app sends nothing itself, but
  * the speech engine runs in its own process and could use the network for these.
  */
 private fun Voice.runsOnDevice(): Boolean =

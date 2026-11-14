@@ -12,8 +12,8 @@ What it does (see "Releasing" in README.md for the whole flow):
 4. Creates release/vX.Y.Z from origin/main with the version bump and
    release-notes/vX.Y.Z/<locale>.txt, pushes it and opens a PR to main.
 
-CI publishes every push to a release/v* branch to internal testing, and promotes the build to
-closed testing (and tags vX.Y.Z) when the PR is merged.
+CI publishes every push to a release/v* branch to Google Play's internal and closed testing (and
+to TestFlight), and releases the build to everyone (and tags vX.Y.Z) when the PR is merged.
 
 Needs: git, gh (logged in) and claude on PATH. Standard library only.
 """
@@ -278,12 +278,13 @@ def main():
     commit_list = git("log", f"{previous_tag}..{BASE}", "--no-merges", "--format=- %h %s")
     body = (f"Release notes ({first_locale}; every language is in `{notes_dir}/`):\n\n"
             f"{notes[first_locale]}\n\n"
-            f"Every push to this branch is published to **internal testing**. Merging this PR "
-            f"promotes the tested build to **closed testing** with these notes and tags `{tag}`.\n\n"
+            f"Every push to this branch is published to **internal and closed testing**. Merging "
+            f"this PR **releases the tested build to everyone** on Google Play, submits it for App "
+            f"Store review with these notes and tags `{tag}`.\n\n"
             f"Changes since {previous_tag}:\n{commit_list}\n")
     url = run("gh", "pr", "create", "--base", "main", "--head", branch,
               "--title", f"Release {new_version}", "--body", body)
-    print(f"\nRelease PR: {url}\nCI is now publishing {new_version} to internal testing.")
+    print(f"\nRelease PR: {url}\nCI is now publishing {new_version} to internal and closed testing.")
     return 0
 
 

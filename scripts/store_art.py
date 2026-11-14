@@ -33,7 +33,7 @@ FEATURE_SIZE = (1024, 500)
 
 # Search shows the image about 365 points wide, so the headline is short and large. "\n" is where
 # it breaks.
-SEARCH_HEADLINE = "Calm,\nvisual\nroutines"
+SEARCH_HEADLINE = "Visual\nroutine\ntimer"
 TAGLINE = "Calm routines,\nbeautiful timers"
 
 

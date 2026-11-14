@@ -128,11 +128,13 @@ release goes out in steps:
    bump. Then it has the Claude CLI write store release notes (en-US) for you to accept, edit or
    regenerate. It creates `release/vX.Y.Z` with the version bump in `Version.xcconfig` and
    `release-notes/vX.Y.Z/en-US.txt`, pushes it and opens a PR.
-2. **Internal testing**: CI publishes every push to `release/v*` to the Google Play internal track
-   and to the internal TestFlight testers, with those notes. Fixes for the release go on the
-   branch; each push becomes a new internal build.
-3. **Play closed testing and the App Store**: merging the PR promotes the newest internal Play
-   build of that version to closed testing (`alpha`). It also puts the newest TestFlight build of
+2. **Testing**: CI publishes every push to `release/v*` (the first is the branch's creation) to
+   the Google Play internal track, promotes that build to closed testing (`alpha`), and publishes
+   one to the internal TestFlight testers, with those notes. Fixes for the release go on the
+   branch; each push becomes a new build for the testers.
+3. **Google Play and the App Store**: merging the PR releases the newest closed-testing Play
+   build of that version to everyone (`production`, a full rollout once Google has reviewed
+   it). It also puts the newest TestFlight build of
    the version on its App Store version, with the notes as "What's New", and submits it for App
    Review, along with any in-app purchases that are ready to submit; it goes live as soon as Apple approves it (set the repository variable
    `APP_STORE_RELEASE_TYPE` to `MANUAL` to release it from App Store Connect yourself). Then it

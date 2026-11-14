@@ -315,6 +315,10 @@ data class AppPreferences(
     val routinesSinceCoffeePrompt: Int = 0,
     /** Whether the user has bought the developer a coffee; the banner then never shows again. */
     val hasDonated: Boolean = false,
+    /** Routines run to their end (stops at the last of [REVIEW_PROMPT_ROUTINES]). */
+    val routinesCompleted: Int = 0,
+    /** [routinesCompleted] when the store's rating prompt was last asked for; 0 = never. */
+    val reviewAskedAt: Int = 0,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @SerialName("defaultSoundMode") val legacyDefaultSoundMode: LegacySoundMode? = null
@@ -329,11 +333,21 @@ data class AppPreferences(
     val showCoffeeBanner: Boolean
         get() = !hasDonated && routinesSinceCoffeePrompt >= COFFEE_PROMPT_ROUTINES
 
+    /** Whether a count in [REVIEW_PROMPT_ROUTINES] has been reached since the rating prompt was last asked for. */
+    val reviewDue: Boolean
+        get() = REVIEW_PROMPT_ROUTINES.any { it in (reviewAskedAt + 1)..routinesCompleted }
+
     companion object {
         val ReminderOptions = listOf(75, 50, 25, 10)
 
         /** Completed routines before the coffee banner shows, and again after each close. */
         const val COFFEE_PROMPT_ROUTINES = 5
+
+        /**
+         * Completed routines after which the store's rating prompt is asked for: once the app has
+         * proved useful, then twice more. The stores limit how often it really shows.
+         */
+        val REVIEW_PROMPT_ROUTINES = listOf(3, 15, 40)
     }
 }
 

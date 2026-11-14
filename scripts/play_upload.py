@@ -9,8 +9,9 @@ runnable by hand:
         --aab androidApp/build/outputs/bundle/release/androidApp-release.aab --track internal \\
         --release-notes-dir release-notes/v1.0.0 --release-name "1.0.0 (101)"
 
-    # Every push to a release/vX.Y.Z branch uploads to internal as above; merging it moves the
-    # build testers have been trying from internal to closed testing, instead of rebuilding:
+    # Every push to a release/vX.Y.Z branch uploads to internal as above and moves that build on
+    # to closed testing; merging the branch releases the build testers have been trying to
+    # everyone (--promote-from alpha --track production), instead of rebuilding:
     PLAY_SERVICE_ACCOUNT_JSON="$(cat key.json)" python3 scripts/play_upload.py \\
         --promote-from internal --version 1.0.0 --track alpha --release-notes-dir release-notes/v1.0.0
 

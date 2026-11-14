@@ -1,0 +1,10 @@
+{
+  "name": "Focus sessions",
+  "keywords": ["focus", "task", "countdown", "step", "daily"],
+  "shots": ["orbit", "list", "hourglass", "editor", "water", "lotus", "bonsai", "settings"],
+  "captions": {
+    "list": "Focus blocks with\nbreaks built in",
+    "editor": "Build a focus\nsession in seconds",
+    "bonsai": "Five living,\nanimated timers"
+  }
+}

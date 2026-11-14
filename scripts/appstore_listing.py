@@ -30,7 +30,7 @@ LISTING_DIR = ROOT / "store-listing" / "app-store"
 PRIVACY_URL = "https://daniil-pastuhov.github.io/sereneflow-privacy/"
 SUPPORT_URL = "https://daniil-pastuhov.github.io/sereneflow-privacy/support.html"
 COPYRIGHT = "2026 Daniil Pastuhov"
-PRIMARY_CATEGORY, SECONDARY_CATEGORY = "HEALTH_AND_FITNESS", "PRODUCTIVITY"
+PRIMARY_CATEGORY, SECONDARY_CATEGORY = "PRODUCTIVITY", "HEALTH_AND_FITNESS"
 # Folder under <locale>/ -> App Store Connect display type. 1320x2868 iPhone screenshots go in
 # the 6.7" slot, which App Store Connect labels 6.9" and also uses for smaller iPhones.
 # APP_IPHONE_DUO isn't in Apple's documentation or OpenAPI spec yet, but the API takes it: one set
@@ -40,6 +40,7 @@ SCREENSHOT_SETS = {"screenshots": "APP_IPHONE_67", "duo-inner-screenshots": "APP
                    "ipad-screenshots": "APP_IPAD_PRO_3GEN_129", "watch-screenshots": "APP_WATCH_SERIES_10"}
 # The same for app previews (.mp4, made by scripts/ios_previews.sh).
 PREVIEW_SETS = {"app-previews": "IPHONE_67", "ipad-app-previews": "IPAD_PRO_3GEN_129"}
+PRIMARY_LOCALE = "en-US"
 LIMITS = {"name.txt": 30, "subtitle.txt": 30, "promotional_text.txt": 170, "keywords.txt": 100,
           "description.txt": 4000}
 # Every age-rating question answered No / None, except that the routines are about wellness
@@ -55,7 +56,7 @@ AGE_RATING = {
     "userGeneratedContent": False, "violenceCartoonOrFantasy": "NONE",
     "violenceRealistic": "NONE", "violenceRealisticProlongedGraphicOrSadistic": "NONE",
 }
-REVIEW_NOTES = """SereneFlow has no account or login, and no network access; everything stays on the device.
+REVIEW_NOTES = """SereneFlow has no account or login and works fully offline; everything stays on the device.
 
 To try it: tap "Begin Routine" on "Morning Awakening". Each step counts down with an animated visual timer, and a voice announces the steps (turn the volume up). Use "New Routine" to build one, and the gear button for themes, default sounds and reminders.
 
@@ -67,7 +68,11 @@ The first step of "Morning Awakening" is 2 minutes long, so its first background
 
 
 def text(locale, name):
-    value = (LISTING_DIR / locale / name).read_text(encoding="utf-8").strip()
+    """A locale's text, or the primary locale's where the folder has no such file: es-MX holds
+    only a subtitle and keywords (see the README's "A second keyword set")."""
+    path = LISTING_DIR / locale / name
+    value = (path if path.exists() else LISTING_DIR / PRIMARY_LOCALE / name) \
+        .read_text(encoding="utf-8").strip()
     if len(value) > LIMITS[name]:
         sys.exit(f"{locale}/{name} has {len(value)} characters; the limit is {LIMITS[name]}")
     return value

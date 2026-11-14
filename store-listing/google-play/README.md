@@ -30,7 +30,8 @@ scripts/frame_screenshots.py build/raw-android-tablet store-listing/google-play/
 
 - App `com.sereneflow.timer` exists in Play Console; the service account
   `bestbeforepublishing@bestbefore-510415.iam.gserviceaccount.com` can open edits on it. Check under
-  Users and permissions that it may **release to testing tracks** for SereneFlow.
+  Users and permissions that it may **release to testing tracks** and **release to production**
+  for SereneFlow.
 - **App signing:** Play App Signing holds the app signing key. Uploads are signed with the upload
   key in `~/.config/sereneflow/upload-keystore.jks` (CI: the `ANDROID_*` secrets). Back it up.
 - **First release:** Play only accepts releases with status `draft` until the app's first review,
@@ -46,7 +47,7 @@ Play details); add `--validate-only` for a dry run.
 
 | Field | Value |
 |---|---|
-| App category | **Health & Fitness** |
+| App category | **Productivity** |
 | Tags | Meditation, Productivity, Timer |
 | Email | your contact email (required by Play, shown publicly) |
 | Website | https://daniil-pastuhov.github.io/sereneflow-privacy/support.html |
@@ -55,7 +56,8 @@ Play details); add `--validate-only` for a dry run.
 ## 3. App content
 
 - **Data safety:** "Does your app collect or share any of the required user data types?" **No.**
-  The app has no INTERNET permission; routines and settings stay in the app's files.
+  Routines and settings stay in the app's files and the app sends nothing itself. (Its manifest
+  does have the INTERNET permission, merged in from the Play Billing library the tip jar uses.)
   Encryption in transit: not applicable. Deletion: uninstalling deletes all data.
 - **Ads:** No ads.
 - **App access:** All functionality is available without special access.
@@ -81,8 +83,7 @@ Play details); add `--validate-only` for a dry run.
 
 ## 4. Release
 
-`scripts/release` starts a release; CI uploads it to the internal track with the notes in
-`release-notes/vX.Y.Z/en-US.txt` and promotes it to closed testing when the release PR is merged
-(see "Releasing" in the top-level README.md). Production rollout is done in Play Console. A new
-personal developer account must run a closed test with at least 12 testers for 14 days before it
-can apply for production access.
+`scripts/release` starts a release; CI uploads each push to the release branch to the internal
+track with the notes in `release-notes/vX.Y.Z/en-US.txt` and promotes it to closed testing, and
+releases that build to production when the release PR is merged (see "Releasing" in the top-level
+README.md).
