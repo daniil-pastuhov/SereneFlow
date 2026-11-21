@@ -10,6 +10,7 @@ import platform.AVFAudio.AVAudioFormat
 import platform.AVFAudio.AVAudioPCMBuffer
 import platform.AVFAudio.AVAudioPlayerNode
 import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryOptionDuckOthers
 import platform.AVFAudio.AVAudioSessionCategoryOptionMixWithOthers
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
 import platform.AVFAudio.AVSpeechBoundary
@@ -30,6 +31,7 @@ import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSNumber
 import platform.Foundation.NSOperationQueue
+import platform.QuartzCore.CACurrentMediaTime
 import platform.UIKit.UIImpactFeedbackGenerator
 import platform.UIKit.UIImpactFeedbackStyle
 import platform.UIKit.UINotificationFeedbackGenerator
@@ -57,9 +59,13 @@ class IOSAudioController : AudioController {
     private var nextPlayer = 0
     private var isSetUp = false
     private var playersAttached = false
+    private var outputChanged = false
     private var sessionActive = false
     private var voiceId: String? = null
     private var idleGeneration = 0
+    private var ducking = false
+    private var duckUntil = 0.0
+    private var duckGeneration = 0
 
     private fun ensureEngine(): Boolean {
         if (!isSetUp) {
@@ -74,6 +80,17 @@ class IOSAudioController : AudioController {
             }
             playersAttached = true
         }
+        if (outputChanged) {
+            // The output's sample rate or channel count changed (another app's music switched it, a
+            // different route). The mixer's connection to the output still has the old format, and
+            // playing through it sounds garbled, so make it again with the format the output has now.
+            outputChanged = false
+            val output = engine.outputNode.outputFormatForBus(0u)
+            if (output.sampleRate > 0.0 && output.channelCount > 0u) {
+                engine.stop()
+                engine.connect(engine.mainMixerNode, to = engine.outputNode, format = output)
+            }
+        }
         if (!engine.running) {
             engine.prepare()
             if (!engine.startAndReturnError(null)) return false
@@ -82,9 +99,49 @@ class IOSAudioController : AudioController {
     }
 
     private fun configureSession() {
-        val session = AVAudioSession.sharedInstance()
-        session.setCategory(AVAudioSessionCategoryPlayback, withOptions = AVAudioSessionCategoryOptionMixWithOthers, error = null)
-        session.setActive(true, error = null)
+        ducking = false
+        applyCategory()
+        AVAudioSession.sharedInstance().setActive(true, error = null)
+    }
+
+    private fun applyCategory() {
+        val options = if (ducking) {
+            AVAudioSessionCategoryOptionMixWithOthers or AVAudioSessionCategoryOptionDuckOthers
+        } else {
+            AVAudioSessionCategoryOptionMixWithOthers
+        }
+        AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback, withOptions = options, error = null)
+    }
+
+    /**
+     * Lowers other apps' audio (music, a podcast) for [seconds] and for as long as the voice is
+     * speaking, as navigation apps do, then lets it back up. The session stays active for a whole
+     * routine, so ducking is switched by the category option, only around a cue. Must run on the
+     * main thread.
+     */
+    private fun duckOthers(seconds: Double) {
+        duckUntil = maxOf(duckUntil, CACurrentMediaTime() + seconds)
+        if (!ducking) {
+            ducking = true
+            applyCategory()
+        }
+        scheduleUnduck(++duckGeneration)
+    }
+
+    private fun scheduleUnduck(generation: Int) {
+        val delay = maxOf(duckUntil - CACurrentMediaTime(), 0.0) + UNDUCK_MARGIN_SECONDS
+        dispatch_after(
+            dispatch_time(DISPATCH_TIME_NOW, (delay * 1_000_000_000).toLong()),
+            dispatch_get_main_queue()
+        ) {
+            if (generation != duckGeneration) return@dispatch_after
+            if (speechSynthesizer.speaking) {
+                scheduleUnduck(generation)
+            } else {
+                ducking = false
+                applyCategory()
+            }
+        }
     }
 
     /**
@@ -112,7 +169,10 @@ class IOSAudioController : AudioController {
             `object` = null,
             queue = NSOperationQueue.mainQueue
         ) { notification ->
-            if (notification?.`object` === engine && sessionActive) ensureEngine()
+            if (notification?.`object` === engine) {
+                outputChanged = true
+                if (sessionActive) ensureEngine()
+            }
         }
         // The audio daemon restarted: every engine, node and synthesizer made before is now invalid.
         center.addObserverForName(
@@ -132,6 +192,7 @@ class IOSAudioController : AudioController {
         players = makePlayers()
         nextPlayer = 0
         playersAttached = false
+        outputChanged = false
         speechSynthesizer = AVSpeechSynthesizer()
     }
 
@@ -144,6 +205,7 @@ class IOSAudioController : AudioController {
         val channel = buffer.floatChannelData?.get(0) ?: return@onMain
         for (i in samples.indices) channel[i] = samples[i]
 
+        duckOthers(samples.size.toDouble() / ToneSynth.SAMPLE_RATE)
         val player = players[nextPlayer]
         nextPlayer = (nextPlayer + 1) % players.size
         player.scheduleBuffer(buffer, completionHandler = null)
@@ -182,6 +244,7 @@ class IOSAudioController : AudioController {
         if (speechSynthesizer.speaking) {
             speechSynthesizer.stopSpeakingAtBoundary(AVSpeechBoundary.AVSpeechBoundaryImmediate)
         }
+        duckOthers(SPEECH_START_SECONDS)
         speechSynthesizer.speakUtterance(utterance)
         if (!sessionActive) scheduleIdlePause()
     }
@@ -269,5 +332,9 @@ class IOSAudioController : AudioController {
 }
 
 private const val IDLE_GRACE_NANOS = 6_000_000_000L
+
+// Other audio comes back up this long after a cue ends, and is held down this long for the voice to start.
+private const val UNDUCK_MARGIN_SECONDS = 0.3
+private const val SPEECH_START_SECONDS = 1.0
 
 actual fun createAudioController(): AudioController = IOSAudioController()
