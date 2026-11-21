@@ -1,14 +1,18 @@
 #!/bin/bash
 # Checks that a release branch is consistent before CI publishes it, and exports RELEASE_VERSION
-# for later steps. Used by .github/workflows/ci.yml with the version from the branch name:
+# for later steps. Used by .github/workflows/ci.yml with the version from the branch name; the
+# -ios or -android suffix of a one-platform release branch is dropped:
 #
 #   scripts/check_release_version.sh 1.3.0
+#   scripts/check_release_version.sh 1.3.0-ios
 #
 # Version.xcconfig (the one version of both the Android and the iOS app) and the release notes
 # have to match the branch, since a hand edit can leave one behind.
 set -euo pipefail
 
-VERSION=${1:?usage: $0 X.Y.Z}
+VERSION=${1:?usage: $0 X.Y.Z[-ios|-android]}
+VERSION=${VERSION%-ios}
+VERSION=${VERSION%-android}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 LOCALES=(en-US)
 fail() { echo "::error::$1"; exit 1; }

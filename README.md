@@ -128,6 +128,10 @@ release goes out in steps:
    bump. Then it has the Claude CLI write store release notes (en-US) for you to accept, edit or
    regenerate. It creates `release/vX.Y.Z` with the version bump in `Version.xcconfig` and
    `release-notes/vX.Y.Z/en-US.txt`, pushes it and opens a PR.
+   `scripts/release --platform ios` (or `android`) releases only that app: the branch is
+   `release/vX.Y.Z-ios`, and every step below happens for that store alone. The version and the
+   `vX.Y.Z` tag are still shared, so the other app skips that version, and its next release
+   notes are drafted from the commits after that tag.
 2. **Testing**: CI publishes every push to `release/v*` (the first is the branch's creation) to
    the Google Play internal track, promotes that build to closed testing (`alpha`), and publishes
    one to the internal TestFlight testers, with those notes. Fixes for the release go on the
