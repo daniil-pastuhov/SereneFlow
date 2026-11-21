@@ -24,6 +24,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 swift tools/generate_icons.swift   # Regenerate all app icons (iOS asset catalog + Android mipmaps/adaptive + Play icon)
 
 scripts/release                    # Start a release (see README "Releasing"); CI publishes release/v* pushes
+scripts/release --platform ios     # ...of one app only (or android): branch release/vX.Y.Z-ios
 scripts/ios_screenshots.sh build/raw-iphone && scripts/frame_screenshots.py build/raw-iphone store-listing/app-store/en-US/screenshots
 scripts/appstore_custom_pages.py   # App Store custom product pages from store-listing/app-store/custom-pages/ (see that README)
 ```

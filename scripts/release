@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Starts a release: bumps the version, writes localized release notes, opens a release PR.
 
-    scripts/release            # interactive
-    scripts/release --dry-run  # everything up to the commit, then show what would change
+    scripts/release                     # interactive, both platforms
+    scripts/release --platform ios      # only the iOS app (or: android)
+    scripts/release --dry-run           # everything up to the commit, then show what would change
 
 What it does (see "Releasing" in README.md for the whole flow):
 1. Takes origin/main and the commits since the last vX.Y.Z tag.
@@ -14,6 +15,10 @@ What it does (see "Releasing" in README.md for the whole flow):
 
 CI publishes every push to a release/v* branch to Google Play's internal and closed testing (and
 to TestFlight), and releases the build to everyone (and tags vX.Y.Z) when the PR is merged.
+
+With --platform ios or android the branch is release/vX.Y.Z-ios or release/vX.Y.Z-android, and CI
+publishes and releases that app only. The version and the vX.Y.Z tag are still shared: the other
+app skips that version, and its next release starts counting commits from that tag.
 
 Needs: git, gh (logged in) and claude on PATH. Standard library only.
 """
@@ -38,6 +43,8 @@ VERSION_FILES = [
     # The one version of both apps: Gradle reads it for versionName, Xcode for MARKETING_VERSION.
     ("Version.xcconfig", r"(MARKETING_VERSION = )(\d+\.\d+\.\d+)()", 1),
 ]
+# --platform value -> what the release notes prompt and the PR call it.
+PLATFORMS = {"all": "Android and iOS", "ios": "iOS", "android": "Android"}
 # ------------------------------------------------------------------------------------------
 
 NOTES_LIMIT = 500  # Google Play's limit per language
@@ -104,7 +111,7 @@ def ask(prompt, choices):
 
 # --- Release notes ------------------------------------------------------------------------
 
-def draft_notes(version, commits, feedback=None):
+def draft_notes(version, commits, platform, feedback=None):
     languages = "\n".join(f'- "{code}": {name}' for code, name in LOCALES.items())
     prompt = f"""You write the "What's new" release notes for {APP_DESCRIPTION}, version {version}.
 
@@ -126,6 +133,10 @@ Answer with ONLY a JSON object mapping each key above to its notes, and nothing 
 Commits:
 {commits}
 """
+    if platform != "all":
+        other = PLATFORMS["android" if platform == "ios" else "ios"]
+        prompt += (f"\nThis release goes out for the {PLATFORMS[platform]} app only: leave out "
+                   f"changes that only affect the {other} app, and don't name the platform.\n")
     if feedback:
         prompt += f"\nThe developer reviewed a previous draft and asks for this change:\n{feedback}\n"
     print("Asking Claude for release notes…")
@@ -179,8 +190,8 @@ def edit_notes(notes, version):
         {code: notes.get(code, "") for code in LOCALES if code not in edited}
 
 
-def review_notes(version, commits):
-    notes = draft_notes(version, commits)
+def review_notes(version, commits, platform):
+    notes = draft_notes(version, commits, platform)
     while True:
         show_notes(notes)
         problems = notes_problems(notes)
@@ -197,7 +208,7 @@ def review_notes(version, commits):
             notes = edit_notes(notes, version)
         elif action == "regenerate":
             feedback = input("What should change? (Enter to just try again) ").strip()
-            notes = draft_notes(version, commits, feedback or None)
+            notes = draft_notes(version, commits, platform, feedback or None)
         else:
             sys.exit("Stopped; nothing was changed.")
 
@@ -208,7 +219,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--dry-run", action="store_true",
                         help="stop before creating the branch and show what would be committed")
+    parser.add_argument("--platform", choices=list(PLATFORMS), default="all",
+                        help="release only this app (default: both)")
     args = parser.parse_args()
+    only = args.platform != "all"
 
     for tool in ("git", "claude") + (() if args.dry_run else ("gh",)):
         if not shutil.which(tool):
@@ -242,15 +256,22 @@ def main():
     print(f"\nLast release: {previous_tag}. Version on main: {version}.")
     kind = ask(", ".join(options) + "? ", choices)
     new_version = version if kind == "keep" else bump(version, kind)
-    tag, branch = f"v{new_version}", f"release/v{new_version}"
+    # CI reads the platform from the branch's suffix; the tag and the notes directory have none.
+    tag = f"v{new_version}"
+    branch = f"release/{tag}" + (f"-{args.platform}" if only else "")
+    title = f"Release {new_version}" + (f" ({PLATFORMS[args.platform]} only)" if only else "")
 
     if git("rev-parse", "--verify", "--quiet", f"refs/tags/{tag}", check=False):
         sys.exit(f"Tag {tag} already exists")
-    if git("ls-remote", "--heads", REMOTE, branch) or \
-            git("rev-parse", "--verify", "--quiet", f"refs/heads/{branch}", check=False):
-        sys.exit(f"Branch {branch} already exists (locally or on {REMOTE})")
+    # One release branch per version, whatever its platform: they would share the tag and notes.
+    existing = [line.split("refs/heads/")[-1] for pattern in (f"release/{tag}", f"release/{tag}-*")
+                for line in git("ls-remote", "--heads", REMOTE, pattern).splitlines()]
+    existing += git("branch", "--list", f"release/{tag}", f"release/{tag}-*",
+                    "--format=%(refname:short)").split()
+    if existing:
+        sys.exit(f"Branch {existing[0]} already exists (locally or on {REMOTE})")
 
-    notes = review_notes(new_version, commits)
+    notes = review_notes(new_version, commits, args.platform)
     notes_dir = f"release-notes/{tag}"
     changes = bumped_files(new_version)
 
@@ -271,20 +292,28 @@ def main():
         (ROOT / notes_dir / f"{code}.txt").write_text(notes[code] + "\n", encoding="utf-8")
     git("add", notes_dir, *changes)
     first_locale = next(iter(LOCALES))
-    git("commit", "-m", f"Release {new_version}\n\n{notes[first_locale]}")
+    git("commit", "-m", f"{title}\n\n{notes[first_locale]}")
     print(f"Pushing {branch}…")
     git("push", "-u", REMOTE, branch, capture=False)
 
     commit_list = git("log", f"{previous_tag}..{BASE}", "--no-merges", "--format=- %h %s")
+    testing = {"all": "**internal and closed testing**", "android": "**internal and closed testing**",
+               "ios": "**TestFlight**"}[args.platform]
+    merging = {"all": "**releases the tested build to everyone** on Google Play, submits it for "
+                      "App Store review with these notes",
+               "android": "**releases the tested build to everyone** on Google Play",
+               "ios": "**submits the tested build for App Store review** with these notes"
+               }[args.platform]
+    scope = (f"This release is for the **{PLATFORMS[args.platform]} app only**; the other app "
+             f"skips {new_version}.\n\n" if only else "")
     body = (f"Release notes ({first_locale}; every language is in `{notes_dir}/`):\n\n"
-            f"{notes[first_locale]}\n\n"
-            f"Every push to this branch is published to **internal and closed testing**. Merging "
-            f"this PR **releases the tested build to everyone** on Google Play, submits it for App "
-            f"Store review with these notes and tags `{tag}`.\n\n"
+            f"{notes[first_locale]}\n\n{scope}"
+            f"Every push to this branch is published to {testing}. Merging this PR {merging} "
+            f"and tags `{tag}`.\n\n"
             f"Changes since {previous_tag}:\n{commit_list}\n")
-    url = run("gh", "pr", "create", "--base", "main", "--head", branch,
-              "--title", f"Release {new_version}", "--body", body)
-    print(f"\nRelease PR: {url}\nCI is now publishing {new_version} to internal and closed testing.")
+    url = run("gh", "pr", "create", "--base", "main", "--head", branch, "--title", title,
+              "--body", body)
+    print(f"\nRelease PR: {url}\nCI is now publishing {new_version} to {testing.strip('*')}.")
     return 0
 
 
