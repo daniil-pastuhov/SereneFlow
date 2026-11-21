@@ -1,0 +1,2 @@
+• Music and podcasts from other apps now get quieter while a chime or the voice plays, then come back.
+• Better sound when SereneFlow runs in the background alongside other audio.
